@@ -7,11 +7,11 @@
 
   PelVis was written in Python 2.6 and requires the following libraries:
 
-  - [[http://numpy.org][NumPy]] for array handling
+  - [[http://numpy.org/][NumPy]] for array handling
 
-  - [[scipy.org][SciPy]] for other numerical libraries
+  - [[http://scipy.org/][SciPy]] for other numerical libraries
 
-  - [[http://www.wxpython.org][wxPython]] for the user interface
+  - [[http://www.wxpython.org/][wxPython]] for the user interface
 
   - [[http://matplotlib.sourceforge.net/][matplotlib]] for data visualization.
 
