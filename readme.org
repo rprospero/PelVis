@@ -61,7 +61,7 @@
 
   Below is an image of the main numpy screen with a data file loaded.
 
-  [[screenshot.png]]
+  [[file://screenshot.png]]
 
   In the screenshot, the main image area is a histogram of the neutron count rate.  It is
   either the total number of neutron counts (as seen in the image) or
@@ -125,10 +125,8 @@
   original, non-background subtracted data is no longer kept in memory
   and cannot be used for error analysis.  The result of this is that
   the uncertainty for each spin state will be (N-n)^0.5 instead of
-  (N+n)^0.5.  This leads to an under-estimation of the relative
-  uncertainty of each spin state that is on the order of the noise to
-  signal ratio.  There may be a way to fix this issue.  If you do fix
-  this problem, be sure to update the documentation.
+  (N+n)^0.5. There may be a way to fix this issue.  If you do fix this
+  problem, be sure to update the documentation.
 
 
 * Spectrum
