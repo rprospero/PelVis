@@ -1,13 +1,41 @@
 
 * Introduction
 
-  This is the introductory manual for the PEL Visualizer (PelVis)
-  program.
+  This is the user manual for the PEL Visualizer (PelVis) program.
+  The PelFile was designed to read PAPA Electronic Log (PEL) files, as
+  designed by Lexitech in their documentation of the PAPA detector.
+
+  PelVis was written in Python 2.6 and requires the following libraries:
+
+  - [[http://numpy.org][NumPy]] for array handling
+
+  - [[scipy.org][SciPy]] for other numerical libraries
+
+  - [[http://www.wxpython.org][wxPython]] for the user interface
+
+  - [[http://matplotlib.sourceforge.net/][matplotlib]] for data visualization.
 
 * Loading a File
 
-  Use File->Open (Ctrl+O) to load a single file or File->Polarized Set
-  to load to files
+  PelVis can load either one or PEL files at any given time.  Use
+  File->Open to load a single file and File->Polarized Set to load two
+  files (for making polarization measurements).
+
+  Whenever PelVis loads a file, it first asks for the neutron data
+  followed by the monitor data.  If you do not wish to normalize a
+  data run against monitor, simply cancel the load dialog when it asks
+  for a monitor file.
+
+  The neutron data file can either be a PEL file for a Numpy NPZ file.
+  The NPZ files are pre-formatted histograms which load much faster
+  than a PEL file.  NPZ files can be created through [[monbatch.py]].  The
+  main disadvantage of NPZ files is that every NPZ files is 200MB in
+  size, regardless of the time of data collection.
+
+
+* Visualizing Data
+
+  
 
 * Eliminating Background
 
@@ -15,4 +43,4 @@
 
   To export a detector image, do File->Save (Ctrl+S).  To export a
   spectrum, go to File->Spactrum, pick your Spectrum Settings, then
-  his save.
+  hit save.
