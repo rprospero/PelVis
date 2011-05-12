@@ -61,7 +61,7 @@
 
   Below is an image of the main numpy screen with a data file loaded.
 
-  [[screenshot.PNG][screenshot.PNG]]
+  [[screenshot.PNG]]
 
   In the screenshot, the main image area is a histogram of the neutron count rate.  It is
   either the total number of neutron counts (as seen in the image) or
