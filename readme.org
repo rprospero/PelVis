@@ -59,15 +59,6 @@
 
 * Visualizing Data
 
-  Below is an image of the main numpy screen with a data file loaded.
-
-  [[screenshot.PNG]]
-
-  In the screenshot, the main image area is a histogram of the neutron count rate.  It is
-  either the total number of neutron counts (as seen in the image) or
-  the neutron counts per million monitor counts, depending on whether
-  you chose to normalize against a monitor file.
-
   To the right of the main image area is the color scale.  Different
   color scales can be chosen from the *Color* menu.  The upper and
   lower bounds of the color bar can be adjusted via the *Minimum
