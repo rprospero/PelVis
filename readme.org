@@ -1,0 +1,186 @@
+#+TITLE: PelVis User Manual
+
+* Introduction
+
+  This is the user manual for the PEL Visualizer (PelVis) program.
+  The PelFile was designed to read PAPA Electronic Log (PEL) files, as
+  designed by Lexitech in their documentation of the PAPA detector.
+
+  PelVis was written in Python 2.6 and requires the following libraries:
+
+  - [[http://numpy.org/][NumPy]] for array handling
+
+  - [[http://scipy.org/][SciPy]] for other numerical libraries
+
+  - [[http://www.wxpython.org/][wxPython]] for the user interface
+
+  - [[http://matplotlib.sourceforge.net/][matplotlib]] for data visualization.
+
+
+* Loading a File
+
+  PelVis can load either one or PEL files at any given time.  Use
+  *File* -> *Open* to load a single file and *File* -> *Polarized Set* to load two
+  files (for making polarization measurements).
+
+  Whenever PelVis loads a file, it first asks for the neutron data
+  followed by the monitor data.  If you do not wish to normalize a
+  data run against monitor, simply cancel the load dialog when it asks
+  for a monitor file.  Note that PelVis normalizes against the total
+  monitor count, not the monitor spectrum, so the intensity spectrum
+  of the beam will still be visible after normalization.
+
+  The neutron data file can either be a PEL file for a Numpy NPZ file.
+  The NPZ files are pre-formatted histograms which load much faster
+  than a PEL file.  NPZ files can be created through [[file:histbatch.py]].  The
+  main disadvantage of NPZ files is that every NPZ files is 200MB in
+  size, regardless of the time of data collection.
+
+  If Pelvis only loads a single file, all it can display is an
+  intensity.  With two files, there are four ways of processing the
+  data.
+
+  * /Spin up data/: This is the (raw or normalized) neutron intensity
+    in the spin up state.  It can be selected from the menu with
+    *Analysis* -> *View Spin Up State* or via /Ctrl/ + /U/
+
+  * /Spin down data/: This is the (raw or normalized) neutron
+    intensity in the spin down state.  It can be selected from the
+    menu with *Analysis* -> *View Spin Down State* or via /Ctrl/ + /D/
+
+  * /Polarization/: This is the polarization of the neutron beam as a
+    function of position.  It can be selected from the menu with
+    *Analysis* -> *Check Polarization* or via /Ctrl/ + /P/
+
+  * /Flipping Ratio/: This is the polarization of the neutron beam as a
+    function of position.  It can be selected from the menu with
+    *Analysis* -> *Check Flipping Ratio* or via /Ctrl/ + /F/
+
+
+* Visualizing Data
+
+  To the right of the main image area is the color scale.  Different
+  color scales can be chosen from the *Color* menu.  The upper and
+  lower bounds of the color bar can be adjusted via the *Minimum
+  Intensity* and *Maximum Intensity* text boxes on the right.  If an
+  intensity box is left empty, PelVis will default to using the
+  largest data point for the maximum and the smallest data point for
+  the minimum.
+
+  In addition to the main color scales of *Hue*, *Greyscale*, and
+  *Spectral*, there's also a *Map Picker*, which has a very large
+  selection of color bars available.  Unfortunately, the map picker is
+  very slow the first time it is loaded, so I would recommend not
+  using it unless you have a specific reason to chose another color
+  bar.  If you do use the map picker, simply click on your chosen
+  color bar to change the color map for your data.
+
+  Beneath and to the left of the detector image is a one dimensional
+  histogram of the displayed data.  Note that it is a histogram of
+  whatever is being displayed, so, when displaying the flipping ratio,
+  it will show the sum of the flipping ratio and not the flipping
+  ratio of the sum of the two states.  Also, the histograms are
+  automatically normalized to fill their region.  Finally, the
+  histogram only operates within the region of interest.  For
+  instance, if the region of interest was from 100 to 200 in the x
+  direction and from 300 to 400 in the y direction, the lower
+  histogram would contain the sum of the data between 300 and 400 in
+  the y direction for each x position, while the left histogram would
+  contain the sum of the data between 100 and 200 in the x direction
+  for each y position.
+
+  There are two ways of cohsing the region of interest.  The first is
+  direct entry into the text boxes on the right (e.g.  *Minimum X* holds
+  the lower x bound of the region of interest).  Alternately, the
+  region of interest can be chosen directly off of the detector image.
+  Left clicking on the detector image sets the upper left hand corner
+  of the region of interest while right clicking selects the lower
+  right hand corner.  Changes to the region of interest do not take
+  effect until you click on the *Update* button in the lower right hand
+  corner.
+
+  In the lower left hand corner of the screen is a live set of
+  position statistics.  The *X* and *Y* values are the current pixel
+  position of the mouse cursor.  The *Z* value is the data under the
+  cursor.  Finally, *ROI* is the integratation of the region of
+  interest.  Once again, it is the integration of the processed data,
+  not a function applied to the integrated data.
+
+
+* Eliminating Background
+
+  To remove background noise from the signal, first select a region of
+  interest in the background region.  Then run *Noise* -> *Region of
+  Disinterest*.  If two files are loaded, it performs the background
+  subtraction on both files.  Note that, due to memory contraints, the
+  original, non-background subtracted data is no longer kept in memory
+  and cannot be used for error analysis.  The result of this is that
+  the uncertainty for each spin state will be (N-n)^0.5 instead of
+  (N+n)^0.5. There may be a way to fix this issue.  If you do fix this
+  problem, be sure to update the documentation.
+
+
+* Spectrum
+
+  *File* -> *Spectrum* loads up a spectrum dialog for viewing
+  wavelength dependent data.  There are three options for binning the
+  data:
+
+  * *Raw Binning* does not perform any rebinning of the data and uses
+    all 200 TOF channels.
+
+  * *Auto Binning* bins the data so that no bin has a greater relative
+    uncertainty than that listed in the *Minimum Percent Error* text
+    box.  This helps pull the most visual information out of the
+    signal, but can be difficult to use in calculations, as there's no
+    way to assure that two data sets will be binned the same way.
+
+  * *Fixed Binning* bins the data into a number of bins equal to the
+    value in the *Minimum Percent Error* text box.  Using a value of
+    twenty is especially useful, as it results in one angstrom bins.
+
+  The binning options are set, click the *View Spectrum* button to
+  plot the data from the current region of interest.  The resulting
+  graph will depend on the current view mode (e.g. if the main image
+  is polarization, then the graph will be of the polarization).  The
+  *Minimum Intensity* and *Maximum Intensity* dialog boxes on the
+  right side of the main PelVis window will set the initial y-range
+  for the plot.  As with the main image, the y-range will default to
+  the maximum and minimum data values if the corresponding intensity
+  value is not set.
+
+  At the top of the graph window is a set of navigation controls:
+
+  * *Home*: Returns the graph to its original state
+
+  * *Back*: Undoes the previous change to the graph
+
+  * *Forward*:  Undoes the last undo
+
+  * *Pan*: Control the graph position with the mouse.  Clicking and
+    dragging with the left mouse button will move adjust the position
+    of the graph origin.  Dragging with the right mouse button will
+    adjust the scale of the axes.
+
+  * *Scale*: Dragging a selected window with the left mouse button
+    will zoom in on the selected region.
+
+* Exporting Data
+
+** Exporting Images
+
+   The current image can be copied to the clipboard via *Edit* ->
+   *Copy* or /Ctrl/ + /C/.  It can also be saved to an image via
+   *File* -> *Save* or /Ctrl/ + /S/.
+
+   In a spectrum windows, the spectrum image can also be copied to the
+   clipboard via *Edit* -> *Copy*.  It can also be saved as an image
+   file by clicking the save icon near the top of the window.
+
+** Exporting Data
+
+   The [[* Spectrum][Spectrum dialog]] can save a spectrum to a tab delimited text
+   file.  The first column is always wavelength, the second is data,
+   and the third is uncertainty.  There is currently a bug that causes
+   the wavelength data to be saved by the number of TOF bins which it
+   contains.  I will update the documentation when this bug is fixed.
