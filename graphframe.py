@@ -67,7 +67,7 @@ class GraphFrame(wx.Frame):
         if wx.TheClipboard.Open():
             print(self.canvas.GetSize())
             w,h=self.canvas.GetSize()
-            bitmap = wx.EmptyBitmap(x,y,24)
+            bitmap = wx.EmptyBitmap(w,h,24)
             memdc = wx.MemoryDC(bitmap)
             self.figure.canvas.draw(memdc)
             wx.TheClipboard.Clear()

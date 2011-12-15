@@ -49,6 +49,6 @@ class MonFile:
         x = self.convertTime(x)
         f = ip.interp1d(x,y) #Interpolation of neutron monitor
         xs = range(200)
-        #graph = GraphFrame(None,"Monitor")
-        #graph.plot(np.arange(0.0,20.0,0.1),f(xs))
+        graph = GraphFrame(None,"Monitor")
+        graph.plot(np.arange(0.0,20.0,0.1),f(xs))
         self.spec = np.expand_dims(np.expand_dims(f(xs),axis=0),axis=0)

@@ -154,7 +154,7 @@ class SpectrumDialog(wx.Dialog):
                     np.array(d))
         elif self.setbinrad.GetValue():
             count = int(self.minerr.GetValue())
-            x = [np.mean(y) for y in np.array_split(np.arange(0.0,20.0)/10.0,count)]
+            x = [np.mean(y) for y in np.array_split(np.arange(0.0,200.0)/10.0,count)]
             u = [np.sum(y)/self.uscale for y in np.array_split(up,count)]
             d = [np.sum(y)/self.dscale for y in np.array_split(down,count)]
             print((x,u,d))

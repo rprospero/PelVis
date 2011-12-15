@@ -88,9 +88,10 @@ class CombinerFrame(wx.Frame):
                     final[key] = runDict[key]
 
         #Combine each flipper current
+        print(final)
         for key in final:
             runs = final[key]
-            mon = np.zeros((1000,),dtype=np.int32)
+            mon = np.zeros((1001,),dtype=np.int32)
             tottime = 0
             totmon = 0
             totdet = 0
@@ -110,6 +111,7 @@ class CombinerFrame(wx.Frame):
                     totmon += int(moncount)
                     totdet += int(detcount)
                     with open(monpath,"r") as infile:
+                        print(monpath)
                         montemp = np.loadtxt(infile,dtype=np.int32,skiprows=3)
                         mon += montemp[:,1]
                     with open(detpath,"rb") as infile:

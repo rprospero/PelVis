@@ -358,7 +358,7 @@ class PelvisFrame(wx.Frame):
         message -- The title for the load file dialog.
 
         """
-        dlg=wx.FileDialog(self,message,wildcard="Preformatted Histograms|*.npy|PAPA Data|*.pel",style=wx.FD_OPEN)
+        dlg=wx.FileDialog(self,message,wildcard="PAPA Data|*.pel|Preformatted Histograms|*.npy",style=wx.FD_OPEN)
         if dlg.ShowModal()==wx.ID_OK:
 #            self.SetCursor(wx.CURSOR_WAIT)
             path = dlg.GetPath()
@@ -410,7 +410,6 @@ class PelvisFrame(wx.Frame):
             data -= flatrun
         spec = mon.spec
         data /= np.sum(spec)
-        print(np.sum(spec))
         return (data,np.sum(mon.spec))
                 
 #    def getLambdaRange(self):
@@ -583,7 +582,7 @@ class PelvisFrame(wx.Frame):
             totd = np.sum(np.sum(d[yMin:yMax,xMin:xMax,:],axis=0),axis=0)
             #totd = np.atleast_3d(totd)
             totd /= area
-            print(totd)
+            print(totd.shape)
             print(self.data.shape)
             self.data -= totd
         self.updateData()
