@@ -235,7 +235,7 @@ class PelFile:
 			if len(place[0]) > 0:
 				temp,_ = np.histogram(Z[place],bins = np.arange(8*256+1))
 				temp = temp.reshape(256,8,order="F")
-				cube[:,:,i] = mapim(temp)[:,:]
+				cube[:,:,i] = mapim(temp)[::-1,:]
 			statusfunc(i*5.0)
 				
 
