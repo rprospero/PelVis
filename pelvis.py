@@ -358,7 +358,7 @@ class PelvisFrame(wx.Frame):
         message -- The title for the load file dialog.
 
         """
-        dlg=wx.FileDialog(self,message,wildcard="He3 data|*.dat|Preformatted Histograms|*.npy",style=wx.FD_OPEN)
+        dlg=wx.FileDialog(self,message,wildcard="He3 data|*neutron_event.dat|Preformatted Histograms|*.npy",style=wx.FD_OPEN)
         if dlg.ShowModal()==wx.ID_OK:
 #            self.SetCursor(wx.CURSOR_WAIT)
             path = dlg.GetPath()
@@ -370,7 +370,7 @@ class PelvisFrame(wx.Frame):
 #            self.SetCursor(wx.CURSOR_ARROW)
         else:
             return (None,None)
-        dlg=wx.FileDialog(self,"Choose the monitor file",wildcard="*.txt",style=wx.FD_OPEN)
+        dlg=wx.FileDialog(self,"Choose the monitor file",wildcard="*bmon_histo.dat",style=wx.FD_OPEN)
         if dlg.ShowModal()==wx.ID_OK:
             mon = MonFile(dlg.GetPath())
             #mon.convertTime(),mon.spec
