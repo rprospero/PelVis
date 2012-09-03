@@ -63,7 +63,7 @@ class ImagePanel(wx.Panel):
         """Event handler when the mouse moves over the graph"""
         (x,y) = event.GetPosition()
         if self.posFunction is None: return
-        self.posFunction(x,y)
+        self.posFunction(x/32,y/4)
 
     def __OnMouseLeft(self,event):
         """Event handler for left clicking on the graph."""
@@ -71,7 +71,7 @@ class ImagePanel(wx.Panel):
         if self.setMin is None: 
             None
         else:
-            self.setMin(x,y)
+            self.setMin(x/32,y/4)
         event.Skip()
 
     def __OnMouseRight(self,event):
@@ -80,7 +80,7 @@ class ImagePanel(wx.Panel):
         if self.setMax is None: 
             None
         else:
-            self.setMax(x,y)
+            self.setMax(x/32,y/4)
         event.Skip()
 
     def update(self,data,vmin=10,vmax=20):

@@ -61,8 +61,8 @@ class PositionPanel(wx.Panel):
         #Set the starting region of interest
         self.minX = 0
         self.minY = 0
-        self.maxX = 512
-        self.maxY = 512
+        self.maxX = 16
+        self.maxY = 128
 
         self.x.SetEditable(False)
         self.y.SetEditable(False)
@@ -113,9 +113,9 @@ class PelvisOptionPanel(wx.Panel):
                 ("intMax",20,"Maximum Intensity",""),
                 ("intMin",30,"Minimum Intensity",""),
                 ("xMin",40,"Minimun X","0"),
-                ("xMax",50,"Maximum X","512"),
+                ("xMax",50,"Maximum X","16"),
                 ("yMin",60,"Minimun Y","0"),
-                ("yMax",70,"Maximum Y","512")]
+                ("yMax",70,"Maximum Y","128")]
 
     def __init__(self,parent):
         """Creates a PelvisOptionPanel"""
