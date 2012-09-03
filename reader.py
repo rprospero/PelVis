@@ -199,7 +199,7 @@ class PelFile:
         def convertTime(self,timearr):
 		"""Convert an array of TOF data into neutron wavelengths."""
                 #convert timearr into microseconds
-                timearr *= 50.0 #50 micosecond bins
+                timearr *= 0.1 #Convert to microseconds
                 #convert timearr into wavelength
                 distanceToG4 = 3.7338+2.5297
                 distanceToDetector = 3.6 #FIXME
@@ -222,25 +222,20 @@ class PelFile:
                 if l==0:
                         return cube
 
-                xarr = np.asarray((self.data & 0xFFFF),np.uint16)#x
-		yarr = xarr % 8
-		xarr /= 8
+                Z = self.data[1::2] & 0xFFFF#position data
 
-                timearr = self.convertTime((self.data >> 32) & 0x7FFFFFFF)#time
+                timearr = self.convertTime(np.asarray(self.data[0::2],dtype=np.float64))#time data
                 timearr = np.asarray(np.floor(timearr),np.uint16)
+		print(timearr[0:20])
                 
 		#Loop over 20 angstroms in steps of 0.1 angstroms
 		np.seterr(over='raise')
- 		xarr %= 256
- 		yarr %= 8
 
 		for i in range(200):
 			place = np.where(timearr==i)
 			if len(place[0]) > 0:
-				temp,xedges,_ = np.histogram2d(
-					xarr[place],
-					yarr[place],
-					bins = [np.arange(513),np.arange(513)])
+				temp,_ = np.histogram(Z[place],bins = np.arange(8*256+1))
+				temp = temp.reshape(256,8,order="F")
 				biggertemp = np.zeros((512,512))
 				biggertemp[0:136,0:16] = mapim(temp)[:,:]
 				cube[:,:,i] = biggertemp
@@ -248,8 +243,6 @@ class PelFile:
 				
 
                 stop=clock()
-                del xarr
-                del yarr
                 del timearr
 
                 print((stop-start))                        
@@ -295,9 +288,10 @@ class PelFile:
                 start=clock()
                 statusfunc = self.statusfunc
                 with open(path,"rb") as infile:
-                    self.header = self.parseHeader(infile.read(256))
+                    #self.header = self.parseHeader(infile.read(256))
+		    #Raw File has no header
                     #point = infile.read(8)
-                    self.data = np.fromfile(infile,np.int64,-1)
+                    self.data = np.fromfile(infile,np.int32,-1)
                 infile.close()
                 stop=clock()
                 print((stop-start))
