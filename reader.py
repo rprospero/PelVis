@@ -15,6 +15,32 @@ import numpy as np
 from time import clock
 from collections import namedtuple
 
+def mapim(imarray):
+    XDIM=8
+    YDIM=256
+    XDIMIM=16
+    YDIMIM=128
+    ZPAD=8
+    maparray=[2, 10, 1, 9, 4, 12, 3, 11, 6, 14, 5, 13, 8, 16, 7, 15]
+    newimarray=np.zeros((YDIMIM+ZPAD,XDIMIM))
+    for i in range(len(maparray)):
+        ti=maparray[i]
+        if 0.5*ti!=int(0.5*ti):
+           for j in range(YDIMIM):
+                tj=j
+                if ti<9:
+                    newimarray[j+ZPAD,i]=imarray[YDIMIM-1-tj,(ti-1)/2]
+                else:
+                    newimarray[j,i]=imarray[YDIMIM-1-tj,(ti-1)/2]
+        else:
+            for j in range(YDIMIM):
+                tj=j+YDIMIM
+                if ti<9:
+                    newimarray[j+ZPAD,i]=imarray[tj,ti/2-1]
+                else:
+                    newimarray[j,i]=imarray[tj,ti/2-1]
+    return newimarray
+
 class PelFile:
         """Handles the data stored in PEL files"""
         data = np.ndarray(shape=(0),dtype=np.int64)#Raw detector data
@@ -197,16 +223,16 @@ class PelFile:
                         return cube
 
                 xarr = np.asarray((self.data & 0xFFFF),np.uint16)#x
-		yarr = xarr % 16
-		xarr /= 16
+		yarr = xarr % 8
+		xarr /= 8
 
                 timearr = self.convertTime((self.data >> 32) & 0x7FFFFFFF)#time
                 timearr = np.asarray(np.floor(timearr),np.uint16)
                 
 		#Loop over 20 angstroms in steps of 0.1 angstroms
 		np.seterr(over='raise')
- 		xarr %= 128
- 		yarr %= 16
+ 		xarr %= 256
+ 		yarr %= 8
 
 		for i in range(200):
 			place = np.where(timearr==i)
@@ -215,7 +241,9 @@ class PelFile:
 					xarr[place],
 					yarr[place],
 					bins = [np.arange(513),np.arange(513)])
-				cube[:,:,i] = temp
+				biggertemp = np.zeros((512,512))
+				biggertemp[0:136,0:16] = mapim(temp)[:,:]
+				cube[:,:,i] = biggertemp
 			statusfunc(i*5.0)
 				
 
