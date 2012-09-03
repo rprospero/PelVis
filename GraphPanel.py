@@ -77,8 +77,6 @@ class GraphPanel(wx.Panel):
         self.axes = self.figure.add_subplot(111)
         #We rebin the data in steps of four to smooth out the dead PMTs
         #If all of the PMTs have been fixed, this step could be taken out.
-        x = rebin(x,4)
-        y = rebin(y,4)
         if self.orientation==self.INVERTED:
             self.axes.fill_between(x,y)
             self.SetPos([0,0.1,1,0.9])

@@ -469,11 +469,11 @@ class PelvisFrame(wx.Frame):
         data = self.flatdata
         self.posPanel.data = data
         self.posPanel.setRange(xMin,yMin,xMax,yMax)
-        x=np.arange(512,0,-1)
+        x=np.arange(136,0,-1)
         y=np.sum(data[:,xMin:xMax],axis=1)
         self.yPanel.SetPlot(x,y)
         #handle the x-plot
-        x=np.arange(0,512,1)
+        x=np.arange(0,16,1)
         y=np.sum(data[yMin:yMax,:],axis=0)
         self.xPanel.SetPlot(x,y)
         self.imPanel.update(self.flatdata,vMin,vMax)

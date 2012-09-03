@@ -216,7 +216,7 @@ class PelFile:
                 sd =self.data
                 i=0;
 
-                cube = np.zeros([512,512,200],dtype=np.float32)
+                cube = np.zeros([136,16,200],dtype=np.float32)
 
 		#If there's no data, return an empty array
                 if l==0:
@@ -226,7 +226,6 @@ class PelFile:
 
                 timearr = self.convertTime(np.asarray(self.data[0::2],dtype=np.float64))#time data
                 timearr = np.asarray(np.floor(timearr),np.uint16)
-		print(timearr[0:20])
                 
 		#Loop over 20 angstroms in steps of 0.1 angstroms
 		np.seterr(over='raise')
@@ -236,9 +235,7 @@ class PelFile:
 			if len(place[0]) > 0:
 				temp,_ = np.histogram(Z[place],bins = np.arange(8*256+1))
 				temp = temp.reshape(256,8,order="F")
-				biggertemp = np.zeros((512,512))
-				biggertemp[0:136,0:16] = mapim(temp)[:,:]
-				cube[:,:,i] = biggertemp
+				cube[:,:,i] = mapim(temp)[:,:]
 			statusfunc(i*5.0)
 				
 
