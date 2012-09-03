@@ -94,7 +94,7 @@ class ImagePanel(wx.Panel):
         """
         self.data=data
         self.figure.clear()
-        self.figure.figimage(data,cmap=self.cmap,vmin=vmin,vmax=vmax)
+        self.figure.add_axes((0,0,1,1),autoscale_on=True,yticks=[0,1],xticks=[0,1]).imshow(data[0:136,0:16],cmap=self.cmap,vmin=vmin,vmax=vmax)
         self.figure.canvas.draw()
         self.Refresh()
 
