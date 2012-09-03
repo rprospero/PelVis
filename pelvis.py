@@ -358,11 +358,11 @@ class PelvisFrame(wx.Frame):
         message -- The title for the load file dialog.
 
         """
-        dlg=wx.FileDialog(self,message,wildcard="PAPA Data|*.pel|Preformatted Histograms|*.npy",style=wx.FD_OPEN)
+        dlg=wx.FileDialog(self,message,wildcard="He3 data|*.dat|Preformatted Histograms|*.npy",style=wx.FD_OPEN)
         if dlg.ShowModal()==wx.ID_OK:
 #            self.SetCursor(wx.CURSOR_WAIT)
             path = dlg.GetPath()
-            if path[-3:] == "pel":
+            if path[-3:] == "dat":
                 data = self.makePel()
                 data.readfileimage(path)
             elif path[-3:] == "npy":

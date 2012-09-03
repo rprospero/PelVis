@@ -17,7 +17,6 @@ from collections import namedtuple
 
 class PelFile:
         """Handles the data stored in PEL files"""
-        imDim = 512 #Edge Length of Detector Images
         data = np.ndarray(shape=(0),dtype=np.int64)#Raw detector data
 
         def __init__(self,file=""):
@@ -174,7 +173,7 @@ class PelFile:
         def convertTime(self,timearr):
 		"""Convert an array of TOF data into neutron wavelengths."""
                 #convert timearr into microseconds
-                timearr *= (1.0/75e6) * 1e6
+                timearr *= 50.0 #50 micosecond bins
                 #convert timearr into wavelength
                 distanceToG4 = 3.7338+2.5297
                 distanceToDetector = 3.6 #FIXME
@@ -191,28 +190,23 @@ class PelFile:
                 sd =self.data
                 i=0;
 
-                cube = np.zeros([self.imDim,self.imDim,200],dtype=np.float32)
+                cube = np.zeros([512,512,200],dtype=np.float32)
 
 		#If there's no data, return an empty array
                 if l==0:
                         return cube
-                xarr = np.asarray((self.data & 0x7FF),np.uint16)#x
-                yarr = np.asarray((self.data & 0x3FF800)>>11,np.uint16)#y
-		earr = np.asarray((self.data >> 22) & 0x3FF,np.uint16)#energy
-		yarr = 512-yarr #correct for vertical flip
+
+                xarr = np.asarray((self.data & 0xFFFF),np.uint16)#x
+		yarr = xarr % 16
+		xarr /= 16
+
                 timearr = self.convertTime((self.data >> 32) & 0x7FFFFFFF)#time
                 timearr = np.asarray(np.floor(timearr),np.uint16)
                 
 		#Loop over 20 angstroms in steps of 0.1 angstroms
 		np.seterr(over='raise')
- 		xarr %= 512
- 		yarr %= 512
-#                 count = len(xarr)
-# 		for i in range(count):
-# 			if 0 < timearr[i] < 200:
-# 				cube[xarr[i],yarr[i],timearr[i]] += 1
-#                         if i%10000 == 0:
-#                                 statusfunc(i*1000/count)
+ 		xarr %= 128
+ 		yarr %= 16
 
 		for i in range(200):
 			place = np.where(timearr==i)
