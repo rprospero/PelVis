@@ -370,12 +370,8 @@ class PelvisFrame(wx.Frame):
 #            self.SetCursor(wx.CURSOR_ARROW)
         else:
             return (None,None)
-        dlg=wx.FileDialog(self,"Choose the monitor file",wildcard="*bmon_histo.dat",style=wx.FD_OPEN)
-        if dlg.ShowModal()==wx.ID_OK:
-            mon = MonFile(dlg.GetPath())
-            #mon.convertTime(),mon.spec
-            return (data,mon)
-        return (data,None)
+        mon = MonFile(path[:-17]+"bmon_histo.dat")
+        return (data,mon)
 
     def OnImageArray(self,event):
         """Exports the 2d detector image by wavelength"""
