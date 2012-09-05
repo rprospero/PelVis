@@ -62,7 +62,7 @@ class CombinerFrame(wx.Frame):
     def onAdd(self,event):
         """Add another manifest to be combined"""
         dlg=wx.FileDialog(self,"Choose the Manifest",
-                          wildcard="SESAME manifest|Manifest.xml|Generic Manifest|*.xml",style=wx.FD_OPEN|wx.FD_MULTIPLE)
+                          wildcard="SNS Manifest|*runinfo.xml|SESAME manifest|Manifest.xml|Generic Manifest|*.xml",style=wx.FD_OPEN|wx.FD_MULTIPLE)
         if dlg.ShowModal()==wx.ID_OK:
             paths = dlg.GetPaths()
             for path in paths:
