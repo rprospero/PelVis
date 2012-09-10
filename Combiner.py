@@ -1,4 +1,5 @@
 import xml.etree.ElementTree as ET
+import HTMLParser
 import json
 import numpy as np
 import os.path
@@ -13,8 +14,11 @@ def load(paths,filter=None):
 
     for path in paths:
         base = os.path.dirname(path)
-        print(ET.parse(path).getroot().find(".//"+XMLNS+"Notes").text)
-        manifest = json.loads(ET.parse(path).getroot().find(".//"+XMLNS+"Notes").text)
+        text = ET.parse(path).getroot().find(".//"+XMLNS+"Notes").text 
+        print(text)
+        text = HTMLParser.HTMLParser().unescape(text)
+        print(text)
+        manifest = json.loads(text)
         
         if ((filter is not None) and 
             (floor(float(manifest['triangle1'])) != filter)):
