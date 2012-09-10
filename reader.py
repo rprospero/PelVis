@@ -293,6 +293,15 @@ class PelFile:
                 stop=clock()
                 print((stop-start))
 
+	def make1d(self,mins,maxs):
+                """Make a 1D histogram from the spectrum data."""
+
+		xmin,ymin = mins
+		xmax,ymax = maxs
+		c = self.make3d()[ymin:ymax,xmin:xmax]
+		return np.sum(c,axis=(0,1),dtype=np.float64())
+		
+
 if __name__=="__main__":
         data = PelFile()
         
