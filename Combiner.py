@@ -70,7 +70,7 @@ def save(path,minmon,keys,runsets):
                 dettemp = np.fromfile(infile,count=-1)
                 dettemp.tofile(outfile)
                 del dettemp
-    with open(path+"_bmon_histo.dat","w") as stream:
+    with open(path+"_bmon_histo.dat","wb") as stream:
         print(path+"_bmon_histo.dat")
         mon.tofile(stream)
 
