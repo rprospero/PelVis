@@ -57,7 +57,7 @@ def save(path,minmon,keys,runsets):
             time = mktime(stoptime)-mktime(starttime)
 
             with open(monpath,"r") as infile:
-                montemp = np.fromfile(infile,dtype=np.int32,)
+                montemp = np.fromfile(infile,dtype=np.int32)
 
             moncount = np.sum(montemp)
 
