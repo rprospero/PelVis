@@ -24,7 +24,7 @@ def load(paths,filter=None):
             (floor(float(manifest['triangle1'])) != filter)):
             continue #wrong triangle current
         current = (manifest['Flipper'],
-                   manifest['Guides'],
+                   manifest['Guide'],
                    manifest['Phase'],
                    manifest['Sample'],
                    manifest['Triangle1'],
