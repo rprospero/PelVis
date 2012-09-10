@@ -20,8 +20,8 @@ def mapim(imarray):
     YDIM=256
     XDIMIM=16
     YDIMIM=128
-    ZPAD=8
-    maparray=[2, 10, 1, 9, 4, 12, 3, 11, 6, 14, 5, 13, 8, 16, 7, 15]
+    ZPAD=0
+    maparray=[2, 15, 1, 16, 4, 13, 3, 14, 6, 11, 5, 12, 8, 9, 7, 10]
     newimarray=np.zeros((YDIMIM+ZPAD,XDIMIM))
     for i in range(len(maparray)):
         ti=maparray[i]
@@ -216,7 +216,7 @@ class PelFile:
                 sd =self.data
                 i=0;
 
-                cube = np.zeros([136,16,200],dtype=np.float32)
+                cube = np.zeros([128,16,200],dtype=np.float32)
 
 		#If there's no data, return an empty array
                 if l==0:
