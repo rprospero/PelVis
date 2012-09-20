@@ -231,6 +231,7 @@ class PelvisFrame(wx.Frame):
     ID_FLAT = 420
     ID_FAKEFLAT = 430
     ID_ROD = 440
+    ID_EXPORT_ROI = 450
 
     ID_COPY = 500
 
@@ -288,9 +289,11 @@ class PelvisFrame(wx.Frame):
         analysismenu.Append(self.ID_FLIPPING,"Check Flipping Ratio\tCtrl-F","2d plot of  spin up over spin down")
         analysismenu.Append(self.ID_SPIN_UP,"View Spin Up State\tCtrl-U","2d plot of  spin up")
         analysismenu.Append(self.ID_SPIN_DOWN,"View Spin Down State\tCtrl-D","2d plot of  spin down")
+
         noisemenu.Append(self.ID_FLAT,"&Load Flat"," Load a blank run for background subtraction")
         noisemenu.Append(self.ID_FAKEFLAT,"Si&mulate Flat"," Drop out background within the same image")
         noisemenu.Append(self.ID_ROD,"Region of &Disinterest"," Drop out background within the same image")
+        noisemenu.Append(self.ID_EXPORT_ROI,"Export ROI"," Export a binary file corresponding to where the data is above the minimum intensity.")
 
         #Bind events to the menu
         self.Connect(self.ID_EXIT,-1,wx.wxEVT_COMMAND_MENU_SELECTED,self.OnExit)
@@ -311,6 +314,7 @@ class PelvisFrame(wx.Frame):
         self.Connect(self.ID_FLAT,-1,wx.wxEVT_COMMAND_MENU_SELECTED,self.OnFlat)
         self.Connect(self.ID_FAKEFLAT,-1,wx.wxEVT_COMMAND_MENU_SELECTED,self.OnFakeFlat)
         self.Connect(self.ID_ROD,-1,wx.wxEVT_COMMAND_MENU_SELECTED,self.OnROD)
+        self.Connect(self.ID_EXPORT_ROI,-1,wx.wxEVT_COMMAND_MENU_SELECTED,self.OnExportROI)
         self.Connect(self.ID_COPY,-1,wx.wxEVT_COMMAND_MENU_SELECTED,self.OnCopy)
 
         menubar.Append(filemenu,"&File")
@@ -582,6 +586,24 @@ class PelvisFrame(wx.Frame):
             print(self.data.shape)
             self.data -= totd
         self.updateData()
+
+    def OnExportROI(self,event):
+        """Save a file containing a map of where the current data
+        image is greater than vmin"""
+        vMin,_ = self.opPanel.getIntensityRange()
+        mask = self.flatdata > vMin
+        dlg = wx.FileDialog(self,
+                            "Where to save the mask file?",
+                            wildcard="Numpy dump (npy)|*.npy|Text (dat)|*.dat",
+                            style=wx.FD_SAVE|wx.FD_OVERWRITE_PROMPT)
+        if dlg.ShowModal()==wx.ID_OK:
+            path=dlg.GetPath()
+            ext = path[-4:]
+            if ext == ".dat":
+                np.savetxt(path,mask,fmt="%d")
+            else:
+                np.save(path,mask)
+        
         
 
     def OnSave(self,event):
