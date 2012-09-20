@@ -55,17 +55,44 @@ def spectrum(run,name,mins=(0,0),maxs=(16,128)):
 
     return (up-down)/(up+down)
 
-def fr(run,name,mins=(183,227),maxs=(234,302)):
-    p = PelFile(basedir+"%04i/" % run + name+"up.pel")
-    mon = MonFile(basedir+"%04i/" % run + name+"up.pel.txt",False)
-    up = p.make1d(mins,maxs)/np.sum(mon.spec)
-    p = PelFile(basedir+"%04i/" % run + name+"down.pel")
-    mon = MonFile(basedir+"%04i/" % run + name+"down.pel.txt",False)
-    down = p.make1d(mins,maxs)/np.sum(mon.spec)
+def fr(run,name,mins=(0,0),maxs=(16,128)):
+    name = "%0.3f"%float(name)
+    p = PelFile(basedir+"SESAME_%i/" % run + name+"up_neutron_event.dat")
+    mon = MonFile(basedir+"SESAME_%i/" % run + name+"up_bmon_histo.dat",False)
+    up = np.sum(p.make1d(mins,maxs)[30:100])
+    uperr = np.sqrt(up)/np.sum(mon.spec)
+    up /= np.sum(mon.spec)
+    p = PelFile(basedir+"SESAME_%i/" % run + name+"down_neutron_event.dat")
+    mon = MonFile(basedir+"SESAME_%i/" % run + name+"down_bmon_histo.dat",False)
+    down = np.sum(p.make1d(mins,maxs)[30:100])
+    downerr = np.sqrt(down)/np.sum(mon.spec)
+    down /= np.sum(mon.spec)
 
-    return np.sum(up[50:100])/np.sum(down[50:100])
+    ratio = down/up
+    rerr = ratio * np.sqrt((uperr/up)**2+(downerr/down)**2)
 
-def singleplot(run,name,mins=(148,223),maxs=(240,302)):
+    return (ratio,rerr)
+
+def run_int(run,name,mins=(0,0),maxs=(16,128)):
+    name = "%0.3f"%float(name)
+    p = PelFile(basedir+"SESAME_%i/" % run + name+"up_neutron_event.dat")
+    mon = MonFile(basedir+"SESAME_%i/" % run + name+"up_bmon_histo.dat",False)
+    up = np.sum(p.make1d(mins,maxs)[30:100])
+    uperr = np.sqrt(up)/np.sum(mon.spec)
+    up /= np.sum(mon.spec)
+    p = PelFile(basedir+"SESAME_%i/" % run + name+"down_neutron_event.dat")
+    mon = MonFile(basedir+"SESAME_%i/" % run + name+"down_bmon_histo.dat",False)
+    down = np.sum(p.make1d(mins,maxs)[30:100])
+    downerr = np.sqrt(down)/np.sum(mon.spec)
+    down /= np.sum(mon.spec)
+
+    total = up+down
+    total_err = np.sqrt(uperr**2+downerr**2)
+
+    return (total,total_err)
+
+
+def singleplot(run,name,mins=(0,0),maxs=(16,128)):
     data = spectrum(run,name,mins,maxs)
     data[np.isnan(data)]=0
     plt.plot(np.arange(200)*0.1,data,"r-")
@@ -89,16 +116,36 @@ def echoplot(run,names,mins=(0,0),maxs=(16,128),outfile=None):
         plt.savefig(outfile)
         plt.clf()
 
-def echofr(run,names,mins=(148,223),maxs=(240,302),outfile=None):
-    data = np.array([fr(run,name,mins,maxs) for name in names])
+def intensity(run,names,mins=(0,0),maxs=(16,128),outfile=None):
+    names = [name for name in names if float(name) != 5.0]
+    data = [run_int(run,name,mins,maxs) for name in names]
+    errs = np.array([x[1] for x in data])
+    data = np.array([x[0] for x in data])
     data[np.isnan(data)]=0
+    errs[np.isnan(data)]=1
     xs = np.array([float(x) for x in names])
-    plt.plot(xs,data)
-    if outfile is None:
-        plt.show()
-    else:
-        plt.savefig(outfile)
-        plt.clf()
+    plt.errorbar(xs,data,yerr=errs)
+#    if outfile is None:
+    plt.show()
+    if outfile is not None:
+        np.savetxt(outfile,np.transpose(np.vstack((xs,data,errs))))
+
+    
+
+def echofr(run,names,mins=(0,0),maxs=(16,128),outfile=None):
+    names = [name for name in names if float(name) != 5.0]
+    print names
+    data = [fr(run,name,mins,maxs) for name in names]
+    errs = np.array([x[1] for x in data])
+    data = np.array([x[0] for x in data])
+    data[np.isnan(data)]=0
+    errs[np.isnan(data)]=1
+    xs = np.array([float(x) for x in names])
+    plt.errorbar(xs,data,yerr=errs)
+#    if outfile is None:
+    plt.show()
+    if outfile is not None:
+        np.savetxt(outfile,np.transpose(np.vstack((xs,data,errs))))
 
 def echodiff(run,names,split,mins,maxs,outfile=None):
     data = np.vstack(tuple([np.arccos(spectrum(run,name,mins,(split,302))) - 
@@ -141,15 +188,17 @@ if __name__=='__main__':
 
     parser.add_option("--plot",action="store",type="choice",
                       help="Where to make a simple plot or perform a height diff",
-                      choices=["plot","diff","fr","echo"])
-
+                      choices=["plot","diff","fr","echo","intensity"])
+    parser.add_option("--save",action="store",type="string",default=None,
+                      help="A file in which to save the dataset.")
     parser.add_option("--current",action="store",type="int",
                       default=None,
                       help="A triangle current to filter the results.")
 
     (options,runs) = parser.parse_args()
 
-    runs = [int(x) for x in runs]
+    runs = range(int(runs[0]),int(runs[1]))
+    runs = [r for r in runs if r != 648] #remove run where He3 was flipped
 
     if options.export:
         export(runs,choices[options.sortby],choices[options.flip],options.mon,options.current)
@@ -172,9 +221,11 @@ if __name__=='__main__':
             print names
             singleplot(runs[-1],names[0],(options.xmin,options.ymin),(options.xmax,options.ymax))
         elif options.plot=="fr":
-            echofr(runs[-1],names,(options.xmin,options.ymin),(options.xmax,options.ymax))
+            echofr(runs[-1],names,(options.xmin,options.ymin),(options.xmax,options.ymax),options.save)
         elif options.plot=="diff":
-            echodiff(runs[-1],names,187(options.xmin,options.ymin),(options.xmax,options.ymax))
+            echodiff(runs[-1],names,187(options.xmin,options.ymin),(options.xmax,options.ymax),options.save)
         elif options.plot=="echo":
-            echoplot(runs[-1],names,(options.xmin,options.ymin),(options.xmax,options.ymax))
+            echoplot(runs[-1],names,(options.xmin,options.ymin),(options.xmax,options.ymax),options.save)
+        elif options.plot=="intensity":
+            intensity(runs[-1],names,(options.xmin,options.ymin),(options.xmax,options.ymax),options.save)
 
