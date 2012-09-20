@@ -61,7 +61,7 @@ def save(path,minmon,keys,runsets):
 
             moncount = np.sum(montemp)
 
-            if time <= 0 or moncount/time < minmon or moncount/time>10*minmon:
+            if time <= 0 or ((moncount/time < minmon or moncount/time>10*minmon) and minmon >0):
                 continue
 
             mon += montemp
