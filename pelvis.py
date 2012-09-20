@@ -256,7 +256,7 @@ class PelvisFrame(wx.Frame):
         self.specDlg = SpectrumDialog(self)
 
         self.cmp = None #color map
-        self.imageSaveDialog=wx.FileDialog(self,"Choose graphics file",wildcard="Windows Bitmap (bmp)|*.BMP|Portable Network Graphic (png)|*.PNG|Joint Photographic Experts Group (jpg)|*.JPG|Portable Network Monocrome (pnm)|*.PNM|Tagged Image File Format (tif)|*.TIF|Archaic, useless format (pcx)|*.PCX",style=wx.FD_SAVE|wx.FD_OVERWRITE_PROMPT)
+        self.imageSaveDialog=wx.FileDialog(self,"Choose graphics file",wildcard="Portable Network Graphic (png)|*.PNG|Windows Bitmap (bmp)|*.BMP|Joint Photographic Experts Group (jpg)|*.JPG|Portable Network Monocrome (pnm)|*.PNM|Tagged Image File Format (tif)|*.TIF|Archaic, useless format (pcx)|*.PCX",style=wx.FD_SAVE|wx.FD_OVERWRITE_PROMPT)
 
         self.update = self.updateSingle#update the image
         self.updateData = self.updateSingleData#update the data in the image
