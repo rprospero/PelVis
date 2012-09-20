@@ -44,18 +44,8 @@ def export(runs,sortby,flipper,minmon=16,current=None):
                           minmon,
                           downs,
                           data)
-def spectrum(run,name,mins=(0,0),maxs=(16,128)):
-    name = "%0.3f"%float(name)
-    p = PelFile(basedir+"SESAME_%i/" % run + name+"up_neutron_event.dat")
-    mon = MonFile(basedir+"SESAME_%i/" % run + name+"up_bmon_histo.dat",False)
-    up = p.make1d(mins,maxs)/np.sum(mon.spec)
-    p = PelFile(basedir+"SESAME_%i/" % run + name+"down_neutron_event.dat")
-    mon = MonFile(basedir+"SESAME_%i/" % run + name+"down_bmon_histo.dat",False)
-    down = p.make1d(mins,maxs)/np.sum(mon.spec)
 
-    return (up-down)/(up+down)
-
-def fr(run,name,mins=(0,0),maxs=(16,128)):
+def getIntegratedSpectra(run,name,mins,maxs):
     name = "%0.3f"%float(name)
     p = PelFile(basedir+"SESAME_%i/" % run + name+"up_neutron_event.dat")
     mon = MonFile(basedir+"SESAME_%i/" % run + name+"up_bmon_histo.dat",False)
@@ -67,6 +57,27 @@ def fr(run,name,mins=(0,0),maxs=(16,128)):
     down = np.sum(p.make1d(mins,maxs)[30:100])
     downerr = np.sqrt(down)/np.sum(mon.spec)
     down /= np.sum(mon.spec)
+
+    return (up,uperr,down,downerr)
+
+
+def spectrum(run,name,mins=(0,0),maxs=(16,128)):
+    name = "%0.3f"%float(name)
+    p = PelFile(basedir+"SESAME_%i/" % run + name+"up_neutron_event.dat")
+    mon = MonFile(basedir+"SESAME_%i/" % run + name+"up_bmon_histo.dat",False)
+    up = p.make1d(mins,maxs)
+    uperr = np.sqrt(up)/np.sum(mon.spec)
+    up /= np.sum(mon.spec)
+    p = PelFile(basedir+"SESAME_%i/" % run + name+"down_neutron_event.dat")
+    mon = MonFile(basedir+"SESAME_%i/" % run + name+"down_bmon_histo.dat",False)
+    down = p.make1d(mins,maxs)
+    downerr = np.sqrt(down)/np.sum(mon.spec)
+    down /= np.sum(mon.spec)
+
+    return (up-down)/(up+down)
+
+def fr(run,name,mins=(0,0),maxs=(16,128)):
+    up,uperr,down,downerr = getIntegratedSpectra(run,name,mins,maxs)
 
     ratio = down/up
     rerr = ratio * np.sqrt((uperr/up)**2+(downerr/down)**2)
@@ -74,17 +85,7 @@ def fr(run,name,mins=(0,0),maxs=(16,128)):
     return (ratio,rerr)
 
 def run_int(run,name,mins=(0,0),maxs=(16,128)):
-    name = "%0.3f"%float(name)
-    p = PelFile(basedir+"SESAME_%i/" % run + name+"up_neutron_event.dat")
-    mon = MonFile(basedir+"SESAME_%i/" % run + name+"up_bmon_histo.dat",False)
-    up = np.sum(p.make1d(mins,maxs)[30:100])
-    uperr = np.sqrt(up)/np.sum(mon.spec)
-    up /= np.sum(mon.spec)
-    p = PelFile(basedir+"SESAME_%i/" % run + name+"down_neutron_event.dat")
-    mon = MonFile(basedir+"SESAME_%i/" % run + name+"down_bmon_histo.dat",False)
-    down = np.sum(p.make1d(mins,maxs)[30:100])
-    downerr = np.sqrt(down)/np.sum(mon.spec)
-    down /= np.sum(mon.spec)
+    up,uperr,down,downerr = getIntegratedSpectra(run,name,mins,maxs)
 
     total = up+down
     total_err = np.sqrt(uperr**2+downerr**2)
