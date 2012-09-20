@@ -44,7 +44,7 @@ class ImagePanel(wx.Panel):
         self.canvas.Bind(wx.EVT_LEFT_UP,self.__OnMouseLeft)
         self.canvas.Bind(wx.EVT_RIGHT_UP,self.__OnMouseRight)
         
-        self.cmap = cm.jet#The color map for the graph
+        self.cmap = cm.spectral#The color map for the graph
 
         #Known file formats for saving images
         self.handlers={u"BMP":wx.BITMAP_TYPE_BMP,
