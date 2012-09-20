@@ -5,11 +5,11 @@ import Combiner
 import numpy as np
 from optparse import OptionParser
 
-basedir = "C:/Documents and Settings/adlwashi/My Documents/SESAME Google Drive/Google Drive/"
+basedir = "C:/userfiles/EXP011/"
 
 def load(runs,current=None):
-    paths = [basedir + "%04i/Manifest.xml"
-             % run for run in runs]
+    paths = [basedir + "SESAME_%i/SESAME_%i_runinfo.xml"
+             % (run,run) for run in runs]
     return Combiner.load(paths,current)
 
 
@@ -23,7 +23,7 @@ def export(runs,sortby,flipper,minmon=16,current=None):
     else:
         values = set([x[sortby] for x in keys])
 
-    base = basedir + "%04i/" % runs[-1]
+    base = basedir + "SESAME_%i/" % runs[-1]
 
     for value in values:
         ups = [x for x in keys if x[flipper] > 0 
@@ -35,21 +35,22 @@ def export(runs,sortby,flipper,minmon=16,current=None):
         if type(value) is not str:
             value = ("%0.3f"%float(value))
         if ups != []:
-            Combiner.save(base+value+"up.pel",
+            Combiner.save(base+value+"up",
                           minmon,
                           ups,
                           data)
         if downs != []:
-            Combiner.save(base+value+"down.pel",
+            Combiner.save(base+value+"down",
                           minmon,
                           downs,
                           data)
-def spectrum(run,name,mins=(183,227),maxs=(234,302)):
-    p = PelFile(basedir+"%04i/" % run + name+"up.pel")
-    mon = MonFile(basedir+"%04i/" % run + name+"up.pel.txt",False)
+def spectrum(run,name,mins=(0,0),maxs=(16,128)):
+    name = "%0.3f"%float(name)
+    p = PelFile(basedir+"SESAME_%i/" % run + name+"up_neutron_event.dat")
+    mon = MonFile(basedir+"SESAME_%i/" % run + name+"up_bmon_histo.dat",False)
     up = p.make1d(mins,maxs)/np.sum(mon.spec)
-    p = PelFile(basedir+"%04i/" % run + name+"down.pel")
-    mon = MonFile(basedir+"%04i/" % run + name+"down.pel.txt",False)
+    p = PelFile(basedir+"SESAME_%i/" % run + name+"down_neutron_event.dat")
+    mon = MonFile(basedir+"SESAME_%i/" % run + name+"down_bmon_histo.dat",False)
     down = p.make1d(mins,maxs)/np.sum(mon.spec)
 
     return (up-down)/(up+down)
@@ -70,11 +71,12 @@ def singleplot(run,name,mins=(148,223),maxs=(240,302)):
     plt.plot(np.arange(200)*0.1,data,"r-")
     plt.show()
 
-def echoplot(run,names,mins=(148,223),maxs=(240,302),outfile=None):
+def echoplot(run,names,mins=(0,0),maxs=(16,128),outfile=None):
+
     data = np.vstack(tuple([spectrum(run,name,mins,maxs) for name in names]))
     data[np.isnan(data)]=0
-    data = data[:,50:100]
-    xs = np.arange(51)*0.1+5
+    data = data[:,0:100]
+    xs = np.arange(101)*0.1
     ys = sorted([float(x) for x in names])
     ys += [ys[-1]+ys[1]-ys[0]] #Add last element
     ys = np.array(ys)
@@ -126,12 +128,12 @@ if __name__=='__main__':
                       choices=choices.keys())
     parser.add_option("--flip",action="store",type="choice",help="Which power supply runs the flipper",
                       choices=choices.keys(),default="guides")
-    parser.add_option("--mon",action="store",type="float",help="Minimum monitor value",default=8)
+    parser.add_option("--mon",action="store",type="float",help="Minimum monitor value.  If the value is lessthan or equal to zero, all runs are included, regardless of monitor count.",default=8)
 
-    parser.add_option("--xmin",action="store",type="int",help="Minimum x value",default=148)
-    parser.add_option("--ymin",action="store",type="int",help="Minimum y value",default=223)
-    parser.add_option("--xmax",action="store",type="int",help="Maximum x value",default=240)
-    parser.add_option("--ymax",action="store",type="int",help="Maximum y value",default=302)
+    parser.add_option("--xmin",action="store",type="int",help="Minimum x value",default=0)
+    parser.add_option("--ymin",action="store",type="int",help="Minimum y value",default=0)
+    parser.add_option("--xmax",action="store",type="int",help="Maximum x value",default=16)
+    parser.add_option("--ymax",action="store",type="int",help="Maximum y value",default=128)
 
     parser.add_option("--start",action = "store",type="float", help="The starting current of the scan")
     parser.add_option("--stop",action = "store", type="float", help="The ending current of the scan")
