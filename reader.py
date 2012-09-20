@@ -299,7 +299,7 @@ class PelFile:
 		xmin,ymin = mins
 		xmax,ymax = maxs
 		c = self.make3d()[ymin:ymax,xmin:xmax]
-		return np.sum(c,axis=(0,1),dtype=np.float64())
+		return np.sum(np.sum(c,axis=0,dtype=np.float64()),axis=0)
 		
 
 if __name__=="__main__":
