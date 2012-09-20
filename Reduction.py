@@ -26,13 +26,14 @@ def export(runs,sortby,flipper,minmon=16,current=None):
     base = basedir + "%04i/" % runs[-1]
 
     for value in values:
-        ups = [x for x in keys if x[flipper][0] != '-' 
+        ups = [x for x in keys if x[flipper] > 0 
                and (sortby is None or x[sortby] == value)]
-        downs = [x for x in keys if x[flipper][0] == '-' 
+        downs = [x for x in keys if x[flipper] < 0 
                   and (sortby is None or x[sortby] == value)]
 #        if current is not None:
 #            value += "_%i_"%current
-        ups,downs=downs,ups
+        if type(value) is not str:
+            value = ("%0.3f"%float(value))
         if ups != []:
             Combiner.save(base+value+"up.pel",
                           minmon,
