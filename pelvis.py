@@ -245,6 +245,7 @@ class PelvisFrame(wx.Frame):
         wx.Frame.__init__(self,None,wx.ID_ANY,"PEL Visualizer")
         self.data = PelFile()
         self.Yield = Yield
+        self.mask = np.ones((128,16),dtype=np.bool)
 
         #Create items in the frame
         self.yPanel = GraphPanel(self,(2,8),64,GraphPanel.VERTICAL)
