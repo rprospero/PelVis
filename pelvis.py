@@ -394,6 +394,7 @@ class PelvisFrame(wx.Frame):
                 file=path+("%03i"%i)+ext
                 self.opPanel.setLambdaRange(0.1*i,0.1*(i+1))
                 self.updateData()
+                self.update()
                 self.imPanel.saveImage(file)
                 self.progress.SetValue(1000*(i-lmin)/(lmax-lmin))
                 self.Yield()
