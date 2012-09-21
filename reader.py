@@ -302,7 +302,7 @@ class PelFile:
                     xmax,ymax = maxs
                     c = c[ymin:ymax,xmin:xmax]
                 else:
-                    c = c[mask]
+                    c[np.logical_not(mask)] = 0
 		return np.sum(np.sum(c,axis=0,dtype=np.float64()),axis=0)
 		
 
