@@ -471,7 +471,10 @@ class PelvisFrame(wx.Frame):
         """Update the 2D data for the region of interest and intensity"""
         (vMin,vMax) = self.opPanel.getIntensityRange()
         (xMin,xMax,yMin,yMax) = self.opPanel.getRoi()
-        data = self.flatdata
+        data = self.flatdata[:,:]
+
+        #Mask to zero during the summing parts
+        data[np.logical_not(self.mask)] = 0
         self.posPanel.data = data
         self.posPanel.setRange(xMin,yMin,xMax,yMax)
         x=np.arange(128,0,-1)
@@ -481,13 +484,15 @@ class PelvisFrame(wx.Frame):
         x=np.arange(0,16,1)
         y=np.sum(data[yMin:yMax,:],axis=0)
         self.xPanel.SetPlot(x,y)
-        self.imPanel.update(self.flatdata,vMin,vMax)
         if vMin is None:
             vMin = np.min(data)
         if vMax is None:
             vMax = np.max(data)
         self.colorbar.setRange(vMin,vMax)
         self.colorbar.update()
+        #mask to vmin for the plotting
+        data[np.logical_not(self.mask)] = vMin
+        self.imPanel.update(self.flatdata,vMin,vMax)
 
     def OnUpdateButton(self,event):
         """Refresh the data when the user pushes the "Update" button"""
