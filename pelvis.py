@@ -232,6 +232,7 @@ class PelvisFrame(wx.Frame):
     ID_FAKEFLAT = 430
     ID_ROD = 440
     ID_EXPORT_ROI = 450
+    ID_IMPORT_ROI = 460
 
     ID_COPY = 500
 
@@ -295,6 +296,8 @@ class PelvisFrame(wx.Frame):
         noisemenu.Append(self.ID_FAKEFLAT,"Si&mulate Flat"," Drop out background within the same image")
         noisemenu.Append(self.ID_ROD,"Region of &Disinterest"," Drop out background within the same image")
         noisemenu.Append(self.ID_EXPORT_ROI,"Export ROI"," Export a binary file corresponding to where the data is above the minimum intensity.")
+        noisemenu.Append(self.ID_IMPORT_ROI,"Import ROI"," Add another exclusion mask.")
+
 
         #Bind events to the menu
         self.Connect(self.ID_EXIT,-1,wx.wxEVT_COMMAND_MENU_SELECTED,self.OnExit)
@@ -316,6 +319,7 @@ class PelvisFrame(wx.Frame):
         self.Connect(self.ID_FAKEFLAT,-1,wx.wxEVT_COMMAND_MENU_SELECTED,self.OnFakeFlat)
         self.Connect(self.ID_ROD,-1,wx.wxEVT_COMMAND_MENU_SELECTED,self.OnROD)
         self.Connect(self.ID_EXPORT_ROI,-1,wx.wxEVT_COMMAND_MENU_SELECTED,self.OnExportROI)
+        self.Connect(self.ID_IMPORT_ROI,-1,wx.wxEVT_COMMAND_MENU_SELECTED,self.OnImportROI)
         self.Connect(self.ID_COPY,-1,wx.wxEVT_COMMAND_MENU_SELECTED,self.OnCopy)
 
         menubar.Append(filemenu,"&File")
@@ -604,6 +608,22 @@ class PelvisFrame(wx.Frame):
                 np.savetxt(path,mask,fmt="%d")
             else:
                 np.save(path,mask)
+
+    def OnImportROI(self,event):
+        """Adds another mask to the current system mask"""
+        dlg = wx.FileDialog(self,
+                            "Which Mask File?",
+                            wildcard="Numpy dump (npy)|*.npy|Text (dat)|*.dat",
+                            style=wx.FD_OPEN)
+        if dlg.ShowModal()==wx.ID_OK:
+            path = dlg.GetPath()
+            ext = path[-4:]
+            if ext == ".dat":
+                newmask = np.loadtxt(path,dtype=np.bool)
+            else:
+                newmask = np.load(path)
+            self.mask = np.logical_and(self.mask,newmask)
+            self.update()
         
         
 
