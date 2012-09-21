@@ -647,13 +647,19 @@ class PelvisFrame(wx.Frame):
         (xMin,xMax,yMin,yMax)=self.opPanel.getRoi()
         if type(self.data) is tuple:
             u3d,d3d = self.data
+            u3d = u3d[:,:,:]
+            d3d = d3d[:,:,:]
+            u3d[np.logical_not(self.mask)] = 0
+            d3d[np.logical_not(self.mask)] = 0
             u = np.sum(np.sum(u3d[yMin:yMax,xMin:xMax],0),0)
             d = np.sum(np.sum(d3d[yMin:yMax,xMin:xMax],0),0)
             uscale,dscale = self.scale
             self.specDlg.setScale(uscale,dscale)            
             self.specDlg.setData(u,d)
         else:
-            u = np.sum(np.sum(self.data[yMin:yMax,xMin:xMax],0),0)
+            copy = self.data[:,:,:]
+            copy[np.logical_not(self.mask)] = 0
+            u = np.sum(np.sum(copy[yMin:yMax,xMin:xMax],0),0)
 #            u *= self.scale
             self.specDlg.setScale(self.scale)
             self.specDlg.setData(u)
