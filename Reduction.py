@@ -49,43 +49,53 @@ def getIntegratedSpectra(run,name,mins,maxs):
     name = "%0.3f"%float(name)
     p = PelFile(basedir+"SESAME_%i/" % run + name+"up_neutron_event.dat")
     mon = MonFile(basedir+"SESAME_%i/" % run + name+"up_bmon_histo.dat",False)
-    up = np.sum(p.make1d(mins,maxs)[30:100])
+    up = np.sum(p.make1d(mins,maxs,mask)[30:100])
     uperr = np.sqrt(up)/np.sum(mon.spec)
     up /= np.sum(mon.spec)
     p = PelFile(basedir+"SESAME_%i/" % run + name+"down_neutron_event.dat")
     mon = MonFile(basedir+"SESAME_%i/" % run + name+"down_bmon_histo.dat",False)
-    down = np.sum(p.make1d(mins,maxs)[30:100])
+    down = np.sum(p.make1d(mins,maxs,mask)[30:100])
     downerr = np.sqrt(down)/np.sum(mon.spec)
     down /= np.sum(mon.spec)
 
     return (up,uperr,down,downerr)
 
 
-def spectrum(run,name,mins=(0,0),maxs=(16,128)):
-    name = "%0.3f"%float(name)
+def spectrum(run,name,mins=(0,0),maxs=(16,128),mask=None):
+    if name != '':
+        name = "%0.3f"%float(name)
     p = PelFile(basedir+"SESAME_%i/" % run + name+"up_neutron_event.dat")
     mon = MonFile(basedir+"SESAME_%i/" % run + name+"up_bmon_histo.dat",False)
-    up = p.make1d(mins,maxs)
+    up = p.make1d(mins,maxs,mask)
     uperr = np.sqrt(up)/np.sum(mon.spec)
     up /= np.sum(mon.spec)
     p = PelFile(basedir+"SESAME_%i/" % run + name+"down_neutron_event.dat")
     mon = MonFile(basedir+"SESAME_%i/" % run + name+"down_bmon_histo.dat",False)
-    down = p.make1d(mins,maxs)
+    down = p.make1d(mins,maxs,mask)
     downerr = np.sqrt(down)/np.sum(mon.spec)
     down /= np.sum(mon.spec)
 
     return (up-down)/(up+down)
 
-def fr(run,name,mins=(0,0),maxs=(16,128)):
-    up,uperr,down,downerr = getIntegratedSpectra(run,name,mins,maxs)
+def simple_spectrum(run,mins=(0,0),maxs=(16,128),mask=None):
+    p = PelFile(basedir+"SESAME_%i/SESAME_%i_neutron_event.dat"%(run,run))    
+    mon = MonFile(basedir+"SESAME_%i/SESAME_%i_bmon_histo.dat"%(run,run),False)    
+    data = p.make1d(mins,maxs,mask)
+    err = np.sqrt(data)/np.sum(mon.spec)
+    data /= np.sum(mon.spec)
+
+    return (data,err)
+
+def fr(run,name,mins=(0,0),maxs=(16,128),mask=None):
+    up,uperr,down,downerr = getIntegratedSpectra(run,name,mins,maxs,mask)
 
     ratio = down/up
     rerr = ratio * np.sqrt((uperr/up)**2+(downerr/down)**2)
 
     return (ratio,rerr)
 
-def run_int(run,name,mins=(0,0),maxs=(16,128)):
-    up,uperr,down,downerr = getIntegratedSpectra(run,name,mins,maxs)
+def run_int(run,name,mins=(0,0),maxs=(16,128),mask=None):
+    up,uperr,down,downerr = getIntegratedSpectra(run,name,mins,maxs,mask)
 
     total = up+down
     total_err = np.sqrt(uperr**2+downerr**2)
@@ -99,9 +109,9 @@ def singleplot(run,name,mins=(0,0),maxs=(16,128)):
     plt.plot(np.arange(200)*0.1,data,"r-")
     plt.show()
 
-def echoplot(run,names,mins=(0,0),maxs=(16,128),outfile=None):
+def echoplot(run,names,mins=(0,0),maxs=(16,128),mask=None,outfile=None):
 
-    data = np.vstack(tuple([spectrum(run,name,mins,maxs) for name in names]))
+    data = np.vstack(tuple([spectrum(run,name,mins,maxs,mask) for name in names]))
     data[np.isnan(data)]=0
     data = data[:,0:100]
     xs = np.arange(101)*0.1
@@ -117,9 +127,9 @@ def echoplot(run,names,mins=(0,0),maxs=(16,128),outfile=None):
         plt.savefig(outfile)
         plt.clf()
 
-def intensity(run,names,mins=(0,0),maxs=(16,128),outfile=None):
-    names = [name for name in names if float(name) != 5.0]
-    data = [run_int(run,name,mins,maxs) for name in names]
+def intensity(run,names,mins=(0,0),maxs=(16,128),mask=None,outfile=None):
+    names = [name for name in names if float(name) != 5.475]
+    data = [run_int(run,name,mins,maxs,mask) for name in names]
     errs = np.array([x[1] for x in data])
     data = np.array([x[0] for x in data])
     data[np.isnan(data)]=0
@@ -133,10 +143,10 @@ def intensity(run,names,mins=(0,0),maxs=(16,128),outfile=None):
 
     
 
-def echofr(run,names,mins=(0,0),maxs=(16,128),outfile=None):
-    names = [name for name in names if float(name) != 5.0]
+def echofr(run,names,mins=(0,0),maxs=(16,128),mask=None,outfile=None):
+    names = [name for name in names if float(name) != 5.475]
     print names
-    data = [fr(run,name,mins,maxs) for name in names]
+    data = [fr(run,name,mins,maxs,mask) for name in names]
     errs = np.array([x[1] for x in data])
     data = np.array([x[0] for x in data])
     data[np.isnan(data)]=0
@@ -192,6 +202,8 @@ if __name__=='__main__':
                       choices=["plot","diff","fr","echo","intensity"])
     parser.add_option("--save",action="store",type="string",default=None,
                       help="A file in which to save the dataset.")
+    parser.add_option("--mask",action="store",type="string",default=None,
+                      help="A mask file indicating which pixel to use in the analysis")
     parser.add_option("--current",action="store",type="int",
                       default=None,
                       help="A triangle current to filter the results.")
@@ -204,6 +216,11 @@ if __name__=='__main__':
     if options.export:
         export(runs,choices[options.sortby],choices[options.flip],options.mon,options.current)
 
+    if options.mask is not None:
+        if options.mask[-3:] == "dat":
+            mask = np.loadtxt(options.mask)
+        else:
+            mask = np.load(options.mask)
     if options.plot is None:
         pass
     else:
@@ -222,11 +239,13 @@ if __name__=='__main__':
             print names
             singleplot(runs[-1],names[0],(options.xmin,options.ymin),(options.xmax,options.ymax))
         elif options.plot=="fr":
-            echofr(runs[-1],names,(options.xmin,options.ymin),(options.xmax,options.ymax),options.save)
+            echofr(runs[-1],names,(options.xmin,options.ymin),(options.xmax,options.ymax),outfile=options.save)
         elif options.plot=="diff":
             echodiff(runs[-1],names,187(options.xmin,options.ymin),(options.xmax,options.ymax),options.save)
         elif options.plot=="echo":
-            echoplot(runs[-1],names,(options.xmin,options.ymin),(options.xmax,options.ymax),options.save)
+            echoplot(runs[-1],names,(options.xmin,options.ymin),(options.xmax,options.ymax),outfile=options.save)
         elif options.plot=="intensity":
-            intensity(runs[-1],names,(options.xmin,options.ymin),(options.xmax,options.ymax),options.save)
+            intensity(runs[-1],names,(options.xmin,options.ymin),(options.xmax,options.ymax),outfile=options.save)
+        elif options.plot=="poldrift":
+            poldrift(runs,(options.xmin,options.ymin),(options.xmax,options.ymax),outfile=options.save)
 
