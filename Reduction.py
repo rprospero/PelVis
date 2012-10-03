@@ -157,6 +157,38 @@ def echofr(run,names,mins=(0,0),maxs=(16,128),mask=None,outfile=None):
     plt.show()
     if outfile is not None:
         np.savetxt(outfile,np.transpose(np.vstack((xs,data,errs))))
+    #trying the fitting
+    data = (data-1.0)/(data+1.0)
+    print(data)
+    data = np.log(data)
+    fit = np.polyfit(xs,data,2)
+    a = fit[0]
+    b = fit[1]
+    c = fit[2]
+    print(fit)
+    plt.plot(xs,np.exp(data),"b*")
+    plt.plot(xs,np.exp(c+b*xs+a*xs**2),"r-")
+    plt.show()
+    print(-1*b/(2*a))
+
+def poldrift(runs,mins,maxs,outfile=None):
+    if len(runs)%2 == 1:
+        runs = runs[:-1]
+    ups = [simple_spectrum(run,mins,maxs)
+                           for run in runs[1::2]]
+    downs = [simple_spectrum(run,mins,maxs)
+                           for run in runs[0::2]]
+    uperrs = np.array([np.sqrt(np.sum(run[1]**2)) for run in ups])
+    downerrs = np.array([np.sqrt(np.sum(run[1]**2)) for run in downs])
+    ups = np.array([np.sum(run[0]) for run in ups])
+    downs = np.array([np.sum(run[0]) for run in downs])
+    p = ups/downs
+    err = p * np.sqrt((uperrs/ups)**2+(downerrs/downs)**2)
+    xs = np.array(runs[0::2])
+    plt.errorbar(xs,p,yerr=err)
+    plt.show()
+    if outfile is not None:
+        np.savetxt(outfile,np.transpose(np.vstack((xs,p,err))))
 
 def echodiff(run,names,split,mins,maxs,outfile=None):
     data = np.vstack(tuple([np.arccos(spectrum(run,name,mins,(split,302))) - 
@@ -199,7 +231,7 @@ if __name__=='__main__':
 
     parser.add_option("--plot",action="store",type="choice",
                       help="Where to make a simple plot or perform a height diff",
-                      choices=["plot","diff","fr","echo","intensity"])
+                      choices=["plot","diff","fr","echo","intensity","poldrift"])
     parser.add_option("--save",action="store",type="string",default=None,
                       help="A file in which to save the dataset.")
     parser.add_option("--mask",action="store",type="string",default=None,
