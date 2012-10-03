@@ -15,9 +15,7 @@ def load(paths,filter=None):
     for path in paths:
         base = os.path.dirname(path)
         text = ET.parse(path).getroot().find(".//"+XMLNS+"Notes").text 
-        print(text)
         text = HTMLParser.HTMLParser().unescape(text)
-        print(text)
         manifest = json.loads(text)
         
         if ((filter is not None) and 
