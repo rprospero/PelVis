@@ -124,8 +124,22 @@ def echoplot(run,names,mins=(0,0),maxs=(16,128),mask=None,outfile=None):
         plt.show()
     else:
         print name
-        plt.savefig(outfile)
-        plt.clf()
+        if outfile[-4:] == ".png":
+            plt.savefig(outfile)
+            plt.clf()
+        else:
+            with open(outfile,"w") as of:
+                y,x = data.shape
+                print(x)
+                print(y)
+                print(len(xs))
+                print(len(ys))
+                for i in range(x):
+                    for j in range(y):
+                        print((xs[i],ys[j]))
+                        print(data[j,i])
+                        of.write("%f\t%f\t%f\n"%(xs[i],ys[j],data[j,i]))
+
 
 def intensity(run,names,mins=(0,0),maxs=(16,128),mask=None,outfile=None):
     names = [name for name in names if float(name) != 5.475]
