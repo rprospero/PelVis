@@ -1,0 +1,93 @@
+#+TITLE: Data Analysis Instructions
+
+* Combining Runs
+
+1. Load CombinerFrame (found on the Desktop)
+2. Click "Add"
+3. Go to the directory "C:\userfiles\EXP011".  This is most likely the
+   parent directory of the default folder that pops up.
+4. Open the directory for one of the runs which you wish to combine.
+5. Open the "runinfo" file in that directory.
+6. Repeat steaps 2 through 5 for each run which you wish to combine.
+7. Click "Open"
+8. In the bottom frame, there will be a list of current configurations
+   used in the different runs.  Click on all the ones which apply.
+   (For the transmission measurements, these will just be all zeros,
+   as we're not doing any sort of flipping measurement).
+9. Click "Save"
+10. Choose a directory and name the file.
+
+* Viewing Data
+
+All of the data analysis is setup to run through PelVis.  It can be
+found on the desktop.  A run can be loaded by choosing File->Open and
+openening the corresponding neutron_event file.  PelVis will
+automaitcally load the corresponding montir file.
+
+Regions are chosen on the detector image by making a left click in the
+upper left hand corner of the region and a right click in the lower
+right hand.  Alternately, regions can be entered by defining the
+maximum and minimum X and Y in the panel on the right of the window.
+
+To subtract the background, chose a region away from the main beam,
+then choose Noise->"Region of Disinterest" from the menu.  If you need
+to undo the background subtraction, you'll need to load the file over again.
+
+To plot the spectrum, choose a region and pick File->Spectrum from the
+menu.  A dialog will pop-up.  Click View to view a graph of the
+spectrum and save to export the spectrum to a text file.
+* Reduction
+
+Using the combiner can be time consuming if you have a large amount of
+data, so I wrote the reduction script for handling longer runs
+
+To run the reduction, type
+
+#+BEGIN_QUOTE
+    c:\Python27\python.exe reduction.py *start* *stop*
+#+END_QUOTE
+
+into the command prompt while in the PELVis directory.  *start* should
+be the run number of the start of the run and *stop* should be the
+number of the firth run _NOT_ in this dataset.
+
+The --help option provides more information about the options for Reduction.
+
+** Flipping Runs
+
+For a simple flipping run, you'll need to use the following parameters:
+
+| parameter | values                                      | meaning                                                                                                                        |
+| --flip    | flipper,guides,sample,phase,1,2,3,4,5,6,7,8 | This is the power supply being used as the flipper.  For most runs, this should just be flipper                                |
+| -e        |                                             | This flag tells reduction to export the combined data into a file.  For flipping runs, it's simpler to just leave the flag in. | 
+
+The exported data will be saved as two files (up and down) in the directory of the last run.
+
+As an example:
+
+#+BEGIN_QUOTE
+c:/Python27/python.exe reduction.py --flip flipper 697 754 -e
+#+END_QUOTE
+  
+Will save two files in the directory for run 753 containing the two different states of the flipper supply.
+
+** Current Scans
+
+For more complicated scans over a current, you'll also need the following.
+
+| parameter | values                                      | meaning                                                                                                                                                                                                                             |
+| --flip    | flipper,guides,sample,phase,1,2,3,4,5,6,7,8 | This is the power supply being used as the flipper.  For most runs, this should just be flipper                                                                                                                                     |
+| -e        |                                             | This flag tells reduction to export the combined data into a file.  For flipping runs, it's simpler to just leave the flag in.                                                                                                      |
+| --sortby  | flipper,guides,sample,phase,1,2,3,4,5,6,7,8 | This is the current value that is scanned.  The exported runs will be grouped by their value in this current, to the nearest 0.1A                                                                                                   |
+| --start   | *number*                                    | The lowest value in the current scan                                                                                                                                                                                                |
+| --stop    | *number*                                    | The highest value in the current scan                                                                                                                                                                                               |
+| --stop    | *number*                                    | The step size of the current scan                                                                                                                                                                                                   |
+| --plot    | fr,echo                                     | This is an optional flag for producing a quick plot frmo the reduction.  Using fr will produce a plot of integrated flipping ratio versus current while echo will produce a colormap of polarization versus current and wavelength. | 
+
+As an example  :
+
+#+BEGIN_QUOTE
+c:/Python27/python.exe reduction.py --flip flipper 703 755 --start -4 --stop 3 --step 1 --plot fr --sortby 8
+#+END_QUOTE
+
+would plot the integrated flipping ratio versus the current in power supply 8 for runs 703 through 754 and with currents of [-4,-3,-2,-1,0,1,2,3]
