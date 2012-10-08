@@ -228,6 +228,7 @@ if __name__=='__main__':
     parser.add_option("--start",action = "store",type="float", help="The starting current of the scan")
     parser.add_option("--stop",action = "store", type="float", help="The ending current of the scan")
     parser.add_option("--step",action = "store", type="float", help="The current step of the scan")
+    parser.add_option("--skip",action = "append", type="int", help="Marks that a run should NOT be included in the file export.")
 
     parser.add_option("--plot",action="store",type="choice",
                       help="Where to make a simple plot or perform a height diff",
@@ -244,6 +245,8 @@ if __name__=='__main__':
 
     runs = range(int(runs[0]),int(runs[1]))
     runs = [r for r in runs if r != 648] #remove run where He3 was flipped
+    for item in options.skip:
+        runs.remove(item)
 
     if options.export:
         export(runs,choices[options.sortby],choices[options.flip],options.mon,options.current)
