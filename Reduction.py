@@ -13,7 +13,7 @@ def load(runs,current=None):
     return Combiner.load(paths,current)
 
 
-def export(runs,sortby,flipper,minmon=16,current=None):
+def export(runs,sortby,flipper,minmon=16,current=None,filter=None):
     data = load(runs,current)
 
     keys = data.keys()
@@ -21,19 +21,22 @@ def export(runs,sortby,flipper,minmon=16,current=None):
     if sortby is None:
         values = [""]
     else:
-        values = set([x[sortby] for x in keys])
+        if filter is None:
+            values = set([x[sortby] for x in keys])
+        else:
+            values = [filter]
 
     base = basedir + "SESAME_%i/" % runs[-1]
 
     for value in values:
-        ups = [x for x in keys if x[flipper] > 0 
-               and (sortby is None or x[sortby] == value)]
-        downs = [x for x in keys if x[flipper] < 0 
-                  and (sortby is None or x[sortby] == value)]
-#        if current is not None:
-#            value += "_%i_"%current
         if type(value) is not str:
             value = ("%0.3f"%float(value))
+        ups = [x for x in keys if x[flipper] > 0 
+               and (sortby is None or "%0.3f"%x[sortby] == value)]
+        downs = [x for x in keys if x[flipper] < 0 
+                  and (sortby is None or "%0.3f"%x[sortby] == value)]
+        if filter is not None:
+            value = "" #Don't put values on files when we're only running a single export
         if ups != []:
             Combiner.save(base+value+"up",
                           minmon,
@@ -230,6 +233,7 @@ if __name__=='__main__':
     parser.add_option("-e","--export",action="store_true",help="Export into pel files")
     parser.add_option("--sortby",action="store",type="choice",help="Which power supply is scanned",
                       choices=choices.keys())
+    parser.add_option("--filter",action="store",type="float",help="Focuses the export to only a single value in the sortby parameter")
     parser.add_option("--flip",action="store",type="choice",help="Which power supply runs the flipper",
                       choices=choices.keys(),default="guides")
     parser.add_option("--mon",action="store",type="float",help="Minimum monitor value.  If the value is lessthan or equal to zero, all runs are included, regardless of monitor count.",default=8)
@@ -263,7 +267,7 @@ if __name__=='__main__':
         runs.remove(item)
 
     if options.export:
-        export(runs,choices[options.sortby],choices[options.flip],options.mon,options.current)
+        export(runs,choices[options.sortby],choices[options.flip],options.mon,options.current,options.filter)
 
     if options.mask is not None:
         if options.mask[-3:] == "dat":
@@ -273,7 +277,7 @@ if __name__=='__main__':
     if options.plot is None:
         pass
     else:
-        if options.sortby is None:
+        if options.sortby is None or options.filter is not None:
             names = [""]
         else:
             count = round((options.stop-options.start)/options.step)+1
