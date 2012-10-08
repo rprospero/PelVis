@@ -284,7 +284,7 @@ if __name__=='__main__':
                       choices=["plot","diff","fr","echo","intensity","poldrift","int2drange","pol2drange"])
     parser.add_option("--save",action="store",type="string",default=None,
                       help="A file in which to save the dataset.")
-    parser.add_option("--mask",action="store",type="string",default=None,
+    parser.add_option("--mask",action="append",type="string",default=None,
                       help="A mask file indicating which pixel to use in the analysis")
     parser.add_option("--current",action="store",type="int",
                       default=None,
@@ -301,10 +301,12 @@ if __name__=='__main__':
         export(runs,choices[options.sortby],choices[options.flip],options.mon,options.current,options.filter)
 
     if options.mask is not None:
-        if options.mask[-3:] == "dat":
-            mask = np.loadtxt(options.mask)
-        else:
-            mask = np.load(options.mask)
+        mask = np.ones((128,16),dtype=np.bool)
+        for m in options.mask:
+            if m[-3:] == "dat":
+                mask = np.logical_and(mask,np.loadtxt(m))
+            else:
+                mask = np.logical_and(mask,np.load(m))
     if options.plot is None:
         pass
     else:
@@ -323,7 +325,7 @@ if __name__=='__main__':
             print names
             singleplot(runs[-1],names[0],(options.xmin,options.ymin),(options.xmax,options.ymax))
         elif options.plot=="fr":
-            echofr(runs[-1],names,(options.xmin,options.ymin),(options.xmax,options.ymax),outfile=options.save)
+            echofr(runs[-1],names,(options.xmin,options.ymin),(options.xmax,options.ymax),outfile=options.save,mask=mask)
         elif options.plot=="diff":
             echodiff(runs[-1],names,187(options.xmin,options.ymin),(options.xmax,options.ymax),options.save)
         elif options.plot=="echo":
