@@ -48,7 +48,42 @@ def export(runs,sortby,flipper,minmon=16,current=None,filter=None):
                           downs,
                           data)
 
-def getIntegratedSpectra(run,name,mins,maxs):
+def plot_2d_range(data,rnge=None,steps=100,mask=None):
+    """Takes a 2d data set and plots a plateau plot"""
+    if type(rnge) is tuple:
+        vmin,vmax=rnge
+    else:
+        vmin = np.min(data)
+        vmax = np.max(data)
+    if mask is None:
+        mask = data >= vmin
+    print(vmax,vmin,steps)
+    print((vmax-vmin))
+    print((vmax-vmin)/steps)
+    xs = np.arange(vmin,vmax,(vmax-vmin)/steps)
+    ys = [len(np.where(np.logical_and(data<x,mask))[0]) for x in xs]
+    ys = np.array(ys)
+    plt.plot(xs,ys,"r*")
+    plt.show()
+
+def get_2d_int(run,name):
+    p = PelFile(basedir+"SESAME_%i/" % run + name+"_neutron_event.dat")
+    mon = MonFile(basedir+"SESAME_%i/" % run + name+"_bmon_histo.dat",False)
+    return np.sum(p.make3d(),axis=2) / np.sum(mon.spec)    
+
+def plot_int_range(run):
+    up = get_2d_int(run,"up")
+    down = get_2d_int(run,"down")
+    plot_2d_range(up+down,steps=1000)
+
+def plot_pol_range(run,mask=None):
+    up = get_2d_int(run,"down")
+    down = get_2d_int(run,"up")
+    plot_2d_range((up-down)/(up+down),(-1.0,1.0),mask=mask)
+    
+    
+
+def getIntegratedSpectra(run,name,mins,maxs,mask):
     name = "%0.3f"%float(name)
     p = PelFile(basedir+"SESAME_%i/" % run + name+"up_neutron_event.dat")
     mon = MonFile(basedir+"SESAME_%i/" % run + name+"up_bmon_histo.dat",False)
@@ -246,7 +281,7 @@ if __name__=='__main__':
 
     parser.add_option("--plot",action="store",type="choice",
                       help="Where to make a simple plot or perform a height diff",
-                      choices=["plot","diff","fr","echo","intensity","poldrift"])
+                      choices=["plot","diff","fr","echo","intensity","poldrift","int2drange","pol2drange"])
     parser.add_option("--save",action="store",type="string",default=None,
                       help="A file in which to save the dataset.")
     parser.add_option("--mask",action="store",type="string",default=None,
@@ -297,4 +332,8 @@ if __name__=='__main__':
             intensity(runs[-1],names,(options.xmin,options.ymin),(options.xmax,options.ymax),outfile=options.save)
         elif options.plot=="poldrift":
             poldrift(runs,(options.xmin,options.ymin),(options.xmax,options.ymax),outfile=options.save)
+        elif options.plot=="int2drange":
+            plot_int_range(runs[-1])
+        elif options.plot=="pol2drange":
+            plot_pol_range(runs[-1],mask)
 
