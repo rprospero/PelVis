@@ -115,6 +115,24 @@ def spectrum(run,name,mins=(0,0),maxs=(16,128),mask=None):
 
     return (up-down)/(up+down)
 
+def errspectrum(run,name,mins=(0,0),maxs=(16,128),mask=None):
+    if name != '':
+        name = "%0.3f"%float(name)
+    p = PelFile(basedir+"SESAME_%i/" % run + name+"up_neutron_event.dat")
+    mon = MonFile(basedir+"SESAME_%i/" % run + name+"up_bmon_histo.dat",False)
+    up = p.make1d(mins,maxs,mask)
+    uperr = np.sqrt(up)/np.sum(mon.spec)
+    up /= np.sum(mon.spec)
+    p = PelFile(basedir+"SESAME_%i/" % run + name+"down_neutron_event.dat")
+    mon = MonFile(basedir+"SESAME_%i/" % run + name+"down_bmon_histo.dat",False)
+    down = p.make1d(mins,maxs,mask)
+    downerr = np.sqrt(down)/np.sum(mon.spec)
+    down /= np.sum(mon.spec)
+
+    p = (up-down)/(up+down)
+    err = p*np.sqrt((up-down)**-2+(up+down)**-2)*np.sqrt(uperr**2+downerr**2)
+    return p,err
+
 def simple_spectrum(run,mins=(0,0),maxs=(16,128),mask=None):
     p = PelFile(basedir+"SESAME_%i/SESAME_%i_neutron_event.dat"%(run,run))    
     mon = MonFile(basedir+"SESAME_%i/SESAME_%i_bmon_histo.dat"%(run,run),False)    
@@ -149,9 +167,12 @@ def singleplot(run,name,mins=(0,0),maxs=(16,128)):
 
 def echoplot(run,names,mins=(0,0),maxs=(16,128),mask=None,outfile=None):
 
-    data = np.vstack(tuple([spectrum(run,name,mins,maxs,mask) for name in names]))
+    data = [spectrum(run,name,mins,maxs,mask) for name in names]
+    errs = np.vstack(tuple([d[1] for d in data]))
+    data = np.vstack(tuple([d[0] for d in data]))
     data[np.isnan(data)]=0
     data = data[:,0:100]
+    errs = errs[:,0:100]
     xs = np.arange(101)*0.1
     ys = sorted([float(x) for x in names])
     ys += [ys[-1]+ys[1]-ys[0]] #Add last element
@@ -168,11 +189,13 @@ def echoplot(run,names,mins=(0,0),maxs=(16,128),mask=None,outfile=None):
         else:
             with open(outfile,"w") as of:
                 y,x = data.shape
+                of.write("wavelength\tcurrent\tpolarization\terror\n")
                 for i in range(x):
                     for j in range(y):
                         print((xs[i],ys[j]))
                         print(data[j,i])
-                        of.write("%f\t%f\t%f\n"%(xs[i],ys[j],data[j,i]))
+                        of.write("%f\t%f\t%f\t%f\n"
+                                 %(xs[i],ys[j],data[j,i],errs[j,i]))
 
 
 def intensity(run,names,mins=(0,0),maxs=(16,128),mask=None,outfile=None):
