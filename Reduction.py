@@ -171,8 +171,6 @@ def echoplot(run,names,mins=(0,0),maxs=(16,128),mask=None,outfile=None):
     errs = np.vstack(tuple([d[1] for d in data]))
     data = np.vstack(tuple([d[0] for d in data]))
     data[np.isnan(data)]=0
-    data = data[:,0:100]
-    errs = errs[:,0:100]
     xs = np.arange(101)*0.1
     ys = sorted([float(x) for x in names])
     ys += [ys[-1]+ys[1]-ys[0]] #Add last element
