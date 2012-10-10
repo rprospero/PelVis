@@ -167,7 +167,7 @@ def singleplot(run,name,mins=(0,0),maxs=(16,128)):
 
 def echoplot(run,names,mins=(0,0),maxs=(16,128),mask=None,outfile=None):
 
-    data = [spectrum(run,name,mins,maxs,mask) for name in names]
+    data = [errspectrum(run,name,mins,maxs,mask) for name in names]
     errs = np.vstack(tuple([d[1] for d in data]))
     data = np.vstack(tuple([d[0] for d in data]))
     data[np.isnan(data)]=0
