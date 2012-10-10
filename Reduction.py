@@ -294,8 +294,9 @@ if __name__=='__main__':
 
     runs = range(int(runs[0]),int(runs[1]))
     runs = [r for r in runs if r != 648] #remove run where He3 was flipped
-    for item in options.skip:
-        runs.remove(item)
+    if options.skip:
+        for item in options.skip:
+            runs.remove(item)
 
     if options.export:
         export(runs,choices[options.sortby],choices[options.flip],options.mon,options.current,options.filter)
