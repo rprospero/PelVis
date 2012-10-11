@@ -6,6 +6,7 @@ import numpy as np
 from optparse import OptionParser
 
 basedir = "C:/userfiles/EXP011/"
+RESOLUTION = 200
 
 def load(runs,current=None):
     paths = [basedir + "SESAME_%i/SESAME_%i_runinfo.xml"
@@ -162,7 +163,7 @@ def run_int(run,name,mins=(0,0),maxs=(16,128),mask=None):
 def singleplot(run,name,mins=(0,0),maxs=(16,128)):
     data = spectrum(run,name,mins,maxs)
     data[np.isnan(data)]=0
-    plt.plot(np.arange(200)*0.1,data,"r-")
+    plt.plot(np.arange(RESOLUTION)*20.0/RESOLUTION,data,"r-")
     plt.show()
 
 def echoplot(run,names,mins=(0,0),maxs=(16,128),mask=None,outfile=None):
@@ -264,9 +265,8 @@ def echodiff(run,names,split,mins,maxs,outfile=None):
                             np.arccos(spectrum(run,name,(split,223),maxs)) for name in names]))
 
     data[np.isnan(data)]=0
-    data = data[:,0:100]
 
-    xs = np.arange(100)*0.1
+    xs = np.arange(RESOLUTION)*20.0/RESOLUTION
     ys = np.array([float(x) for x in names])
     plt.pcolor(xs,ys,data,vmin=-np.pi,vmax=np.pi)
     if outfile is None:

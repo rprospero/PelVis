@@ -11,6 +11,8 @@ import wx
 import numpy as np
 from graphframe import GraphFrame
 
+RESOLUTION = 200
+
 class SpectrumDialog(wx.Dialog):
     """A dialog to set the options on a spectrum plot"""
 
@@ -124,7 +126,7 @@ class SpectrumDialog(wx.Dialog):
         dtot=0 #counts in the down state
         #If there's no chosen error bounds, just return the original data.
         if self.nobinrad.GetValue():
-            return (np.arange(0.0,20.0,0.1),self.up,self.down)
+            return (np.arange(0.0,20.0,20.0/RESOLUTION),self.up,self.down)
         #If we're going any sort of binning, we'll need raw values
         up=self.up*self.uscale
         down=self.down*self.dscale
@@ -154,7 +156,7 @@ class SpectrumDialog(wx.Dialog):
                     np.array(d))
         elif self.setbinrad.GetValue():
             count = int(self.minerr.GetValue())
-            x = [np.mean(y) for y in np.array_split(np.arange(0.0,200.0)/10.0,count)]
+            x = [np.mean(y) for y in np.array_split(np.arange(0.0,20.0,20.0/RESOLUTION),count)]
             u = [np.sum(y)/self.uscale for y in np.array_split(up,count)]
             d = [np.sum(y)/self.dscale for y in np.array_split(down,count)]
             print((x,u,d))
@@ -173,7 +175,7 @@ class SpectrumDialog(wx.Dialog):
 
         """
         if self.nobinrad.GetValue():
-            return (np.arange(0.0,20.0,0.1),up/scale)
+            return (np.arange(0.0,20.0,20.0/RESOLUTION),up/scale)
         elif self.autobinrad.GetValue():
             x=[]
             u=[]
@@ -194,7 +196,7 @@ class SpectrumDialog(wx.Dialog):
             return (np.array(x),np.array(u))
         elif self.setbinrad.GetValue():
             count = int(self.minerr.GetValue())
-            x = np.arange(0.0,200.0)/10.0
+            x = np.arange(0.0,20.0,20.0/RESOLUTION)
             x = np.array([np.mean(y) for y in np.array_split(x,count)])
             u = np.array([np.sum(y)/scale for y in np.array_split(up,count)])
             return (x,u)

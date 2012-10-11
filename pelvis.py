@@ -32,6 +32,8 @@ import matplotlib.cm as cm
 
 import wx
 
+RESOLUTION = 200
+
 class PositionPanel(wx.Panel):
     """A panel with pixel information
 
@@ -146,7 +148,7 @@ class PelvisOptionPanel(wx.Panel):
         try:
             lmax = int(float(self.options["lambdaMax"].GetValue())*10)
         except ValueError:
-            lmax = 200 
+            lmax = RESOLUTION
         return (lmin,lmax)
 
     def setLambdaRange(self,min,max):
@@ -529,7 +531,7 @@ class PelvisFrame(wx.Frame):
         elif isinstance(data,np.ndarray):
             flatrun = data
         flatrun = np.sum(flatrun,axis=2)
-        flatrun /= 200
+        flatrun /= RESOLUTION
         flatrun /= float(mon.time)
         flatrun = np.expand_dims(flatrun,2)
         self.flatrun = TemporaryFile()
@@ -555,8 +557,8 @@ class PelvisFrame(wx.Frame):
             backgroundd = totd-centd
             backgroundrateu = backgroundu/backgroundarea
             backgroundrated = backgroundd/backgroundarea
-            backgroundrateu /= 201 #normalize against the wavelengths
-            backgroundrated /= 201 #normalize against the wavelengths
+            backgroundrateu /= (RESOLUTION + 1) #normalize against the wavelengths
+            backgroundrated /= (RESOLUTION + 1) #normalize against the wavelengths
             ###Stupid Memory Errors
             del self.data
             u -= backgroundrateu
@@ -569,7 +571,7 @@ class PelvisFrame(wx.Frame):
             cent = np.sum(d[yMin:yMax,xMin:xMax,:])
             background = tot-cent
             backgroundrate = background/backgroundarea
-            backgroundrate /= 201 #normalize against the wavelengths
+            backgroundrate /= (RESOLUTION + 1) #normalize against the wavelengths
             self.data-=backgroundrate
         self.updateData()
 
