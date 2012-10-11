@@ -6,7 +6,7 @@ import numpy as np
 from optparse import OptionParser
 
 basedir = "C:/userfiles/EXP011/"
-RESOLUTION = 200
+RESOLUTION = 400
 
 def load(runs,current=None):
     paths = [basedir + "SESAME_%i/SESAME_%i_runinfo.xml"

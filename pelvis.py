@@ -32,7 +32,7 @@ import matplotlib.cm as cm
 
 import wx
 
-RESOLUTION = 200
+RESOLUTION = 400
 
 class PositionPanel(wx.Panel):
     """A panel with pixel information

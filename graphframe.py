@@ -91,6 +91,8 @@ class GraphFrame(wx.Frame):
         """
         self.figure.clear()
         axes = self.figure.add_subplot(111)
+        print(x.shape)
+        print(y.shape)
         axes.errorbar(x,y,xerr=xerr,yerr=yerr)
         if range==None:
             axes.autoscale_view(True,True,True)

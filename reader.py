@@ -15,6 +15,8 @@ import numpy as np
 from time import clock
 from collections import namedtuple
 
+RESOLUTION = 400
+
 def mapim(imarray):
     XDIM=8
     YDIM=256
@@ -204,7 +206,7 @@ class PelFile:
                 distanceToG4 = 3.7338+2.5297
                 distanceToDetector = 3.6 #FIXME
                 timearr -= 860
-                timearr *= 3.956034e-7/(distanceToDetector+distanceToG4)/1e-10*1e-6*10 #The last 10 is to handle fractional angstroms
+                timearr *= 3.956034e-7/(distanceToDetector+distanceToG4)/1e-10*1e-6*(RESOLUTION/20) #The last term is to handle fractional angstroms
                 return timearr
 
         def make3d(self):
@@ -216,7 +218,7 @@ class PelFile:
                 sd =self.data
                 i=0;
 
-                cube = np.zeros([128,16,200],dtype=np.float32)
+                cube = np.zeros([128,16,RESOLUTION],dtype=np.float32)
 
 		#If there's no data, return an empty array
                 if l==0:
@@ -230,13 +232,13 @@ class PelFile:
 		#Loop over 20 angstroms in steps of 0.1 angstroms
 		np.seterr(over='raise')
 
-		for i in range(200):
+		for i in range(RESOLUTION):
 			place = np.where(timearr==i)
 			if len(place[0]) > 0:
 				temp,_ = np.histogram(Z[place],bins = np.arange(8*256+1))
 				temp = temp.reshape(256,8,order="F")
 				cube[:,:,i] = mapim(temp)[::-1,:]
-			statusfunc(i*5.0)
+			statusfunc(i*1000.0/RESOLUTION)
 				
 
                 stop=clock()
