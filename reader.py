@@ -204,7 +204,7 @@ class PelFile:
                 timearr *= 0.1 #Convert to microseconds
                 #convert timearr into wavelength
                 distanceToG4 = 3.7338+2.5297
-                distanceToDetector = 3.6 #FIXME
+                distanceToDetector = 3.835 #FIXME
                 timearr -= 860
                 timearr *= 3.956034e-7/(distanceToDetector+distanceToG4)/1e-10*1e-6*(RESOLUTION/20) #The last term is to handle fractional angstroms
                 return timearr
