@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import Combiner
 import numpy as np
 from optparse import OptionParser
+import os
 
 basedir = "C:/userfiles/EXP011/"
 RESOLUTION = 400
@@ -167,8 +168,9 @@ def singleplot(run,name,mins=(0,0),maxs=(16,128)):
     plt.show()
 
 def echoplot(run,names,mins=(0,0),maxs=(16,128),mask=None,outfile=None):
-
-    data = [errspectrum(run,name,mins,maxs,mask) for name in names]
+    data = [errspectrum(run,name,mins,maxs,mask) for name in names
+            if os.path.exists(basedir+"SESAME_%i/" % run + name+"up_neutron_event.dat") 
+            and os.path.exists(basedir+"SESAME_%i/" % run + name+"down_neutron_event.dat")]
     errs = np.vstack(tuple([d[1] for d in data]))
     data = np.vstack(tuple([d[0] for d in data]))
     data[np.isnan(data)]=0
