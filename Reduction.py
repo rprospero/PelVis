@@ -172,9 +172,7 @@ def singleplot(run,name,mins=(0,0),maxs=(16,128)):
     plt.show()
 
 def echoplot(run,names,mins=(0,0),maxs=(16,128),mask=None,outfile=None):
-    data = [errspectrum(run,name,mins,maxs,mask) for name in names
-            if os.path.exists(basedir+"SESAME_%i/" % run + name+"up_neutron_event.dat") 
-            and os.path.exists(basedir+"SESAME_%i/" % run + name+"down_neutron_event.dat")]
+    data = [errspectrum(run,name,mins,maxs,mask) for name in names]
     errs = np.vstack(tuple([d[1] for d in data]))
     data = np.vstack(tuple([d[0] for d in data]))
     data[np.isnan(data)]=0
@@ -350,6 +348,14 @@ if __name__=='__main__':
                     options.start,
                     options.stop,
                     count)]
+            names = [name for name in names
+                     if os.path.exists(basedir+"SESAME_%i/" % runs[-1] + 
+                                       normalize_name(name)+
+                                       "up_neutron_event.dat") 
+                     and os.path.exists(basedir+"SESAME_%i/" % runs[-1] + 
+                                        normalize_name(name)+
+                                        "down_neutron_event.dat")]
+
         if options.plot=="plot":
             print runs
             print names
