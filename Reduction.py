@@ -32,7 +32,7 @@ def export(runs,sortby,flipper,minmon=16,current=None,filter=None):
 
     for value in values:
         if type(value) is not str:
-            value = normalize_name(name)
+            value = normalize_name(value)
         ups = [x for x in keys if x[flipper] > 0 
                and (sortby is None or normalize_name(x[sortby]) == value)]
         downs = [x for x in keys if x[flipper] < 0 
