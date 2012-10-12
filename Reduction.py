@@ -32,11 +32,11 @@ def export(runs,sortby,flipper,minmon=16,current=None,filter=None):
 
     for value in values:
         if type(value) is not str:
-            value = ("%0.3f"%float(value))
+            value = normalize_name(name)
         ups = [x for x in keys if x[flipper] > 0 
-               and (sortby is None or "%0.3f"%x[sortby] == value)]
+               and (sortby is None or normalize_name(x[sortby]) == value)]
         downs = [x for x in keys if x[flipper] < 0 
-                  and (sortby is None or "%0.3f"%x[sortby] == value)]
+                  and (sortby is None or normalize_name(x[sortby]) == value)]
         if filter is not None:
             value = "" #Don't put values on files when we're only running a single export
         if ups != []:
@@ -86,7 +86,7 @@ def plot_pol_range(run,mask=None):
     
 
 def getIntegratedSpectra(run,name,mins,maxs,mask):
-    name = "%0.3f"%float(name)
+    name = normalize_name(name)
     p = PelFile(basedir+"SESAME_%i/" % run + name+"up_neutron_event.dat")
     mon = MonFile(basedir+"SESAME_%i/" % run + name+"up_bmon_histo.dat",False)
     up = np.sum(p.make1d(mins,maxs,mask)[30:100])
@@ -100,10 +100,15 @@ def getIntegratedSpectra(run,name,mins,maxs,mask):
 
     return (up,uperr,down,downerr)
 
+def normalize_name(name):
+    if name != '':
+        return "%0.3f"%float(name)
+    else:
+        return name
+
 
 def spectrum(run,name,mins=(0,0),maxs=(16,128),mask=None):
-    if name != '':
-        name = "%0.3f"%float(name)
+    name = normalize_name(name)
     p = PelFile(basedir+"SESAME_%i/" % run + name+"up_neutron_event.dat")
     mon = MonFile(basedir+"SESAME_%i/" % run + name+"up_bmon_histo.dat",False)
     up = p.make1d(mins,maxs,mask)
@@ -118,8 +123,7 @@ def spectrum(run,name,mins=(0,0),maxs=(16,128),mask=None):
     return (up-down)/(up+down)
 
 def errspectrum(run,name,mins=(0,0),maxs=(16,128),mask=None):
-    if name != '':
-        name = "%0.3f"%float(name)
+    name = normalize_name(name)
     p = PelFile(basedir+"SESAME_%i/" % run + name+"up_neutron_event.dat")
     mon = MonFile(basedir+"SESAME_%i/" % run + name+"up_bmon_histo.dat",False)
     up = p.make1d(mins,maxs,mask)
