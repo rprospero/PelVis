@@ -329,6 +329,8 @@ if __name__=='__main__':
                 mask = np.logical_and(mask,np.loadtxt(m))
             else:
                 mask = np.logical_and(mask,np.load(m))
+    else:
+        mask = None
     if options.plot is None:
         pass
     else:
