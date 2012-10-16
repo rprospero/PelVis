@@ -218,7 +218,7 @@ def intensity(run,names,mins=(0,0),maxs=(16,128),mask=None,outfile=None):
     
 
 def echofr(run,names,mins=(0,0),maxs=(16,128),mask=None,outfile=None):
-    names = [name for name in names if float(name) != 5.475]
+#    names = [name for name in names if float(name) != 5.475]
     print names
     data = [fr(run,name,mins,maxs,mask) for name in names]
     errs = np.array([x[1] for x in data])
