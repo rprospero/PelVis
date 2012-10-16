@@ -44,7 +44,6 @@ def save(path,minmon,keys,runsets):
     runs = [x for key in keys for x in runsets[key]]
     mon = np.zeros((50001,),dtype=np.int32)
     format = "%Y-%m-%dT%H:%M:%S-04:00"
-    print(path+"_neutron_event.dat")
     with open(path+"_neutron_event.dat","wb") as outfile:
         for r in runs:
             monpath = r[:-11] + "bmon_histo.dat"
@@ -59,6 +58,8 @@ def save(path,minmon,keys,runsets):
 
             moncount = np.sum(montemp)
 
+
+
             if time <= 0 or ((moncount/time < minmon or moncount/time>10*minmon) and minmon >0):
                 continue
 
@@ -69,6 +70,5 @@ def save(path,minmon,keys,runsets):
                 dettemp.tofile(outfile)
                 del dettemp
     with open(path+"_bmon_histo.dat","wb") as stream:
-        print(path+"_bmon_histo.dat")
         mon.tofile(stream)
 
