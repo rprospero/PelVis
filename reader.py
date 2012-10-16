@@ -211,7 +211,6 @@ class PelFile:
 
         def make3d(self):
 		"""Make a 3D histogram from the raw data."""
-                print("Cubing Image")
                 start=clock()                
                 statusfunc = self.statusfunc
                 l = len(self.data)
@@ -244,7 +243,6 @@ class PelFile:
                 stop=clock()
                 del timearr
 
-                print((stop-start))                        
                 return cube
 
         
@@ -283,7 +281,6 @@ class PelFile:
 
         def readfileimage(self,path):
 		"""Reads a raw Pel File into memory."""
-                print("Loading PEL file"+path)
                 start=clock()
                 statusfunc = self.statusfunc
                 with open(path,"rb") as infile:
@@ -293,7 +290,6 @@ class PelFile:
                     self.data = np.fromfile(infile,np.int32,-1)
                 infile.close()
                 stop=clock()
-                print((stop-start))
 
 	def make1d(self,mins,maxs,mask=None):
                 """Make a 1D histogram from the spectrum data."""
