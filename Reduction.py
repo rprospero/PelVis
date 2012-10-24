@@ -314,11 +314,15 @@ if __name__=='__main__':
     parser.add_option("--current",action="store",type="int",
                       default=None,
                       help="A triangle current to filter the results.")
+    parser.add_option("--complex",action="store_true",
+                     help="Whether to load the run data from runlist.txt")
 
     (options,runs) = parser.parse_args()
 
-    runs = range(int(runs[0]),int(runs[1]))
-    runs = [r for r in runs if r != 648] #remove run where He3 was flipped
+    if options.complex:
+        runs = list(np.loadtxt("runlist.txt"))
+    else:
+        runs = range(int(runs[0]),int(runs[1]))
     if options.skip:
         for item in options.skip:
             runs.remove(item)
