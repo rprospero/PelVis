@@ -16,7 +16,11 @@ def load(paths,filter=None):
         base = os.path.dirname(path)
         text = ET.parse(path).getroot().find(".//"+XMLNS+"Notes").text 
         text = HTMLParser.HTMLParser().unescape(text)
-        manifest = json.loads(text)
+        try:
+            manifest = json.loads(text)
+        except:
+            print("Failed: %s"%path)
+            continue
         
         if ((filter is not None) and 
             (floor(float(manifest['triangle1'])) != filter)):
