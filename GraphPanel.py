@@ -90,10 +90,9 @@ class GraphPanel(wx.Panel):
             self.axes.set_ylim((0,np.max(y)))
         else:
             #Notice that we now fill along the x axis
-            self.axes.fill_betweenx(x,y)
+            self.axes.fill_betweenx(x,-y)
             self.SetPos([0.2,0,0.8,1])
-            self.axes.set_xlim((np.max(x),0))
-            self.axes.set_ylim((0,np.max(y)))
+            self.axes.set_ylim((0,128))
 
         self.axes.autoscale_view(True,True,True)
         self.Refresh()
