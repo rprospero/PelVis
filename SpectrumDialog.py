@@ -218,11 +218,10 @@ class SpectrumDialog(wx.Dialog):
         if self.down is not None:
             (x,u,d)=self.autobinset()
             print((x,u,d))
-            y = (u-d)/(u+d+1e-6)
-            u *= self.uscale
-            d *= self.dscale
-            e = y*(np.sqrt(u+d))
-            e *= (1.0/(u-d)+1.0/(u+d))
+            y = (u-d)/(u+d)
+            uerr = np.sqrt(u/self.uscale)
+            derr = np.sqrt(d/self.dscale)
+            e = 2*np.sqrt(u**2*derr**2+d**2*uerr**2)/(u+d)**2
             return (x,y,e)
 
     def spinUp(self):
