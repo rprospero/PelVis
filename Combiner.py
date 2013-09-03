@@ -16,11 +16,7 @@ def load(paths,filter=None):
         base = os.path.dirname(path)
         text = ET.parse(path).getroot().find(".//"+XMLNS+"Notes").text 
         text = HTMLParser.HTMLParser().unescape(text)
-        try:
-            manifest = json.loads(text)
-        except:
-            print("Failed: %s"%path)
-            continue
+        manifest = json.loads(text)
         
         if ((filter is not None) and 
             (floor(float(manifest['triangle1'])) != filter)):
@@ -47,13 +43,14 @@ def load(paths,filter=None):
 def save(path,minmon,keys,runsets):
     runs = [x for key in keys for x in runsets[key]]
     mon = np.zeros((50001,),dtype=np.int32)
-    format = "%Y-%m-%dT%H:%M:%S-04:00"
+    format1 = "%Y-%m-%dT%H:%M:%S-04:00"
+    format2 = "%Y-%m-%dT%H:%M:%S-04:00-04:00"
     with open(path+"_neutron_event.dat","wb") as outfile:
         for r in runs:
             monpath = r[:-11] + "bmon_histo.dat"
             detpath = r[:-11] + "neutron_event.dat"
-            starttime = strptime(ET.parse(r).getroot().find(".//"+XMLNS+"StartTime").text.strip(),format)
-            stoptime = strptime(ET.parse(r).getroot().find(".//"+XMLNS+"StopTime").text.strip(),format)
+            starttime = strptime(ET.parse(r).getroot().find(".//"+XMLNS+"StartTime").text.strip(),format1)
+            stoptime = strptime(ET.parse(r).getroot().find(".//"+XMLNS+"StopTime").text.strip(),format2)
 
             time = mktime(stoptime)-mktime(starttime)
 
@@ -62,9 +59,10 @@ def save(path,minmon,keys,runsets):
 
             moncount = np.sum(montemp)
 
-
-
+            #Fixed for enabling dead run substraction 04/01/2013 done by Radian 
             if time <= 0 or ((moncount/time < minmon or moncount/time>10*minmon) and minmon >0):
+                print moncount
+                print "Skipping run "+str(r)
                 continue
 
             mon += montemp

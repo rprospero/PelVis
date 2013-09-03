@@ -15,10 +15,12 @@ def load(runs,current=None):
     return Combiner.load(paths,current)
 
 
-def export(runs,sortby,flipper,minmon=16,current=None,filter=None):
+def export(runs,sortby=None,flipper=0,minmon=8,current=None,\
+           filter=None,watch=None):
     data = load(runs,current)
 
     keys = data.keys()
+    print keys
 
     if sortby is None:
         values = [""]
@@ -33,22 +35,40 @@ def export(runs,sortby,flipper,minmon=16,current=None,filter=None):
     for value in values:
         if type(value) is not str:
             value = normalize_name(value)
-        ups = [x for x in keys if x[flipper] > 0 
+        ups = [x for x in keys if (flipper is None or x[flipper] < 0) \
+               and (watch is None or x[choices[watch]]==current) \
                and (sortby is None or normalize_name(x[sortby]) == value)]
-        downs = [x for x in keys if x[flipper] < 0 
-                  and (sortby is None or normalize_name(x[sortby]) == value)]
+        downs = [x for x in keys if (flipper is not None and x[flipper] > 0)  \
+                and (watch is None or x[choices[watch]]==current) \
+                and (sortby is None or normalize_name(x[sortby]) == value)]
+        sames = [x for x in keys if (flipper is not None and x[flipper] == 0)  \
+                and (watch is None or x[choices[watch]]==current) \
+                and (sortby is None or normalize_name(x[sortby]) == value)]
         if filter is not None:
             value = "" #Don't put values on files when we're only running a single export
+        if current==None:
+            titleend=""
+        else:
+            titleend="_current="+str(current)
+        if ups == [] and downs == []:
+            Combiner.save(base+value+"Combined"+titleend,
+                          0,
+                          sames,
+                          data)
         if ups != []:
-            Combiner.save(base+value+"up",
+            print "-------------- Up state --------------"
+            Combiner.save(base+value+"up"+titleend,
                           minmon,
                           ups,
                           data)
         if downs != []:
-            Combiner.save(base+value+"down",
+            print "-------------- Down state --------------"
+            Combiner.save(base+value+"down"+titleend,
                           minmon,
                           downs,
                           data)
+        
+            
 
 def plot_2d_range(data,rnge=None,steps=100,mask=None):
     """Takes a 2d data set and plots a plateau plot"""
@@ -89,12 +109,12 @@ def getIntegratedSpectra(run,name,mins,maxs,mask):
     name = normalize_name(name)
     p = PelFile(basedir+"SESAME_%i/" % run + name+"up_neutron_event.dat")
     mon = MonFile(basedir+"SESAME_%i/" % run + name+"up_bmon_histo.dat",False)
-    up = np.sum(p.make1d(mins,maxs,mask)[30:100])
+    up = np.sum(p.make1d(mins,maxs,mask)[40:90])
     uperr = np.sqrt(up)/np.sum(mon.spec)
     up /= np.sum(mon.spec)
     p = PelFile(basedir+"SESAME_%i/" % run + name+"down_neutron_event.dat")
     mon = MonFile(basedir+"SESAME_%i/" % run + name+"down_bmon_histo.dat",False)
-    down = np.sum(p.make1d(mins,maxs,mask)[30:100])
+    down = np.sum(p.make1d(mins,maxs,mask)[40:90])
     downerr = np.sqrt(down)/np.sum(mon.spec)
     down /= np.sum(mon.spec)
 
@@ -151,7 +171,7 @@ def simple_spectrum(run,mins=(0,0),maxs=(16,128),mask=None):
 def fr(run,name,mins=(0,0),maxs=(16,128),mask=None):
     up,uperr,down,downerr = getIntegratedSpectra(run,name,mins,maxs,mask)
 
-    ratio = down/up
+    ratio = up/down
     rerr = ratio * np.sqrt((uperr/up)**2+(downerr/down)**2)
 
     return (ratio,rerr)
@@ -180,7 +200,6 @@ def echoplot(run,names,mins=(0,0),maxs=(16,128),mask=None,outfile=None):
     ys = sorted([float(x) for x in names])
     ys += [ys[-1]+ys[1]-ys[0]] #Add last element
     ys = np.array(ys)
-    print ys
     plt.pcolor(xs,ys,data,vmin=-1,vmax=1)
     if outfile is None:
         plt.show()
@@ -226,24 +245,25 @@ def echofr(run,names,mins=(0,0),maxs=(16,128),mask=None,outfile=None):
     data[np.isnan(data)]=0
     errs[np.isnan(data)]=1
     xs = np.array([float(x) for x in names])
+    print xs
     plt.errorbar(xs,data,yerr=errs)
 #    if outfile is None:
     plt.show()
     if outfile is not None:
         np.savetxt(outfile,np.transpose(np.vstack((xs,data,errs))))
     #trying the fitting
-    data = (data-1.0)/(data+1.0)
-    print(data)
-    data = np.log(data)
-    fit = np.polyfit(xs,data,2)
-    a = fit[0]
-    b = fit[1]
-    c = fit[2]
-    print(fit)
-    plt.plot(xs,np.exp(data),"b*")
-    plt.plot(xs,np.exp(c+b*xs+a*xs**2),"r-")
-    plt.show()
-    print(-1*b/(2*a))
+    # data = (data-1.0)/(data+1.0)
+    # print(data)
+    # data = np.log(data)
+    # fit = np.polyfit(xs,data,2)
+    # a = fit[0]
+    # b = fit[1]
+    # c = fit[2]
+    # print(fit)
+    # plt.plot(xs,np.exp(data),"b*")
+    # plt.plot(xs,np.exp(c+b*xs+a*xs**2),"r-")
+    # plt.show()
+    # print(-1*b/(2*a))
 
 def poldrift(runs,mins,maxs,outfile=None):
     if len(runs)%2 == 1:
@@ -280,19 +300,84 @@ def echodiff(run,names,split,mins,maxs,outfile=None):
         plt.savefig(outfile)
         plt.clf()
 
+def two_flipper(runs, flipper1, flipper2, minmon, current, \
+                watch="2"):
+    
+    data = load(runs,current)
+    keys = data.keys()
+    values = [""]
+    base = basedir + "SESAME_%i/" % runs[-1]
+
+    for value in values:
+        if type(value) is not str:
+            value = normalize_name(value)
+        upup = [x for x in keys if x[flipper1] < 0 and x[flipper2] < 0 \
+                and x[choices[watch]]==current]
+        updown = [x for x in keys if x[flipper1] < 0 and x[flipper2] > 0 \
+                  and x[choices[watch]]==current]
+        downup = [x for x in keys if x[flipper1] > 0 and x[flipper2] < 0 \
+                  and x[choices[watch]]==current]
+        downdown = [x for x in keys if x[flipper1] > 0 and x[flipper2] > 0 \
+                    and x[choices[watch]]==current]
+        if filter is not None:
+            value = "" #Don't put values on files when we're only running a single export
+
+        if upup != []:
+            print "-------------- Up/Up state --------------"
+            Combiner.save(base+value+"upup_current=" + str(current),
+                          minmon,
+                          upup,
+                          data)
+        if updown != []:
+            print "-------------- Up/Down state --------------"
+            Combiner.save(base+value+"updown_current=" + str(current),
+                          minmon,
+                          updown,
+                          data)
+        if downup != []:
+            print "-------------- Down/Up state --------------"
+            Combiner.save(base+value+"downup_current=" + str(current),
+                          minmon,
+                          downup,
+                          data)
+        if downdown != []:
+            print "-------------- Down/Down state --------------"
+            Combiner.save(base+value+"downdown_current=" + str(current),
+                          minmon,
+                          downdown,
+                          data)
+            
+        if [upup,updown,downup,downdown]==[[],[],[],[]]:
+            print("No data to write")
+           
+    
+
 if __name__=='__main__':
 
     parser = OptionParser()
 
     choices = {None:None,"flipper":0,"guides":1,"phase":2,"sample":3,"1":4,"2":5,"3":6,"4":7,"5":8,"6":9,"7":10,"8":11}
 
-    parser.add_option("-e","--export",action="store_true",help="Export into pel files")
-    parser.add_option("--sortby",action="store",type="choice",help="Which power supply is scanned",
-                      choices=choices.keys())
-    parser.add_option("--filter",action="store",type="float",help="Focuses the export to only a single value in the sortby parameter")
-    parser.add_option("--flip",action="store",type="choice",help="Which power supply runs the flipper",
-                      choices=choices.keys(),default="guides")
-    parser.add_option("--mon",action="store",type="float",help="Minimum monitor value.  If the value is lessthan or equal to zero, all runs are included, regardless of monitor count.",default=8)
+    parser.add_option("-e","--export", type="choice", action="store", \
+                      help="Export into pel files",
+                      choices=["flip","twoflip"])
+    parser.add_option("--sortby",action="store",type="choice", \
+                       help = "Which power supply is scanned",
+                       choices=choices.keys())
+    parser.add_option("--filter",action="store",type="float", \
+                       help="Focuses the export to only a single \
+                       value in the sortby parameter")
+    parser.add_option("--flip",action="store",type="choice", \
+                       help="Which power supply runs the flipper",
+                       choices=choices.keys())
+    parser.add_option("--flip2",action="store",type="choice", \
+                       help="Which power supply runs the second flipper \
+                       in a two flipper run",
+                       choices=choices.keys())
+    parser.add_option("--mon",action="store",default=32,type="float", \
+                       help="Minimum monitor value.  If the value \
+                       is lessthan or equal to zero, all runs are \
+                       included, regardless of monitor count.")
 
     parser.add_option("--xmin",action="store",type="int",help="Minimum x value",default=0)
     parser.add_option("--ymin",action="store",type="int",help="Minimum y value",default=0)
@@ -314,6 +399,9 @@ if __name__=='__main__':
     parser.add_option("--current",action="store",type="int",
                       default=None,
                       help="A triangle current to filter the results.")
+    parser.add_option("--watch",action="store",type="choice", \
+                      choices=choices.keys(), \
+                      help="Which coil are we watching the current of (see --current)")
     parser.add_option("--complex",action="store_true",
                      help="Whether to load the run data from runlist.txt")
 
@@ -322,13 +410,17 @@ if __name__=='__main__':
     if options.complex:
         runs = list(np.loadtxt("runlist.txt"))
     else:
-        runs = range(int(runs[0]),int(runs[1]))
+        runs = range(int(runs[0]),int(runs[1])+1)
     if options.skip:
         for item in options.skip:
             runs.remove(item)
 
-    if options.export:
-        export(runs,choices[options.sortby],choices[options.flip],options.mon,options.current,options.filter)
+    if options.export=="flip":
+        export(runs, choices[options.sortby], choices[options.flip], \
+               options.mon, options.current, options.filter, options.watch)
+    if options.export=="twoflip":
+        two_flipper(runs, choices[options.flip], choices[options.flip2], \
+               options.mon, options.current, options.watch)
 
     if options.mask is not None:
         mask = np.ones((128,16),dtype=np.bool)
@@ -346,12 +438,14 @@ if __name__=='__main__':
             names = [""]
         else:
             count = round((options.stop-options.start)/options.step)+1
+            print(count)
             names = [str(x) 
                      for x in 
                      np.linspace(
                     options.start,
                     options.stop,
                     count)]
+            print(names)
             names = [name for name in names
                      if os.path.exists(basedir+"SESAME_%i/" % runs[-1] + 
                                        normalize_name(name)+
@@ -359,6 +453,7 @@ if __name__=='__main__':
                      and os.path.exists(basedir+"SESAME_%i/" % runs[-1] + 
                                         normalize_name(name)+
                                         "down_neutron_event.dat")]
+            print(names)
 
         if options.plot=="plot":
             print runs
@@ -367,9 +462,11 @@ if __name__=='__main__':
         elif options.plot=="fr":
             echofr(runs[-1],names,(options.xmin,options.ymin),(options.xmax,options.ymax),outfile=options.save,mask=mask)
         elif options.plot=="diff":
-            echodiff(runs[-1],names,187(options.xmin,options.ymin),(options.xmax,options.ymax),options.save)
+            echodiff(runs[-1],names,187(options.xmin,options.ymin), \
+                     (options.xmax,options.ymax),options.save)
         elif options.plot=="echo":
-            echoplot(runs[-1],names,(options.xmin,options.ymin),(options.xmax,options.ymax),outfile=options.save)
+            echoplot(runs[-1],names,(options.xmin,options.ymin), \
+                     (options.xmax,options.ymax),outfile=options.save)
         elif options.plot=="intensity":
             intensity(runs[-1],names,(options.xmin,options.ymin),(options.xmax,options.ymax),outfile=options.save)
         elif options.plot=="poldrift":

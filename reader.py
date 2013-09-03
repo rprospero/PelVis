@@ -23,7 +23,10 @@ def mapim(imarray):
     XDIMIM=16
     YDIMIM=128
     ZPAD=0
-    maparray=[2, 15, 1, 16, 4, 13, 3, 14, 6, 11, 5, 12, 8, 9, 7, 10]
+#    maparray=[2, 15, 1, 16, 4, 13, 3, 14, 6, 11, 5, 12, 8, 9, 7, 10]
+    maparray =[2, 1, 4, 3, 6, 5, 8, 7, 10, 9, 12, 11, 14, 13, 16, 15]
+#    maparray =[2, 1, 4, 3, 6, 15, 5, 16, 8, 7, 13, 14, 11, 12, 9, 10]
+#    maparray =[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]
     newimarray=np.zeros((YDIMIM+ZPAD,XDIMIM))
     for i in range(len(maparray)):
         ti=maparray[i]
