@@ -145,7 +145,7 @@ class SpectrumDialog(wx.Dialog):
                     u.append(utot/self.uscale)
                     d.append(dtot/self.dscale)
                 #choose x as the center of the binned data
-                    x.append((i-0.5*count)*0.1)
+                    x.append((i-0.5*count)*20.0/RESOLUTION)
                     i = 0
                     utot=0
                     dtot=0
@@ -161,7 +161,7 @@ class SpectrumDialog(wx.Dialog):
                  np.array_split(np.arange(0.0,RESOLUTION)*20.0/RESOLUTION,count)]
             u = [np.sum(y)/self.uscale for y in np.array_split(up,count)]
             d = [np.sum(y)/self.dscale for y in np.array_split(down,count)]
-            print((x,u,d))
+            #print((x,u,d))
             return (np.array(x),
                     np.array(u),
                     np.array(d))
@@ -190,7 +190,7 @@ class SpectrumDialog(wx.Dialog):
                 uerr = 1.0/np.sqrt(utot)
                 if uerr < emax:
                     u.append(utot/scale/(count+1))
-                    x.append((i-0.5*count)*0.1)
+                    x.append((i-0.5*count)*20.0/RESOLUTION)
                     count = 0
                     utot=0
                 else:
@@ -211,17 +211,20 @@ class SpectrumDialog(wx.Dialog):
             uerr = np.sqrt(u*self.uscale)/self.uscale
             derr = np.sqrt(d*self.dscale)/self.dscale
             e = y*np.sqrt((uerr/u)**2+(derr/d)**2)
+            #e = y * np.sqrt(1/(u + 1e-6)+1/(d + 1e-6))
             return (x,y,e)
 
     def polar(self):
         """Calculate the polarization"""
         if self.down is not None:
+            print "Polar Spectrum"
             (x,u,d)=self.autobinset()
-            print((x,u,d))
+            #print((x,u,d))
             y = (u-d)/(u+d)
             uerr = np.sqrt(u/self.uscale)
             derr = np.sqrt(d/self.dscale)
             e = 2*np.sqrt(u**2*derr**2+d**2*uerr**2)/(u+d)**2
+            #e = nerr/n*(1+abs(y))
             return (x,y,e)
 
     def spinUp(self):
