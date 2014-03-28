@@ -775,28 +775,7 @@
       def __init__(self,parent):
           """Create a PositionPanel"""
           <<position_panel_init>>
-      def set(self,x,y):
-          """Updates the position being examined"""
-          self.x.SetValue(str(x))
-          self.y.SetValue(str(y))
-          if self.data is None:
-              return
-          self.intensity.SetValue(str(self.data[y,x]))
-      def setData(self,data):
-          """Updates the data being examined"""
-          self.data=data
-      def setRange(self,minX,minY,maxX,maxY):
-          """Updates the region of interest for integration"""
-          self.minX = minX
-          self.minY = minY
-          self.maxX = maxX
-          self.maxY = maxY
-          self.updateIntegration()
-      def updateIntegration(self):
-          """Calculates the sum of the data over the region of interest"""
-          self.integrate.SetValue(
-              str(np.sum(self.data[self.minY:self.maxY,self.minX:self.maxX])))
-
+      <<position_panel_updating>>
 #+end_src
 
 **** Initialization of the PositionPanel
@@ -866,3 +845,54 @@ Finally, we need to do the standard GUI layout code.
           self.SetSizer(sizer)
           self.Layout()
 #+end_src
+
+**** Update position data
+
+     As implied by the name, the primary function of the position
+     panel is to provide the direct numbers for the value under the
+     user's cursor.  To do that, it must know where the mouse is.  The
+     =set= function takes the x and y position of the cursor and
+     updates the panel accordingly.
+
+#+Name:position_panel_updating
+#+begin_src python
+      def set(self,x,y):
+          """Updates the position being examined"""
+          self.x.SetValue(str(x))
+          self.y.SetValue(str(y))
+          if self.data is None:
+              return
+          self.intensity.SetValue(str(self.data[y,x]))
+#+end_src
+
+     Obviously, this is of no use if the panel doesn't know the
+     detector values.  The =setData= function provides a 2D array of
+     values for the Panel to report on.
+
+#+Name:position_panel_updating
+#+begin_src python
+      def setData(self,data):
+          """Updates the data being examined"""
+          self.data=data
+#+end_src
+
+     The remaining functions deal with the region of interest
+     integration.  The =setRange= function controls the region of
+     interest while the =updateIntegration= function handles
+     calculating 
+
+#+Name:position_panel_updating
+#+begin_src python
+      def setRange(self,minX,minY,maxX,maxY):
+          """Updates the region of interest for integration"""
+          self.minX = minX
+          self.minY = minY
+          self.maxX = maxX
+          self.maxY = maxY
+          self.updateIntegration()
+      def updateIntegration(self):
+          """Calculates the sum of the data over the region of interest"""
+          self.integrate.SetValue(
+              str(np.sum(self.data[self.minY:self.maxY,self.minX:self.maxX])))
+#+end_src
+
