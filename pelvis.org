@@ -1,0 +1,12 @@
+#+TITLE: PELVis: The PEL Visualizer
+#+AUTHOR: Adam Washington
+
+* Introduction
+
+  This docment is a [[http://www.literateprogramming.com/index.html][literate]] program for analyzing data collected on
+  the SESAME beamline. The document itself was written in
+  [[http://orgmode.org/][Org Mode]] while the majority of the source is intended to be run
+  through python.
+
+  If your primary goal is to simply use PELVis, then the
+  [[readme.org][user documentation]] would be the best place to start.
