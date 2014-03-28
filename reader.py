@@ -233,7 +233,8 @@ class PelFile:
 
                 Z = self.data[1::2] & 0xFFFF#position data
 
-                timearr = self.convertTime(np.asarray(self.data[0::2],dtype=np.float64))#time data
+                timearr = self.convertTime(np.asarray(self.data[0::2], \
+                                                      dtype=np.float64))#time data
                 timearr = np.asarray(np.floor(timearr),np.uint16)
                 
 		#Loop over 20 angstroms in steps of 0.1 angstroms
@@ -242,7 +243,8 @@ class PelFile:
 		for i in range(RESOLUTION):
 			place = np.where(timearr==i)
 			if len(place[0]) > 0:
-				temp,_ = np.histogram(Z[place],bins = np.arange(8*256+1))
+				temp,_ = np.histogram(Z[place],bins = \
+                                                      np.arange(8*256+1))
 				temp = temp.reshape(256,8,order="F")
 				cube[:,:,i] = mapim(temp)[::-1,:]
 			statusfunc(i*1000.0/RESOLUTION)
@@ -262,7 +264,8 @@ class PelFile:
                         timearr /= 10
 
 			#Get the spectrum and wavelengths
-                        (spec,lmbda) = np.histogram(timearr,bins=np.arange(2.0,50.0,0.1))
+                        (spec,lmbda) = np.histogram(timearr,bins = \
+                                                    np.arange(2.0,50.0,0.1))
                         hist = np.column_stack((lmbda[1:],spec))
                         for point in hist:
                                 of.write("%f %i\n" % (point[0],point[1]))
