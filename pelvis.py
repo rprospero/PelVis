@@ -25,6 +25,7 @@ from SpectrumDialog import SpectrumDialog
 from tempfile import TemporaryFile
 
 import math
+import time
 
 import numpy as np
 from matplotlib import pyplot as plt
@@ -48,7 +49,7 @@ class PositionPanel(wx.Panel):
         wx.Panel.__init__(self,parent)
         sizer=wx.GridBagSizer(3,2)
         sizer.Add(wx.StaticText(self,-1,"X:"),pos=wx.GBPosition(0,0))
-        self.x = wx.TextCtrl(self,-1,"")
+        self.x = wx.TextCtrl(self,-1,"")   
         sizer.Add(self.x,pos=wx.GBPosition(0,1))
         sizer.Add(wx.StaticText(self,-1,"Y:"),pos=wx.GBPosition(1,0))
         self.y = wx.TextCtrl(self,-1,"")
@@ -135,6 +136,7 @@ class PelvisOptionPanel(wx.Panel):
             
 
         self.SetAutoLayout(True)
+        self.specDlg = SpectrumDialog(self)
         sizer.SetSizeHints(self)
         self.SetSizer(sizer)
         self.Layout()
@@ -172,6 +174,11 @@ class PelvisOptionPanel(wx.Panel):
         except ValueError:
             vMax = None
         return (vMin,vMax)
+
+    def setIntensityRange(self,min,max):
+        self.options["intMin"].SetValue(str(min))
+        self.options["intMax"].SetValue(str(max))
+        self.specDlg.setIntensityRange((min,max))
 
     def getRoi(self):
         """Returns a 4-tuple with the region of interest
@@ -417,7 +424,9 @@ class PelvisFrame(wx.Frame):
             flatrun *= mon.time
             data -= flatrun
         spec = mon.spec
-        data /= np.sum(spec)
+        monsum = np.sum(spec)
+        print("Integrated monitor counts: " + str(monsum))
+        data /= monsum
         return (data,np.sum(mon.spec))
                 
 #    def getLambdaRange(self):
@@ -595,8 +604,8 @@ class PelvisFrame(wx.Frame):
             totd = np.sum(np.sum(d[yMin:yMax,xMin:xMax,:],axis=0),axis=0)
             #totd = np.atleast_3d(totd)
             totd /= area
-            print(totd.shape)
-            print(self.data.shape)
+            #print(totd.shape)
+            #print(self.data.shape)
             self.data -= totd
         self.updateData()
 
@@ -605,6 +614,12 @@ class PelvisFrame(wx.Frame):
         image is greater than vmin"""
         vMin,_ = self.opPanel.getIntensityRange()
         mask = self.flatdata > vMin
+        # (vMin,vMax) = self.opPanel.getIntensityRange()#
+        # (xMin,xMax,yMin,yMax) = self.opPanel.getRoi()#
+        # (lMin,lMax) = self.opPanel.getLambdaRange()#
+        # (lMin,lMax) = (lMin/10,lMax/10)#
+        # mask = [["xMin",xMin], ["xMax",xMax], ["yMin",yMin], ["yMax",yMax], \
+        #         ["lMin",lMin], ["lMax",lMax], ["vMin",vMin], ["vMax",vMax]]#
         dlg = wx.FileDialog(self,
                             "Where to save the mask file?",
                             wildcard="Numpy dump (npy)|*.npy|Text (dat)|*.dat",
@@ -623,15 +638,21 @@ class PelvisFrame(wx.Frame):
                             "Which Mask File?",
                             wildcard="Numpy dump (npy)|*.npy|Text (dat)|*.dat",
                             style=wx.FD_OPEN)
+        time.sleep(.1)
         if dlg.ShowModal()==wx.ID_OK:
             path = dlg.GetPath()
             ext = path[-4:]
             if ext == ".dat":
                 newmask = np.loadtxt(path,dtype=np.bool)
+                newmask=dict(newmask)#
             else:
                 newmask = np.load(path)
             self.mask = np.logical_and(self.mask,newmask)
-            self.update()
+            #self.opPanel.setPosMin(newmask["xMin"],newmask["yMin"])#
+            #self.opPanel.setPosMax(newmask["xMax"],newmask["yMax"])#
+            #self.opPanel.setLambdaRange(newmask["lMin"],newmask["lMax"])#
+            #self.opPanel.setIntensityRange(newmask["vMin"],newmask["vMax"])#
+            self.updateData()
         
         
 
