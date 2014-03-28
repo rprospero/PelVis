@@ -59,125 +59,7 @@
   RESOLUTION = 400
 
   <<position_panel>>
-  class PelvisOptionPanel(wx.Panel):
-      """A panel for user parameters
-  
-      The panel gets it's parameters and appearance from the built in
-      DEFAULTS variable.  This was designed to allow the easy addition
-      of more parameters in the future.
-  
-      """
-      #Each parameter is a tuple
-      #0 - variable name
-      #1 - position in list
-      #2 - label
-      #3 - default value
-      DEFAULTS = [("lambdaMax",0,"Maximum Wavelength","20"),
-                  ("lambdaMin",10,"Minimum Wavelength","0"),
-                  ("intMax",20,"Maximum Intensity",""),
-                  ("intMin",30,"Minimum Intensity",""),
-                  ("xMin",40,"Minimun X","0"),
-                  ("xMax",50,"Maximum X","16"),
-                  ("yMin",60,"Minimun Y","0"),
-                  ("yMax",70,"Maximum Y","128")]
-  
-      def __init__(self,parent):
-          """Creates a PelvisOptionPanel"""
-          wx.Panel.__init__(self,parent)
-          sizer=wx.BoxSizer(wx.VERTICAL)
-          
-          self.options={}#member which holds the created text controls
-  
-          self.DEFAULTS.sort(lambda x,y: x[1]-y[1])
-          for option in self.DEFAULTS:
-              (key,_,title,val) = option
-              sizer.Add(wx.StaticText(self,-1,title))
-              self.options[key] = wx.TextCtrl(self,-1,val)
-              sizer.Add(self.options[key])
-              
-  
-          self.SetAutoLayout(True)
-          self.specDlg = SpectrumDialog(self)
-          sizer.SetSizeHints(self)
-          self.SetSizer(sizer)
-          self.Layout()
-  
-      def getLambdaRange(self):
-          """Gives a tuple with the minimum and maximum wavelength indices"""
-          try:
-              lmin = int(float(self.options["lambdaMin"].GetValue())*10)
-          except ValueError:
-              lmin = 0
-          try:
-              lmax = int(float(self.options["lambdaMax"].GetValue())*10)
-          except ValueError:
-              lmax = RESOLUTION
-          return (lmin,lmax)
-  
-      def setLambdaRange(self,min,max):
-          """Set the minimum and maximum wavelengths"""
-          self.options["lambdaMin"].SetValue(str(min))
-          self.options["lambdaMax"].SetValue(str(max))
-  
-      def getIntensityRange(self):
-          """Return a tuple with the floor and ceilling for intensity
-  
-          If a value isn't specified, or is not a number, None is returned
-          for that part of the range.
-  
-          """
-          try:
-              vMin = float(self.options["intMin"].GetValue())
-          except ValueError:
-              vMin = None
-          try:
-              vMax = float(self.options["intMax"].GetValue())
-          except ValueError:
-              vMax = None
-          return (vMin,vMax)
-  
-      def setIntensityRange(self,min,max):
-          self.options["intMin"].SetValue(str(min))
-          self.options["intMax"].SetValue(str(max))
-          self.specDlg.setIntensityRange((min,max))
-  
-      def getRoi(self):
-          """Returns a 4-tuple with the region of interest
-  
-          Returns (xmin,xmax,ymin,ymax).  Minimum values, if
-          unspecified, are set to zero.  Maximum values, if
-          unspecified, are set to 512.
-  
-          """
-          try:
-              xMin = int(self.options["xMin"].GetValue())
-          except ValueError:
-              xMin = 0
-          try:
-              xMax = int(self.options["xMax"].GetValue())
-          except ValueError:
-              xMax = 512
-          try:
-              yMin = int(self.options["yMin"].GetValue())
-          except ValueError:
-              yMin = 0
-          try:
-              yMax = int(self.options["yMax"].GetValue())
-          except ValueError:
-              yMax = 512
-          return (xMin,xMax,yMin,yMax)
-  
-      def setPosMin(self,x,y):
-          """Takes the x and y coordinates for the NW corner of the ROI."""
-          self.options["xMin"].SetValue(str(x))
-          self.options["yMin"].SetValue(str(y))
-  
-      def setPosMax(self,x,y):
-          """Takes the x and y coordinates for the SE corner of the ROI."""
-          self.options["xMax"].SetValue(str(x))
-          self.options["yMax"].SetValue(str(y))
-  
-  
+  <<pelvis_option_panel>>
   class PelvisFrame(wx.Frame):
       """The main application window for PELvis"""
   
@@ -896,3 +778,220 @@ Finally, we need to do the standard GUI layout code.
               str(np.sum(self.data[self.minY:self.maxY,self.minX:self.maxX])))
 #+end_src
 
+
+*** Option Panel
+
+    The class PelvisOptionPanel creates a panel of labeled text boxes
+    for user entry.  This is used to control values such as the
+    wavelength range, region of interest, and intensity values.
+
+    As an experiment in software architecture, the class generates the
+    layout of the panel from a list of configurations.  Each list item
+    is a tuple of four values
+
+    | Position | 0           |                      1 | 2                    | 3             |
+    | Value    | Name        | Relative list position | Label                | Default Value |
+    | Type     | string      |                    int | string               | string        |
+    | Example  | "lambdaMax" |                     30 | "Maximum Wavelength" | "19.7"        |
+
+    The panel generates a set of text controls with the given labels
+    and default values.  The text controls are arranged from top to
+    bottom by the order of the relative list position from smallest to
+    largest.
+
+    The advantage to this setup is that adding new options onto the
+    panel is trivial.  Putting a new item into the list adds a new
+    option onto the panel.  The disadvantage is that the data is a
+    little more cumbersome to access as the values are not members of
+    the class.  This could be fixed with Python accessors and
+    properties, but I have not done so yet.  As this design decision
+    was made to ease life for future maintainers and, seeing as you're
+    reading this, you are the future maintainer, feel free to return
+    to hard coded values if you find it easier to handle.
+    
+#+name:pelvis_option_panel
+#+begin_src python :noweb yes
+  class PelvisOptionPanel(wx.Panel):
+      """A panel for user parameters
+  
+      The panel gets it's parameters and appearance from the built in
+      DEFAULTS variable.  This was designed to allow the easy addition
+      of more parameters in the future.
+  
+      """
+      #Each parameter is a tuple
+      #0 - variable name
+      #1 - position in list
+      #2 - label
+      #3 - default value
+      DEFAULTS = [("lambdaMax",0,"Maximum Wavelength","20"),
+                  ("lambdaMin",10,"Minimum Wavelength","0"),
+                  ("intMax",20,"Maximum Intensity",""),
+                  ("intMin",30,"Minimum Intensity",""),
+                  ("xMin",40,"Minimun X","0"),
+                  ("xMax",50,"Maximum X","16"),
+                  ("yMin",60,"Minimun Y","0"),
+                  ("yMax",70,"Maximum Y","128")]
+  
+      def __init__(self,parent):
+          """Creates a PelvisOptionPanel"""
+          <<pelvis_option_panel_init>>
+  
+      <<pelvis_option_panel_wavelength>>
+  
+      <<pelvis_option_panel_intensity>>
+  
+      <<pelvis_option_panel_roi>>
+  
+  
+#+end_src
+
+**** Initialization
+
+     We begin by initializing the superclass and creating a sizer for
+     the panel
+#+name:pelvis_option_panel_init
+#+begin_src python
+          wx.Panel.__init__(self,parent)
+          sizer=wx.BoxSizer(wx.VERTICAL)
+#+end_src   
+
+     We then create the text controls.  The controls are held in the
+     local dictionary =options=, which will need to be used every time
+     we want to access one of the values.
+#+name:pelvis_option_panel_init
+#+begin_src python
+          self.options={}#member which holds the created text controls
+  
+          self.DEFAULTS.sort(lambda x,y: x[1]-y[1])
+          for option in self.DEFAULTS:
+              (key,_,title,val) = option
+              sizer.Add(wx.StaticText(self,-1,title))
+              self.options[key] = wx.TextCtrl(self,-1,val)
+              sizer.Add(self.options[key])
+#+end_src
+
+     Finally, we perform the standard cleanup for a wxPanel
+  
+#+name:pelvis_option_panel_init
+#+begin_src python
+          self.SetAutoLayout(True)
+          self.specDlg = SpectrumDialog(self)
+          sizer.SetSizeHints(self)
+          self.SetSizer(sizer)
+          self.Layout()
+#+end_src
+
+**** Wavelength Range
+
+     When a set of parameters is added, it's useful to put in a
+     standard getter and setter.  The setters are fairly standard, but
+     the getter can be a little tricky, since the user might add a
+     non-standard value.  It's good to provide default values if the
+     user's input cannot be parsed.
+
+     Note that the code below is *wrong*.  It holds true while
+     the RESOLUTION is 200, which is the default case, but the
+     multiplication by ten should be replaced with a value dependent
+     on the current resolution.
+
+#+Name:pelvis_option_panel_wavelength
+#+begin_src python
+
+      def getLambdaRange(self):
+          """Gives a tuple with the minimum and maximum wavelength indices"""
+          try:
+              lmin = int(float(self.options["lambdaMin"].GetValue())*10)
+          except ValueError:
+              lmin = 0
+          try:
+              lmax = int(float(self.options["lambdaMax"].GetValue())*10)
+          except ValueError:
+              lmax = RESOLUTION
+          return (lmin,lmax)
+  
+      def setLambdaRange(self,min,max):
+          """Set the minimum and maximum wavelengths"""
+          self.options["lambdaMin"].SetValue(str(min))
+          self.options["lambdaMax"].SetValue(str(max))
+#+end_src
+
+**** Intensity Range
+
+     We create similar getters and setters for the minimum and maximum
+     intensity.  The values create bounds for both the 2D color plot
+     and the spectrum display.  They're also used as part of the mask
+     making routines.
+
+#+name:pelvis_option_panel_intensity
+#+begin_src python
+      def getIntensityRange(self):
+          """Return a tuple with the floor and ceilling for intensity
+  
+          If a value isn't specified, or is not a number, None is returned
+          for that part of the range.
+  
+          """
+          try:
+              vMin = float(self.options["intMin"].GetValue())
+          except ValueError:
+              vMin = None
+          try:
+              vMax = float(self.options["intMax"].GetValue())
+          except ValueError:
+              vMax = None
+          return (vMin,vMax)
+  
+      def setIntensityRange(self,min,max):
+          self.options["intMin"].SetValue(str(min))
+          self.options["intMax"].SetValue(str(max))
+          self.specDlg.setIntensityRange((min,max))
+
+#+end_src
+
+**** Region of Interest
+
+     Finally, we need getters and setters for our region of interest.
+     The getter works pretty much the same as the others, but the
+     setter has been split into two functions: one for the upper left
+     corner and another for the lower right.  This allows us to set
+     the region of interest with two mouse clicks.
+
+#+name:pelvis_option_panel_roi
+#+begin_src python
+      def getRoi(self):
+          """Returns a 4-tuple with the region of interest
+  
+          Returns (xmin,xmax,ymin,ymax).  Minimum values, if
+          unspecified, are set to zero.  Maximum values, if
+          unspecified, are set to 512.
+  
+          """
+          try:
+              xMin = int(self.options["xMin"].GetValue())
+          except ValueError:
+              xMin = 0
+          try:
+              xMax = int(self.options["xMax"].GetValue())
+          except ValueError:
+              xMax = 512
+          try:
+              yMin = int(self.options["yMin"].GetValue())
+          except ValueError:
+              yMin = 0
+          try:
+              yMax = int(self.options["yMax"].GetValue())
+          except ValueError:
+              yMax = 512
+          return (xMin,xMax,yMin,yMax)
+  
+      def setPosMin(self,x,y):
+          """Takes the x and y coordinates for the NW corner of the ROI."""
+          self.options["xMin"].SetValue(str(x))
+          self.options["yMin"].SetValue(str(y))
+  
+      def setPosMax(self,x,y):
+          """Takes the x and y coordinates for the SE corner of the ROI."""
+          self.options["xMax"].SetValue(str(x))
+          self.options["yMax"].SetValue(str(y))
+#+end_src
