@@ -60,6 +60,37 @@
 
   <<position_panel>>
   <<pelvis_option_panel>>
+  <<pelvis_frame>>
+  if __name__=="__main__":
+      app=wx.PySimpleApp()
+      pelvisframe = PelvisFrame(app.Yield)
+      app.MainLoop()
+  
+#+end_src
+
+** GUI Controls
+
+   We're using [[https://www.wxwidgets.org/][wxWidgets]] as our GUI toolkit through the [[www.wxpython.org][wxPython]]
+   binding library.  wxWidgets was chosen as it is cross platform and
+   provided a more complete toolkit than the default Tk toolkit that
+   comes with Python.  The largest disadvantage to this decision is
+   that wxPython has not yet been officially ported to Python 3.
+
+*** Pelvis Frame
+
+    The Pelvis Frame is the main UI for the application.
+    Unfortunately, it also contains a large amount of application
+    logic, which should be extracted out into its own class.  That
+    would certainly make working on the Reduction programs easier.
+    If you're looking for a good improvement to make to the code.
+    This would be it.
+
+    The class starts off with a large number of constant definitions.
+    These constants are identifiers for menu commands, which are
+    needed for the wxWidget menu system.
+
+#+name:pelvis_frame
+#+begin_src python
   class PelvisFrame(wx.Frame):
       """The main application window for PELvis"""
   
@@ -89,120 +120,7 @@
       ID_COPY = 500
   
       def __init__(self,Yield):
-          """Create a PELvis frame
-  
-          Keyword arguments:
-          Yield -- A function to give control back to the main event loop
-  
-          """
-          wx.Frame.__init__(self,None,wx.ID_ANY,"PEL Visualizer")
-          self.data = PelFile()
-          self.Yield = Yield
-          self.mask = np.ones((128,16),dtype=np.bool)
-  
-          #Create items in the frame
-          self.yPanel = GraphPanel(self,(2,8),64,GraphPanel.VERTICAL)
-          self.xPanel = GraphPanel(self,(8,2),64,GraphPanel.INVERTED)
-          self.colorbar = ColorBarPanel(self,cm.jet)
-          self.opPanel = PelvisOptionPanel(self)
-          self.posPanel = PositionPanel(self)
-          self.imPanel = ImagePanel(self,self.posPanel.set,
-                                    self.opPanel.setPosMin,self.opPanel.setPosMax)
-          self.specDlg = SpectrumDialog(self)
-  
-          self.cmp = None #color map
-          self.imageSaveDialog=wx.FileDialog(self,"Choose graphics file",wildcard="Portable Network Graphic (png)|*.PNG|Windows Bitmap (bmp)|*.BMP|Joint Photographic Experts Group (jpg)|*.JPG|Portable Network Monocrome (pnm)|*.PNM|Tagged Image File Format (tif)|*.TIF|Archaic, useless format (pcx)|*.PCX",style=wx.FD_SAVE|wx.FD_OVERWRITE_PROMPT)
-  
-          self.update = self.updateSingle#update the image
-          self.updateData = self.updateSingleData#update the data in the image
-  
-          #Create the menu
-          menubar = wx.MenuBar()
-          filemenu = wx.Menu()
-          editmenu = wx.Menu()
-          scalemenu = wx.Menu()
-          analysismenu = wx.Menu()
-          noisemenu = wx.Menu()
-  
-          #populate the menu
-          filemenu.Append(self.ID_OPEN,"&Open\tCtrl-O"," Open a PEL file")
-          filemenu.Append(self.ID_OPENTWO,"&Polarized Set"," Open two PEL files")
-          filemenu.Append(self.ID_SAVE,"&Save\tCtrl-S"," Save an image file")
-          filemenu.Append(self.ID_SPECTRUM,"Spectrum"," View the TOF spectrum")
-          filemenu.Append(self.ID_IMAGE_ARRAY,"&Export Images..."," Save a series of TOF snapshots")
-          filemenu.Append(self.ID_EXIT,"&Quit\tCtrl-Q"," Quit")
-  
-          editmenu.Append(self.ID_COPY,"&Copy\tCtrl-c","Copy the current image to the clipboard")
-  
-          scalemenu.Append(self.ID_GREY,"Greyscale\tCtrl-G","Monochrome images")
-          scalemenu.Append(self.ID_HUEVAL,"Hue and Value\tCtrl-H","Scaled Rainbow Images")
-          scalemenu.Append(self.ID_SPECTRAL,"spectral","Uses spectrum of light")
-          scalemenu.Append(self.ID_PICKER,"Map Picker..."," Select from the full list of colormaps")
-  
-          analysismenu.Append(self.ID_POLAR,"Check Polarization\tCtrl-P","2d plot of polarization data")
-          analysismenu.Append(self.ID_FLIPPING,"Check Flipping Ratio\tCtrl-F","2d plot of  spin up over spin down")
-          analysismenu.Append(self.ID_SPIN_UP,"View Spin Up State\tCtrl-U","2d plot of  spin up")
-          analysismenu.Append(self.ID_SPIN_DOWN,"View Spin Down State\tCtrl-D","2d plot of  spin down")
-  
-          noisemenu.Append(self.ID_FLAT,"&Load Flat"," Load a blank run for background subtraction")
-          noisemenu.Append(self.ID_FAKEFLAT,"Si&mulate Flat"," Drop out background within the same image")
-          noisemenu.Append(self.ID_ROD,"Region of &Disinterest"," Drop out background within the same image")
-          noisemenu.Append(self.ID_EXPORT_ROI,"Export ROI"," Export a binary file corresponding to where the data is above the minimum intensity.")
-          noisemenu.Append(self.ID_IMPORT_ROI,"Import ROI"," Add another exclusion mask.")
-  
-  
-          #Bind events to the menu
-          self.Connect(self.ID_EXIT,-1,wx.wxEVT_COMMAND_MENU_SELECTED,self.OnExit)
-          self.Connect(self.ID_OPEN,-1,wx.wxEVT_COMMAND_MENU_SELECTED,self.OnOpen)
-          self.Connect(self.ID_OPENTWO,-1,wx.wxEVT_COMMAND_MENU_SELECTED,self.OnOpenSet)
-          self.Connect(self.ID_SAVE,-1,wx.wxEVT_COMMAND_MENU_SELECTED,self.OnSave)
-          self.Connect(self.ID_SPECTRUM,-1,wx.wxEVT_COMMAND_MENU_SELECTED,self.OnSpectrum)
-          self.Connect(self.ID_IMAGE_ARRAY,-1,wx.wxEVT_COMMAND_MENU_SELECTED,self.OnImageArray)
-          self.Connect(self.ID_GREY,-1,wx.wxEVT_COMMAND_MENU_SELECTED,self.OnGrey)
-          self.Connect(self.ID_HUEVAL,-1,wx.wxEVT_COMMAND_MENU_SELECTED,self.OnHueVal)
-          self.Connect(self.ID_SPECTRAL,-1,wx.wxEVT_COMMAND_MENU_SELECTED,self.OnSpectral)
-          self.Connect(self.ID_PICKER,-1,wx.wxEVT_COMMAND_MENU_SELECTED,self.OnPicker)
-          self.Connect(self.ID_POLAR,-1,wx.wxEVT_COMMAND_MENU_SELECTED,self.OnPolar)
-          self.Connect(self.ID_FLIPPING,-1,wx.wxEVT_COMMAND_MENU_SELECTED,self.OnFlipping)
-          self.Connect(self.ID_SPIN_UP,-1,wx.wxEVT_COMMAND_MENU_SELECTED,self.OnAnalysisSpinUp)
-          self.Connect(self.ID_SPIN_DOWN,-1,wx.wxEVT_COMMAND_MENU_SELECTED,self.OnAnalysisSpinDown)
-  
-          self.Connect(self.ID_FLAT,-1,wx.wxEVT_COMMAND_MENU_SELECTED,self.OnFlat)
-          self.Connect(self.ID_FAKEFLAT,-1,wx.wxEVT_COMMAND_MENU_SELECTED,self.OnFakeFlat)
-          self.Connect(self.ID_ROD,-1,wx.wxEVT_COMMAND_MENU_SELECTED,self.OnROD)
-          self.Connect(self.ID_EXPORT_ROI,-1,wx.wxEVT_COMMAND_MENU_SELECTED,self.OnExportROI)
-          self.Connect(self.ID_IMPORT_ROI,-1,wx.wxEVT_COMMAND_MENU_SELECTED,self.OnImportROI)
-          self.Connect(self.ID_COPY,-1,wx.wxEVT_COMMAND_MENU_SELECTED,self.OnCopy)
-  
-          menubar.Append(filemenu,"&File")
-          menubar.Append(editmenu,"&Edit")
-          menubar.Append(scalemenu,"&Color")
-          menubar.Append(analysismenu,"&Analysis")
-          menubar.Append(noisemenu,"&Noise")
-          self.SetMenuBar(menubar)
-  
-          #arrange window
-          sizer = wx.GridBagSizer()
-          sizer.Add(self.colorbar,pos=wx.GBPosition(0,9),span=wx.GBSpan(9,1))
-          sizer.Add(self.imPanel,pos=wx.GBPosition(0,1),span=wx.GBSpan(8,8))
-          sizer.Add(self.yPanel,pos=wx.GBPosition(0,0),span=wx.GBSpan(8,1))
-          sizer.Add(self.xPanel,pos=wx.GBPosition(8,1),span=wx.GBSpan(1,8))
-          sizer.Add(self.opPanel,pos=wx.GBPosition(0,10),span=wx.GBSpan(8,1),flag=wx.EXPAND)
-          sizer.Add(self.posPanel,pos=wx.GBPosition(8,0),flag=wx.EXPAND)
-          self.progress = wx.Gauge(self,range=1000)
-          sizer.Add(self.progress,pos=wx.GBPosition(9,0),span=wx.GBSpan(1,11),flag=wx.EXPAND)
-  
-          updateButton = wx.Button(self,-1,"Update")
-          updateButton.Bind(wx.EVT_BUTTON,self.OnUpdateButton)
-          sizer.Add(updateButton,flag=wx.EXPAND,pos=wx.GBPosition(8,10))
-  
-          self.data = self.makePel()
-          self.flatrun = None#background data
-          
-          sizer.SetSizeHints(self)
-          self.SetSizer(sizer)
-          self.Show(True)
-  
+          <<pelvis_frame_init>>
       def makePel(self):
           """Create a blank Pel object for loading detector data"""
           data = PelFile()
@@ -617,21 +535,129 @@
                   
   
   
-  if __name__=="__main__":
-      app=wx.PySimpleApp()
-      pelvisframe = PelvisFrame(app.Yield)
-      app.MainLoop()
   
 #+end_src
 
-** GUI Controls
+**** Initialization
 
-   We're using [[https://www.wxwidgets.org/][wxWidgets]] as our GUI toolkit through the [[www.wxpython.org][wxPython]]
-   binding library.  wxWidgets was chosen as it is cross platform and
-   provided a more complete toolkit than the default Tk toolkit that
-   comes with Python.  The largest disadvantage to this decision is
-   that wxPython has not yet been officially ported to Python 3.
-   
+#+name:pelvis_frame_init
+#+begin_src python
+          """Create a PELvis frame
+  
+          Keyword arguments:
+          Yield -- A function to give control back to the main event loop
+  
+          """
+          wx.Frame.__init__(self,None,wx.ID_ANY,"PEL Visualizer")
+          self.data = PelFile()
+          self.Yield = Yield
+          self.mask = np.ones((128,16),dtype=np.bool)
+  
+          #Create items in the frame
+          self.yPanel = GraphPanel(self,(2,8),64,GraphPanel.VERTICAL)
+          self.xPanel = GraphPanel(self,(8,2),64,GraphPanel.INVERTED)
+          self.colorbar = ColorBarPanel(self,cm.jet)
+          self.opPanel = PelvisOptionPanel(self)
+          self.posPanel = PositionPanel(self)
+          self.imPanel = ImagePanel(self,self.posPanel.set,
+                                    self.opPanel.setPosMin,self.opPanel.setPosMax)
+          self.specDlg = SpectrumDialog(self)
+  
+          self.cmp = None #color map
+          self.imageSaveDialog=wx.FileDialog(self,"Choose graphics file",wildcard="Portable Network Graphic (png)|*.PNG|Windows Bitmap (bmp)|*.BMP|Joint Photographic Experts Group (jpg)|*.JPG|Portable Network Monocrome (pnm)|*.PNM|Tagged Image File Format (tif)|*.TIF|Archaic, useless format (pcx)|*.PCX",style=wx.FD_SAVE|wx.FD_OVERWRITE_PROMPT)
+  
+          self.update = self.updateSingle#update the image
+          self.updateData = self.updateSingleData#update the data in the image
+  
+          #Create the menu
+          menubar = wx.MenuBar()
+          filemenu = wx.Menu()
+          editmenu = wx.Menu()
+          scalemenu = wx.Menu()
+          analysismenu = wx.Menu()
+          noisemenu = wx.Menu()
+  
+          #populate the menu
+          filemenu.Append(self.ID_OPEN,"&Open\tCtrl-O"," Open a PEL file")
+          filemenu.Append(self.ID_OPENTWO,"&Polarized Set"," Open two PEL files")
+          filemenu.Append(self.ID_SAVE,"&Save\tCtrl-S"," Save an image file")
+          filemenu.Append(self.ID_SPECTRUM,"Spectrum"," View the TOF spectrum")
+          filemenu.Append(self.ID_IMAGE_ARRAY,"&Export Images..."," Save a series of TOF snapshots")
+          filemenu.Append(self.ID_EXIT,"&Quit\tCtrl-Q"," Quit")
+  
+          editmenu.Append(self.ID_COPY,"&Copy\tCtrl-c","Copy the current image to the clipboard")
+  
+          scalemenu.Append(self.ID_GREY,"Greyscale\tCtrl-G","Monochrome images")
+          scalemenu.Append(self.ID_HUEVAL,"Hue and Value\tCtrl-H","Scaled Rainbow Images")
+          scalemenu.Append(self.ID_SPECTRAL,"spectral","Uses spectrum of light")
+          scalemenu.Append(self.ID_PICKER,"Map Picker..."," Select from the full list of colormaps")
+  
+          analysismenu.Append(self.ID_POLAR,"Check Polarization\tCtrl-P","2d plot of polarization data")
+          analysismenu.Append(self.ID_FLIPPING,"Check Flipping Ratio\tCtrl-F","2d plot of  spin up over spin down")
+          analysismenu.Append(self.ID_SPIN_UP,"View Spin Up State\tCtrl-U","2d plot of  spin up")
+          analysismenu.Append(self.ID_SPIN_DOWN,"View Spin Down State\tCtrl-D","2d plot of  spin down")
+  
+          noisemenu.Append(self.ID_FLAT,"&Load Flat"," Load a blank run for background subtraction")
+          noisemenu.Append(self.ID_FAKEFLAT,"Si&mulate Flat"," Drop out background within the same image")
+          noisemenu.Append(self.ID_ROD,"Region of &Disinterest"," Drop out background within the same image")
+          noisemenu.Append(self.ID_EXPORT_ROI,"Export ROI"," Export a binary file corresponding to where the data is above the minimum intensity.")
+          noisemenu.Append(self.ID_IMPORT_ROI,"Import ROI"," Add another exclusion mask.")
+  
+  
+          #Bind events to the menu
+          self.Connect(self.ID_EXIT,-1,wx.wxEVT_COMMAND_MENU_SELECTED,self.OnExit)
+          self.Connect(self.ID_OPEN,-1,wx.wxEVT_COMMAND_MENU_SELECTED,self.OnOpen)
+          self.Connect(self.ID_OPENTWO,-1,wx.wxEVT_COMMAND_MENU_SELECTED,self.OnOpenSet)
+          self.Connect(self.ID_SAVE,-1,wx.wxEVT_COMMAND_MENU_SELECTED,self.OnSave)
+          self.Connect(self.ID_SPECTRUM,-1,wx.wxEVT_COMMAND_MENU_SELECTED,self.OnSpectrum)
+          self.Connect(self.ID_IMAGE_ARRAY,-1,wx.wxEVT_COMMAND_MENU_SELECTED,self.OnImageArray)
+          self.Connect(self.ID_GREY,-1,wx.wxEVT_COMMAND_MENU_SELECTED,self.OnGrey)
+          self.Connect(self.ID_HUEVAL,-1,wx.wxEVT_COMMAND_MENU_SELECTED,self.OnHueVal)
+          self.Connect(self.ID_SPECTRAL,-1,wx.wxEVT_COMMAND_MENU_SELECTED,self.OnSpectral)
+          self.Connect(self.ID_PICKER,-1,wx.wxEVT_COMMAND_MENU_SELECTED,self.OnPicker)
+          self.Connect(self.ID_POLAR,-1,wx.wxEVT_COMMAND_MENU_SELECTED,self.OnPolar)
+          self.Connect(self.ID_FLIPPING,-1,wx.wxEVT_COMMAND_MENU_SELECTED,self.OnFlipping)
+          self.Connect(self.ID_SPIN_UP,-1,wx.wxEVT_COMMAND_MENU_SELECTED,self.OnAnalysisSpinUp)
+          self.Connect(self.ID_SPIN_DOWN,-1,wx.wxEVT_COMMAND_MENU_SELECTED,self.OnAnalysisSpinDown)
+  
+          self.Connect(self.ID_FLAT,-1,wx.wxEVT_COMMAND_MENU_SELECTED,self.OnFlat)
+          self.Connect(self.ID_FAKEFLAT,-1,wx.wxEVT_COMMAND_MENU_SELECTED,self.OnFakeFlat)
+          self.Connect(self.ID_ROD,-1,wx.wxEVT_COMMAND_MENU_SELECTED,self.OnROD)
+          self.Connect(self.ID_EXPORT_ROI,-1,wx.wxEVT_COMMAND_MENU_SELECTED,self.OnExportROI)
+          self.Connect(self.ID_IMPORT_ROI,-1,wx.wxEVT_COMMAND_MENU_SELECTED,self.OnImportROI)
+          self.Connect(self.ID_COPY,-1,wx.wxEVT_COMMAND_MENU_SELECTED,self.OnCopy)
+  
+          menubar.Append(filemenu,"&File")
+          menubar.Append(editmenu,"&Edit")
+          menubar.Append(scalemenu,"&Color")
+          menubar.Append(analysismenu,"&Analysis")
+          menubar.Append(noisemenu,"&Noise")
+          self.SetMenuBar(menubar)
+  
+          #arrange window
+          sizer = wx.GridBagSizer()
+          sizer.Add(self.colorbar,pos=wx.GBPosition(0,9),span=wx.GBSpan(9,1))
+          sizer.Add(self.imPanel,pos=wx.GBPosition(0,1),span=wx.GBSpan(8,8))
+          sizer.Add(self.yPanel,pos=wx.GBPosition(0,0),span=wx.GBSpan(8,1))
+          sizer.Add(self.xPanel,pos=wx.GBPosition(8,1),span=wx.GBSpan(1,8))
+          sizer.Add(self.opPanel,pos=wx.GBPosition(0,10),span=wx.GBSpan(8,1),flag=wx.EXPAND)
+          sizer.Add(self.posPanel,pos=wx.GBPosition(8,0),flag=wx.EXPAND)
+          self.progress = wx.Gauge(self,range=1000)
+          sizer.Add(self.progress,pos=wx.GBPosition(9,0),span=wx.GBSpan(1,11),flag=wx.EXPAND)
+  
+          updateButton = wx.Button(self,-1,"Update")
+          updateButton.Bind(wx.EVT_BUTTON,self.OnUpdateButton)
+          sizer.Add(updateButton,flag=wx.EXPAND,pos=wx.GBPosition(8,10))
+  
+          self.data = self.makePel()
+          self.flatrun = None#background data
+          
+          sizer.SetSizeHints(self)
+          self.SetSizer(sizer)
+          self.Show(True)
+#+end_src
+
+     
 
 *** Position Panel
 
@@ -995,3 +1021,5 @@ Finally, we need to do the standard GUI layout code.
           self.options["xMax"].SetValue(str(x))
           self.options["yMax"].SetValue(str(y))
 #+end_src
+
+#  LocalWords:  wxWidget
