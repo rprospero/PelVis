@@ -24,7 +24,7 @@ class ColorBarPanel(wx.Panel):
     """Panel to display a ColorBar in a wxWidgets container."""
     def __init__(self,parent,cmap,fig=(1,10),
                  res=64,orientation='vertical',
-                 size=[0,0.025,0.6,0.95]):
+                 size=[0.05,0.025,.25,0.95]):
         """Creates a ColorBarPanel.
 
         Keyword arguments:
