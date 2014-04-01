@@ -540,6 +540,16 @@
 
 **** Initialization
 
+     The frame is created with a single parameter: =Yield=.  This points
+     to a function which allows Pelvis to temporarily return control
+     back to the GUI.  This is necessary to amintain responsiveness
+     of the user interface while performing long calculations
+     (e.g. loading a file).
+
+     We start by creating a wxFrame.  We also set the initial data to
+     an empty file, store the =Yield= command, and create a default
+     data mask that accepts all pixels.
+
 #+name:pelvis_frame_init
 #+begin_src python
           """Create a PELvis frame
@@ -552,7 +562,23 @@
           self.data = PelFile()
           self.Yield = Yield
           self.mask = np.ones((128,16),dtype=np.bool)
-  
+#+end_src
+
+
+     Now we can create the actual components of the GUI.  The =xPanel=
+     and =yPanel= are [[GraphPanel][graphs]] which display the integrated intensity
+     along an axis.  =imPanel= displays the actual, 2D detector [[ImagePanel][image]].
+     =colorbar= gives the current scale of the color scheme on the
+     imPanel.  =opPanel= is a generic [[Pelvis Option Panel][panel]] for the user to input data
+     about the current region of interest.  =posPanel= displays
+     position information to the user.  =cmp= stores the current color
+     map for use on the =imPanel=. =specDlg= is a [[SpectrumDialog][dialog box]]
+     which handles displaying and saving wavelength spectrums.
+     Finally, =imageSaveDialog= is a custom file saving dialog for
+     handling saving the current detector image to a file.
+
+#+name:pelvis_frame_init
+#+begin_src python  
           #Create items in the frame
           self.yPanel = GraphPanel(self,(2,8),64,GraphPanel.VERTICAL)
           self.xPanel = GraphPanel(self,(8,2),64,GraphPanel.INVERTED)
@@ -565,9 +591,36 @@
   
           self.cmp = None #color map
           self.imageSaveDialog=wx.FileDialog(self,"Choose graphics file",wildcard="Portable Network Graphic (png)|*.PNG|Windows Bitmap (bmp)|*.BMP|Joint Photographic Experts Group (jpg)|*.JPG|Portable Network Monocrome (pnm)|*.PNM|Tagged Image File Format (tif)|*.TIF|Archaic, useless format (pcx)|*.PCX",style=wx.FD_SAVE|wx.FD_OVERWRITE_PROMPT)
+#+end_src
+
+     The Pelvis Frame class has two dynamic member functions.  The
+     first is =update=, which is responsible for setting the image in
+     the image panel.  The function assumes that the 3D array of data
+     that has been displayed hasn't changed, but that some of the
+     parameters for the display (e.g. wavelength range, intensity
+     caps) may have changed.  The other member function, =updateData=,
+     is used whenever the underlying 3D array may have changed.
+
+#+name:pelvis_frame_init
+#+begin_src python  
   
           self.update = self.updateSingle#update the image
           self.updateData = self.updateSingleData#update the data in the image
+#+end_src
+
+     Below is the creation and layout of the menu for the PELVis
+     application.  To add an entry to a menu, we need to append both a
+     message code (e.g. =ID_EXIT=) and a title.  If the title contains
+     a tab character, a hotkey can follow that tab character to allow
+     for a more keyboard oriented interaction with the program.
+     Additionally, if there is an ampersand in front of a character,
+     then that character will serve as the hotkey for that command
+     when accessing the menu through the keyboard.  The =Append=
+     function will also accept tooltext for the menu, but the current
+     version of wxpython seems to be ignoring it.
+
+#+name:pelvis_frame_init
+#+begin_src python  
   
           #Create the menu
           menubar = wx.MenuBar()
@@ -602,6 +655,16 @@
           noisemenu.Append(self.ID_ROD,"Region of &Disinterest"," Drop out background within the same image")
           noisemenu.Append(self.ID_EXPORT_ROI,"Export ROI"," Export a binary file corresponding to where the data is above the minimum intensity.")
           noisemenu.Append(self.ID_IMPORT_ROI,"Import ROI"," Add another exclusion mask.")
+#+end_src
+
+     Each menu item needs to be bound to a function.  This is
+     performed by connecting the menu signal (e.g. =ID_EXIT=) to the
+     corresponding function (e.g. =OnExit=).  There's probably a
+     better way of doing this through some config file, but that will
+     be left as an exercise to the reader.
+
+#+name:pelvis_frame_init
+#+begin_src python  
   
   
           #Bind events to the menu
@@ -626,6 +689,16 @@
           self.Connect(self.ID_EXPORT_ROI,-1,wx.wxEVT_COMMAND_MENU_SELECTED,self.OnExportROI)
           self.Connect(self.ID_IMPORT_ROI,-1,wx.wxEVT_COMMAND_MENU_SELECTED,self.OnImportROI)
           self.Connect(self.ID_COPY,-1,wx.wxEVT_COMMAND_MENU_SELECTED,self.OnCopy)
+#+end_src
+
+     We can now add the menus into the menubar and assign that menubar
+     to the application.  Adding an ampersand into the title of a
+     menu assigns an Alt hotkey to that menu (e.g. pressing Alt+F
+     will open the =&File= menu).
+
+#+name:pelvis_frame_init
+#+begin_src python  
+
   
           menubar.Append(filemenu,"&File")
           menubar.Append(editmenu,"&Edit")
@@ -633,6 +706,14 @@
           menubar.Append(analysismenu,"&Analysis")
           menubar.Append(noisemenu,"&Noise")
           self.SetMenuBar(menubar)
+#+end_src
+
+     We can now add all of the GUI components to the window.  A
+     progress bar is added to the bottom of the window to give
+     feedback on the loading of files.
+
+#+name:pelvis_frame_init
+#+begin_src python  
   
           #arrange window
           sizer = wx.GridBagSizer()
@@ -644,10 +725,25 @@
           sizer.Add(self.posPanel,pos=wx.GBPosition(8,0),flag=wx.EXPAND)
           self.progress = wx.Gauge(self,range=1000)
           sizer.Add(self.progress,pos=wx.GBPosition(9,0),span=wx.GBSpan(1,11),flag=wx.EXPAND)
+#+end_src
+
+     A button to force the image display to update is added and bound
+     to the [[OnUpdateButton]] function.
+
+#+name:pelvis_frame_init
+#+begin_src python  
   
           updateButton = wx.Button(self,-1,"Update")
           updateButton.Bind(wx.EVT_BUTTON,self.OnUpdateButton)
           sizer.Add(updateButton,flag=wx.EXPAND,pos=wx.GBPosition(8,10))
+#+end_src
+
+     All that remains is some final cleanup.  The data is set to an
+     empty file, the background is set to empty, as the window
+     undergoes stanard intialization.
+
+#+name:pelvis_frame_init
+#+begin_src python  
   
           self.data = self.makePel()
           self.flatrun = None#background data
@@ -1023,3 +1119,6 @@ Finally, we need to do the standard GUI layout code.
 #+end_src
 
 #  LocalWords:  wxWidget
+
+
+*** GraphPanel
