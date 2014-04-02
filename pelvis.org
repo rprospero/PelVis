@@ -387,6 +387,35 @@
 
 **** Handling Pel Files
 
+     There's a large amount of references to Pel files in this
+     section, which might be confusing, since you will almost never
+     encounter an actual Pel file.  The PELVis program was originally
+     written to view neutron data comes of off the PAPA detector.  The
+     data off of the PAPA was saved in a binary format called the PAPA
+     Electronic Log, or PEL for short.  
+
+     The software which came with the detector was written in
+     Labview 5.  [[http://ni.com/labview][Labview]] files are stored in a proprietary format
+     which can only be read by Labview itself.  Modern versions of
+     Labview are not backwards compatible enough to read Labview 5
+     code.  Versions of Labview old enough to read the code are
+     generally unavailable and difficult to install on modern
+     operating systems.  Thus, while the vendor's supplied code could
+     open the files, we could not extended it to perform the sorts of
+     calulcations that we would like.  Thus, it was necessary to write
+     a new program from scratch to read these files.  This is that
+     application.
+
+     Once we obtained the Helium-3 detector, we replaced the PAPA
+     detector, as the PAPA had terrible noise issues.  However, PELVis
+     had grown to the point where the reading of the data file was
+     only a small part of the functionality.  By changing the [[reader]]
+     code to handle the SNS file format (which was quite similar to
+     the Pel format), we were able to continue using the same suite.
+
+     The =makePel= function creates a blank neutron run.  It's just a
+     default for when the user hasn't loaded any data yet.
+
 #+name: pelvis_handle_pels
 #+begin_src python
   def makePel(self):
@@ -397,7 +426,14 @@
           self.Yield()
       data.statusfunc = statusfunc
       return data
-  
+#+end_src
+
+     The =loadPel= command reads in a neutron data file.  It takes as
+     a single parameter a message to display to the user about what
+     sort of file should be loaded.
+
+#+name: pelvis_handle_pels
+#+begin_src python  
   def loadPel(self,message):
       """Load a .pel file and its monitor data.
       
