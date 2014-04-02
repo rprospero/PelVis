@@ -149,135 +149,7 @@
   
       <<pelvis_flat_files>>
   
-      #Subtract out the region of disinterest
-      def OnROD(self,event):
-          """Take the region of interest as background noise"""
-          (xMin,xMax,yMin,yMax)=self.opPanel.getRoi()
-          area = (yMax-yMin)*(xMax-xMin)
-          if type(self.data) is tuple:
-              u,d=self.data
-              del self.data
-              totu = np.sum(np.sum(u[yMin:yMax,xMin:xMax,:],axis=0),axis=0)
-              totd = np.sum(np.sum(d[yMin:yMax,xMin:xMax,:],axis=0),axis=0)
-              totu /= area
-              totd /= area
-              u -= totu
-              d -= totd
-              self.data=(u,d)
-          else:
-              d=self.data
-              totd = np.sum(np.sum(d[yMin:yMax,xMin:xMax,:],axis=0),axis=0)
-              #totd = np.atleast_3d(totd)
-              totd /= area
-              #print(totd.shape)
-              #print(self.data.shape)
-              self.data -= totd
-          self.updateData()
-  
-      def OnExportROI(self,event):
-          """Save a file containing a map of where the current data
-          image is greater than vmin"""
-          vMin,_ = self.opPanel.getIntensityRange()
-          mask = self.flatdata > vMin
-          # (vMin,vMax) = self.opPanel.getIntensityRange()#
-          # (xMin,xMax,yMin,yMax) = self.opPanel.getRoi()#
-          # (lMin,lMax) = self.opPanel.getLambdaRange()#
-          # (lMin,lMax) = (lMin/10,lMax/10)#
-          # mask = [["xMin",xMin], ["xMax",xMax], ["yMin",yMin], ["yMax",yMax], \
-          #         ["lMin",lMin], ["lMax",lMax], ["vMin",vMin], ["vMax",vMax]]#
-          dlg = wx.FileDialog(self,
-                              "Where to save the mask file?",
-                              wildcard="Numpy dump (npy)|*.npy|Text (dat)|*.dat",
-                              style=wx.FD_SAVE|wx.FD_OVERWRITE_PROMPT)
-          if dlg.ShowModal()==wx.ID_OK:
-              path=dlg.GetPath()
-              ext = path[-4:]
-              if ext == ".dat":
-                  np.savetxt(path,mask,fmt="%d")
-              else:
-                  np.save(path,mask)
-  
-      def OnImportROI(self,event):
-          """Adds another mask to the current system mask"""
-          dlg = wx.FileDialog(self,
-                              "Which Mask File?",
-                              wildcard="Numpy dump (npy)|*.npy|Text (dat)|*.dat",
-                              style=wx.FD_OPEN)
-          time.sleep(.1)
-          if dlg.ShowModal()==wx.ID_OK:
-              path = dlg.GetPath()
-              ext = path[-4:]
-              if ext == ".dat":
-                  newmask = np.loadtxt(path,dtype=np.bool)
-                  newmask=dict(newmask)#
-              else:
-                  newmask = np.load(path)
-              self.mask = np.logical_and(self.mask,newmask)
-              #self.opPanel.setPosMin(newmask["xMin"],newmask["yMin"])#
-              #self.opPanel.setPosMax(newmask["xMax"],newmask["yMax"])#
-              #self.opPanel.setLambdaRange(newmask["lMin"],newmask["lMax"])#
-              #self.opPanel.setIntensityRange(newmask["vMin"],newmask["vMax"])#
-              self.updateData()
-          
-          
-  
-      def OnSave(self,event):
-          """Save the current 2D image to a file"""
-          print("OnSave")
-  #        dlg=wx.FileDialog(self,"Choose graphics file",wildcard="Windows Bitmap (bmp)|*.BMP|Portable Network Graphic (png)|*.PNG|Joint Photographic Experts Group (jpg)|*.JPG|Portable Network Monocrome (pnm)|*.PNM|Tagged Image File Format (tif)|*.TIF|Archaic, useless format (pcx)|*.PCX",style=wx.FD_SAVE|wx.FD_OVERWRITE_PROMPT)
-          dlg = self.imageSaveDialog
-          if dlg.ShowModal()==wx.ID_OK:
-              self.imPanel.saveImage(dlg.GetPath())
-  
-      def OnSpectrum(self,event):
-          """Display a plot of the region of interest versus wavelength"""
-          print("OnSpectrum")
-          (xMin,xMax,yMin,yMax)=self.opPanel.getRoi()
-          if type(self.data) is tuple:
-              u3d,d3d = self.data
-              u3d = u3d[:,:,:]
-              d3d = d3d[:,:,:]
-              u3d[np.logical_not(self.mask)] = 0
-              d3d[np.logical_not(self.mask)] = 0
-              u = np.sum(np.sum(u3d[yMin:yMax,xMin:xMax],0),0)
-              d = np.sum(np.sum(d3d[yMin:yMax,xMin:xMax],0),0)
-              uscale,dscale = self.scale
-              self.specDlg.setScale(uscale,dscale)            
-              self.specDlg.setData(u,d)
-          else:
-              copy = self.data[:,:,:]
-              copy[np.logical_not(self.mask)] = 0
-              u = np.sum(np.sum(copy[yMin:yMax,xMin:xMax],0),0)
-  #            u *= self.scale
-              self.specDlg.setScale(self.scale)
-              self.specDlg.setData(u)
-          self.specDlg.setIntensityRange(self.opPanel.getIntensityRange())
-          self.specDlg.Show()
-  
-      def OnGrey(self,event):
-          """Set the colormap to gray"""
-          self.imPanel.cmap = cm.gray
-          self.colorbar.setCmap(cm.gray)
-          self.update()
-  
-      def OnHueVal(self,event):
-          """Set the colormap to a rainbow"""
-          self.imPanel.cmap = cm.jet
-          self.colorbar.setCmap(cm.jet)
-          self.update()
-  
-      def OnSpectral(self,event):
-          """Set the colormap to the spectral map"""
-          self.imPanel.cmap = cm.spectral
-          self.colorbar.setCmap(cm.spectral)
-          self.update()
-  
-      def OnPicker(self,event):
-          """Let the user pick a color map from a list"""
-          if self.cmp is None:
-              self.cmp = ColorMapPicker(self,self.setColorMap)
-          self.cmp.Show()
-  
+      <<pelvis_menu_commands>>  
       def setColorMap(self,cmap):
           """Changes to the given colormap"""
           self.imPanel.cmap = cmap
@@ -736,6 +608,140 @@
               self.data-=backgroundrate
           self.updateData()
 #+end_src
+
+#+name:pelvis_menu_commands
+#+begin_src python
+  #Subtract out the region of disinterest
+  def OnROD(self,event):
+      """Take the region of interest as background noise"""
+      (xMin,xMax,yMin,yMax)=self.opPanel.getRoi()
+      area = (yMax-yMin)*(xMax-xMin)
+      if type(self.data) is tuple:
+          u,d=self.data
+          del self.data
+          totu = np.sum(np.sum(u[yMin:yMax,xMin:xMax,:],axis=0),axis=0)
+          totd = np.sum(np.sum(d[yMin:yMax,xMin:xMax,:],axis=0),axis=0)
+          totu /= area
+          totd /= area
+          u -= totu
+          d -= totd
+          self.data=(u,d)
+      else:
+          d=self.data
+          totd = np.sum(np.sum(d[yMin:yMax,xMin:xMax,:],axis=0),axis=0)
+          #totd = np.atleast_3d(totd)
+          totd /= area
+          #print(totd.shape)
+          #print(self.data.shape)
+          self.data -= totd
+      self.updateData()
+  
+  def OnExportROI(self,event):
+      """Save a file containing a map of where the current data
+      image is greater than vmin"""
+      vMin,_ = self.opPanel.getIntensityRange()
+      mask = self.flatdata > vMin
+      # (vMin,vMax) = self.opPanel.getIntensityRange()#
+      # (xMin,xMax,yMin,yMax) = self.opPanel.getRoi()#
+      # (lMin,lMax) = self.opPanel.getLambdaRange()#
+      # (lMin,lMax) = (lMin/10,lMax/10)#
+      # mask = [["xMin",xMin], ["xMax",xMax], ["yMin",yMin], ["yMax",yMax], \
+      #         ["lMin",lMin], ["lMax",lMax], ["vMin",vMin], ["vMax",vMax]]#
+      dlg = wx.FileDialog(self,
+                          "Where to save the mask file?",
+                          wildcard="Numpy dump (npy)|*.npy|Text (dat)|*.dat",
+                          style=wx.FD_SAVE|wx.FD_OVERWRITE_PROMPT)
+      if dlg.ShowModal()==wx.ID_OK:
+          path=dlg.GetPath()
+          ext = path[-4:]
+          if ext == ".dat":
+              np.savetxt(path,mask,fmt="%d")
+          else:
+              np.save(path,mask)
+  
+  def OnImportROI(self,event):
+      """Adds another mask to the current system mask"""
+      dlg = wx.FileDialog(self,
+                          "Which Mask File?",
+                          wildcard="Numpy dump (npy)|*.npy|Text (dat)|*.dat",
+                          style=wx.FD_OPEN)
+      time.sleep(.1)
+      if dlg.ShowModal()==wx.ID_OK:
+          path = dlg.GetPath()
+          ext = path[-4:]
+          if ext == ".dat":
+              newmask = np.loadtxt(path,dtype=np.bool)
+              newmask=dict(newmask)#
+          else:
+              newmask = np.load(path)
+          self.mask = np.logical_and(self.mask,newmask)
+          #self.opPanel.setPosMin(newmask["xMin"],newmask["yMin"])#
+          #self.opPanel.setPosMax(newmask["xMax"],newmask["yMax"])#
+          #self.opPanel.setLambdaRange(newmask["lMin"],newmask["lMax"])#
+          #self.opPanel.setIntensityRange(newmask["vMin"],newmask["vMax"])#
+          self.updateData()
+  
+  
+  
+  def OnSave(self,event):
+      """Save the current 2D image to a file"""
+      print("OnSave")
+  #        dlg=wx.FileDialog(self,"Choose graphics file",wildcard="Windows Bitmap (bmp)|*.BMP|Portable Network Graphic (png)|*.PNG|Joint Photographic Experts Group (jpg)|*.JPG|Portable Network Monocrome (pnm)|*.PNM|Tagged Image File Format (tif)|*.TIF|Archaic, useless format (pcx)|*.PCX",style=wx.FD_SAVE|wx.FD_OVERWRITE_PROMPT)
+      dlg = self.imageSaveDialog
+      if dlg.ShowModal()==wx.ID_OK:
+          self.imPanel.saveImage(dlg.GetPath())
+  
+  def OnSpectrum(self,event):
+      """Display a plot of the region of interest versus wavelength"""
+      print("OnSpectrum")
+      (xMin,xMax,yMin,yMax)=self.opPanel.getRoi()
+      if type(self.data) is tuple:
+          u3d,d3d = self.data
+          u3d = u3d[:,:,:]
+          d3d = d3d[:,:,:]
+          u3d[np.logical_not(self.mask)] = 0
+          d3d[np.logical_not(self.mask)] = 0
+          u = np.sum(np.sum(u3d[yMin:yMax,xMin:xMax],0),0)
+          d = np.sum(np.sum(d3d[yMin:yMax,xMin:xMax],0),0)
+          uscale,dscale = self.scale
+          self.specDlg.setScale(uscale,dscale)            
+          self.specDlg.setData(u,d)
+      else:
+          copy = self.data[:,:,:]
+          copy[np.logical_not(self.mask)] = 0
+          u = np.sum(np.sum(copy[yMin:yMax,xMin:xMax],0),0)
+          #            u *= self.scale
+          self.specDlg.setScale(self.scale)
+          self.specDlg.setData(u)
+      self.specDlg.setIntensityRange(self.opPanel.getIntensityRange())
+      self.specDlg.Show()
+  
+  def OnGrey(self,event):
+      """Set the colormap to gray"""
+      self.imPanel.cmap = cm.gray
+      self.colorbar.setCmap(cm.gray)
+      self.update()
+  
+  def OnHueVal(self,event):
+      """Set the colormap to a rainbow"""
+      self.imPanel.cmap = cm.jet
+      self.colorbar.setCmap(cm.jet)
+      self.update()
+  
+  def OnSpectral(self,event):
+      """Set the colormap to the spectral map"""
+      self.imPanel.cmap = cm.spectral
+      self.colorbar.setCmap(cm.spectral)
+      self.update()
+  
+  def OnPicker(self,event):
+      """Let the user pick a color map from a list"""
+      if self.cmp is None:
+          self.cmp = ColorMapPicker(self,self.setColorMap)
+      self.cmp.Show()
+  
+#+end_src
+
 
 **** 
 
