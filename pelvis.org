@@ -121,11 +121,11 @@
   
       def __init__(self,Yield):
           <<pelvis_frame_init>>
-
+  
       <<pelvis_handle_pels>>
   
       <<pelvis_on_image_array>>
-
+  
       <<pelvis_load_norm_pel>>
                   
   #    def getLambdaRange(self):
@@ -139,76 +139,12 @@
   #            lmax = 200 
   #        return (lmin,lmax)
   
-      def updateSingleData(self,event=None):
-          """Update changes in wavelength on a single file"""
-          print("Make 2d")
-          (lmin,lmax) = self.opPanel.getLambdaRange()
-          self.flatdata = np.sum(self.data[:,:,lmin:lmax],2)
-          self.update()
-  
-      def updateDataFlip(self,event=None):
-          """Update changes in wavelength for flipping ratios"""
-          (lmin,lmax) = self.opPanel.getLambdaRange()
-          (u3d,d3d)=self.data
-          u = np.sum(u3d[:,:,lmin:lmax],2)
-          d = np.sum(d3d[:,:,lmin:lmax],2)
-          self.flatdata = u/(d+1e-6)
-          self.update()
-  
-      def updateDataPolar(self,event=None):
-          """Update changes in wavelength for polarizations"""
-          (lmin,lmax) = self.opPanel.getLambdaRange()
-          (u3d,d3d)=self.data
-          u = np.sum(u3d[:,:,lmin:lmax],2)
-          d = np.sum(d3d[:,:,lmin:lmax],2)
-          self.flatdata = (u-d)/(u+d+1e-6)
-          self.update()
-  
-      def updateDataUp(self,event=None):
-          """Update changes in wavelength for the spin up state"""
-          (lmin,lmax) = self.opPanel.getLambdaRange()
-          (u3d,_)=self.data
-          self.flatdata = np.sum(u3d[:,:,lmin:lmax],2)
-          self.update()
-  
-      def updateDataDown(self,event=None):
-          """Update changes in wavelength for the spin down state"""
-          (lmin,lmax) = self.opPanel.getLambdaRange()
-          (_,d3d)=self.data
-          self.flatdata = np.sum(d3d[:,:,lmin:lmax],2)
-          self.update()
-  
-      def updateSingle(self,event=None):
-          """Update the 2D data for the region of interest and intensity"""
-          (vMin,vMax) = self.opPanel.getIntensityRange()
-          (xMin,xMax,yMin,yMax) = self.opPanel.getRoi()
-          data = self.flatdata[:,:]
-  
-          #Mask to zero during the summing parts
-          data[np.logical_not(self.mask)] = 0
-          self.posPanel.data = data
-          self.posPanel.setRange(xMin,yMin,xMax,yMax)
-          x=np.arange(128,0,-1)
-          y=np.sum(data[:,xMin:xMax],axis=1)
-          self.yPanel.SetPlot(x,y)
-          #handle the x-plot
-          x=np.arange(0,16,1)
-          y=np.sum(data[yMin:yMax,:],axis=0)
-          self.xPanel.SetPlot(x,y)
-          if vMin is None:
-              vMin = np.min(data)
-          if vMax is None:
-              vMax = np.max(data)
-          self.colorbar.setRange(vMin,vMax)
-          self.colorbar.update()
-          #mask to vmin for the plotting
-          data[np.logical_not(self.mask)] = vMin
-          self.imPanel.update(self.flatdata,vMin,vMax)
+      <<pelvis_updaters>>
   
       <<pelvis_on_update_button>>
   
       <<pelvis_on_open>>
-
+  
       <<pelvis_on_open_set>>
   
       <<pelvis_flat_files>>
@@ -801,6 +737,80 @@
           self.updateData()
 #+end_src
 
+**** 
+
+
+**** Updaters
+
+#+name: pelvis_updaters
+#+begin_src python
+      def updateSingleData(self,event=None):
+          """Update changes in wavelength on a single file"""
+          print("Make 2d")
+          (lmin,lmax) = self.opPanel.getLambdaRange()
+          self.flatdata = np.sum(self.data[:,:,lmin:lmax],2)
+          self.update()
+  
+      def updateDataFlip(self,event=None):
+          """Update changes in wavelength for flipping ratios"""
+          (lmin,lmax) = self.opPanel.getLambdaRange()
+          (u3d,d3d)=self.data
+          u = np.sum(u3d[:,:,lmin:lmax],2)
+          d = np.sum(d3d[:,:,lmin:lmax],2)
+          self.flatdata = u/(d+1e-6)
+          self.update()
+  
+      def updateDataPolar(self,event=None):
+          """Update changes in wavelength for polarizations"""
+          (lmin,lmax) = self.opPanel.getLambdaRange()
+          (u3d,d3d)=self.data
+          u = np.sum(u3d[:,:,lmin:lmax],2)
+          d = np.sum(d3d[:,:,lmin:lmax],2)
+          self.flatdata = (u-d)/(u+d+1e-6)
+          self.update()
+  
+      def updateDataUp(self,event=None):
+          """Update changes in wavelength for the spin up state"""
+          (lmin,lmax) = self.opPanel.getLambdaRange()
+          (u3d,_)=self.data
+          self.flatdata = np.sum(u3d[:,:,lmin:lmax],2)
+          self.update()
+  
+      def updateDataDown(self,event=None):
+          """Update changes in wavelength for the spin down state"""
+          (lmin,lmax) = self.opPanel.getLambdaRange()
+          (_,d3d)=self.data
+          self.flatdata = np.sum(d3d[:,:,lmin:lmax],2)
+          self.update()
+  
+      def updateSingle(self,event=None):
+          """Update the 2D data for the region of interest and intensity"""
+          (vMin,vMax) = self.opPanel.getIntensityRange()
+          (xMin,xMax,yMin,yMax) = self.opPanel.getRoi()
+          data = self.flatdata[:,:]
+  
+          #Mask to zero during the summing parts
+          data[np.logical_not(self.mask)] = 0
+          self.posPanel.data = data
+          self.posPanel.setRange(xMin,yMin,xMax,yMax)
+          x=np.arange(128,0,-1)
+          y=np.sum(data[:,xMin:xMax],axis=1)
+          self.yPanel.SetPlot(x,y)
+          #handle the x-plot
+          x=np.arange(0,16,1)
+          y=np.sum(data[yMin:yMax,:],axis=0)
+          self.xPanel.SetPlot(x,y)
+          if vMin is None:
+              vMin = np.min(data)
+          if vMax is None:
+              vMax = np.max(data)
+          self.colorbar.setRange(vMin,vMax)
+          self.colorbar.update()
+          #mask to vmin for the plotting
+          data[np.logical_not(self.mask)] = vMin
+          self.imPanel.update(self.flatdata,vMin,vMax)
+
+#+end_src
 
 
 *** Position Panel
