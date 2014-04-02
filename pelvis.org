@@ -121,74 +121,12 @@
   
       def __init__(self,Yield):
           <<pelvis_frame_init>>
-      def makePel(self):
-          """Create a blank Pel object for loading detector data"""
-          data = PelFile()
-          def statusfunc(x):
-              self.progress.SetValue(x)
-              self.Yield()
-          data.statusfunc = statusfunc
-          return data
+
+      <<pelvis_handle_pels>>
   
-      def loadPel(self,message):
-          """Load a .pel file and its monitor data.
-  
-          Keyword arguments:
-          message -- The title for the load file dialog.
-  
-          """
-          dlg=wx.FileDialog(self,message,wildcard="He3 data|*neutron_event.dat|Preformatted Histograms|*.npy",style=wx.FD_OPEN)
-          if dlg.ShowModal()==wx.ID_OK:
-  #            self.SetCursor(wx.CURSOR_WAIT)
-              path = dlg.GetPath()
-              if path[-3:] == "dat":
-                  data = self.makePel()
-                  data.readfileimage(path)
-              elif path[-3:] == "npy":
-                  data = np.load(path)
-  #            self.SetCursor(wx.CURSOR_ARROW)
-          else:
-              return (None,None)
-          mon = MonFile(path[:-17]+"bmon_histo.dat")
-          return (data,mon)
-  
-      def OnImageArray(self,event):
-          """Exports the 2d detector image by wavelength"""
-          dlg = self.imageSaveDialog
-          if dlg.ShowModal()==wx.ID_OK:
-              path=dlg.GetPath()
-              ext = path[-4:]
-              path = path[:-4]
-              (lmin,lmax) = self.opPanel.getLambdaRange()
-              for i in range(lmin,lmax):
-                  file=path+("%03i"%i)+ext
-                  self.opPanel.setLambdaRange(0.1*i,0.1*(i+1))
-                  self.updateData()
-                  self.update()
-                  self.imPanel.saveImage(file)
-                  self.progress.SetValue(1000*(i-lmin)/(lmax-lmin))
-                  self.Yield()
-              self.opPanel.setLambdaRange(lmin*0.1,lmax*0.1)
-              self.updateData()
-              self.progress.SetValue(0)
-  
-      def loadNormPel(self,message):
-          """Load a .pel file, normalize it by monitor, and subtract background"""
-          (data,mon) = self.loadPel(message)
-          if isinstance(data,PelFile):
-              data = np.asarray(data.make3d(),np.float32)
-          if mon is None:
-              return (data,1)
-          if self.flatrun != None:
-              flatrun = np.load(self.flatrun)
-              self.flatrun.seek(0)
-              flatrun *= mon.time
-              data -= flatrun
-          spec = mon.spec
-          monsum = np.sum(spec)
-          print("Integrated monitor counts: " + str(monsum))
-          data /= monsum
-          return (data,np.sum(mon.spec))
+      <<pelvis_on_image_array>>
+
+      <<pelvis_load_norm_pel>>
                   
   #    def getLambdaRange(self):
   #        try:
@@ -267,83 +205,13 @@
           data[np.logical_not(self.mask)] = vMin
           self.imPanel.update(self.flatdata,vMin,vMax)
   
-      def OnUpdateButton(self,event):
-          """Refresh the data when the user pushes the "Update" button"""
-          #This function is needed for wxWidgets to allow
-          #for dynamically changing the bound function
-          self.updateData(event)
+      <<pelvis_on_update_button>>
   
-      def OnOpen(self,event):
-          """Load a single .pel file for display"""
-          data,scale = self.loadNormPel("Choose the Pel File to Open")
-          if data is None:
-              return
-          self.data = data
-          self.scale = scale
-          self.progress.SetValue(0)
-          self.specDlg.setMode("up")
-          self.updateData = self.updateSingleData
-          self.update = self.updateSingle
-          self.updateData()
+      <<pelvis_on_open>>
+
+      <<pelvis_on_open_set>>
   
-      def OnOpenSet(self,event):
-          """Load a spin flip measurement for display"""
-          if self.loadUpAndDown():
-              self.OnPolar(event)
-  
-      def OnFlat(self,event):
-          """Load a blank run for background subtraction"""
-          (data,mon) = self.loadPel("Choose a Blank Run")
-          if data == None:
-              return
-          if isinstance(data,PelFile):
-              flatrun = data.make3d()
-          elif isinstance(data,np.ndarray):
-              flatrun = data
-          flatrun = np.sum(flatrun,axis=2)
-          flatrun /= RESOLUTION
-          flatrun /= float(mon.time)
-          flatrun = np.expand_dims(flatrun,2)
-          self.flatrun = TemporaryFile()
-          np.save(self.flatrun,flatrun)
-          self.flatrun.seek(0)
-          self.progress.SetValue(0)
-  
-      def OnFakeFlat(self,event):
-          """Create a fake background run from outside the region of interest."""
-          (xMin,xMax,yMin,yMax)=self.opPanel.getRoi()
-          totarea = 512*512
-          centarea = (yMax-yMin)*(xMax-xMin)
-          backgroundarea = totarea-centarea
-          if type(self.data) is tuple:
-              (u,d)=self.data
-  
-              totu = np.sum(u)
-              totd = np.sum(d)
-              centu = np.sum(u[yMin:yMax,xMin:xMax,:])
-              centd = np.sum(d[yMin:yMax,xMin:xMax,:])
-  
-              backgroundu = totu-centu
-              backgroundd = totd-centd
-              backgroundrateu = backgroundu/backgroundarea
-              backgroundrated = backgroundd/backgroundarea
-              backgroundrateu /= (RESOLUTION + 1) #normalize against the wavelengths
-              backgroundrated /= (RESOLUTION + 1) #normalize against the wavelengths
-              ###Stupid Memory Errors
-              del self.data
-              u -= backgroundrateu
-              d -= backgroundrated
-              ###
-              self.data=(u,d)
-          else:
-              d=self.data
-              tot = np.sum(d)
-              cent = np.sum(d[yMin:yMax,xMin:xMax,:])
-              background = tot-cent
-              backgroundrate = background/backgroundarea
-              backgroundrate /= (RESOLUTION + 1) #normalize against the wavelengths
-              self.data-=backgroundrate
-          self.updateData()
+      <<pelvis_flat_files>>
   
       #Subtract out the region of disinterest
       def OnROD(self,event):
@@ -754,6 +622,186 @@
 #+end_src
 
      
+
+
+**** Handling Pel Files
+
+#+name: pelvis_handle_pels
+#+begin_src python
+  def makePel(self):
+      """Create a blank Pel object for loading detector data"""
+      data = PelFile()
+      def statusfunc(x):
+          self.progress.SetValue(x)
+          self.Yield()
+      data.statusfunc = statusfunc
+      return data
+  
+  def loadPel(self,message):
+      """Load a .pel file and its monitor data.
+      
+      Keyword arguments:
+      message -- The title for the load file dialog.
+      
+      """
+      dlg=wx.FileDialog(self,message,wildcard="He3 data|*neutron_event.dat|Preformatted Histograms|*.npy",style=wx.FD_OPEN)
+      if dlg.ShowModal()==wx.ID_OK:
+      #            self.SetCursor(wx.CURSOR_WAIT)
+          path = dlg.GetPath()
+          if path[-3:] == "dat":
+              data = self.makePel()
+              data.readfileimage(path)
+          elif path[-3:] == "npy":
+              data = np.load(path)
+      #            self.SetCursor(wx.CURSOR_ARROW)
+      else:
+          return (None,None)
+      mon = MonFile(path[:-17]+"bmon_histo.dat")
+      return (data,mon)
+#+end_src
+
+#+name: pelvis_load_norm_pel
+#+begin_src python
+
+      def loadNormPel(self,message):
+          """Load a .pel file, normalize it by monitor, and subtract background"""
+          (data,mon) = self.loadPel(message)
+          if isinstance(data,PelFile):
+              data = np.asarray(data.make3d(),np.float32)
+          if mon is None:
+              return (data,1)
+          if self.flatrun != None:
+              flatrun = np.load(self.flatrun)
+              self.flatrun.seek(0)
+              flatrun *= mon.time
+              data -= flatrun
+          spec = mon.spec
+          monsum = np.sum(spec)
+          print("Integrated monitor counts: " + str(monsum))
+          data /= monsum
+          return (data,np.sum(mon.spec))
+#+end_src
+
+
+
+**** Menu Commands
+
+#+name: pelvis_on_image_array
+#+begin_src python
+
+      def OnImageArray(self,event):
+          """Exports the 2d detector image by wavelength"""
+          dlg = self.imageSaveDialog
+          if dlg.ShowModal()==wx.ID_OK:
+              path=dlg.GetPath()
+              ext = path[-4:]
+              path = path[:-4]
+              (lmin,lmax) = self.opPanel.getLambdaRange()
+              for i in range(lmin,lmax):
+                  file=path+("%03i"%i)+ext
+                  self.opPanel.setLambdaRange(0.1*i,0.1*(i+1))
+                  self.updateData()
+                  self.update()
+                  self.imPanel.saveImage(file)
+                  self.progress.SetValue(1000*(i-lmin)/(lmax-lmin))
+                  self.Yield()
+              self.opPanel.setLambdaRange(lmin*0.1,lmax*0.1)
+              self.updateData()
+              self.progress.SetValue(0)
+#+end_src
+
+#+name: pelvis_on_update_button
+#+begin_src python
+      def OnUpdateButton(self,event):
+          """Refresh the data when the user pushes the "Update" button"""
+          #This function is needed for wxWidgets to allow
+          #for dynamically changing the bound function
+          self.updateData(event)
+#+end_src
+
+
+#+name:pelvis_on_open
+#+begin_src python
+      def OnOpen(self,event):
+          """Load a single .pel file for display"""
+          data,scale = self.loadNormPel("Choose the Pel File to Open")
+          if data is None:
+              return
+          self.data = data
+          self.scale = scale
+          self.progress.SetValue(0)
+          self.specDlg.setMode("up")
+          self.updateData = self.updateSingleData
+          self.update = self.updateSingle
+          self.updateData()
+#+end_src
+
+#+name:pelvis_on_open_set
+#+begin_src python
+      def OnOpenSet(self,event):
+          """Load a spin flip measurement for display"""
+          if self.loadUpAndDown():
+              self.OnPolar(event)
+#+end_src
+
+#+name:pelvis_flat_files
+#+begin_src python
+      def OnFlat(self,event):
+          """Load a blank run for background subtraction"""
+          (data,mon) = self.loadPel("Choose a Blank Run")
+          if data == None:
+              return
+          if isinstance(data,PelFile):
+              flatrun = data.make3d()
+          elif isinstance(data,np.ndarray):
+              flatrun = data
+          flatrun = np.sum(flatrun,axis=2)
+          flatrun /= RESOLUTION
+          flatrun /= float(mon.time)
+          flatrun = np.expand_dims(flatrun,2)
+          self.flatrun = TemporaryFile()
+          np.save(self.flatrun,flatrun)
+          self.flatrun.seek(0)
+          self.progress.SetValue(0)
+  
+      def OnFakeFlat(self,event):
+          """Create a fake background run from outside the region of interest."""
+          (xMin,xMax,yMin,yMax)=self.opPanel.getRoi()
+          totarea = 512*512
+          centarea = (yMax-yMin)*(xMax-xMin)
+          backgroundarea = totarea-centarea
+          if type(self.data) is tuple:
+              (u,d)=self.data
+  
+              totu = np.sum(u)
+              totd = np.sum(d)
+              centu = np.sum(u[yMin:yMax,xMin:xMax,:])
+              centd = np.sum(d[yMin:yMax,xMin:xMax,:])
+  
+              backgroundu = totu-centu
+              backgroundd = totd-centd
+              backgroundrateu = backgroundu/backgroundarea
+              backgroundrated = backgroundd/backgroundarea
+              backgroundrateu /= (RESOLUTION + 1) #normalize against the wavelengths
+              backgroundrated /= (RESOLUTION + 1) #normalize against the wavelengths
+              ###Stupid Memory Errors
+              del self.data
+              u -= backgroundrateu
+              d -= backgroundrated
+              ###
+              self.data=(u,d)
+          else:
+              d=self.data
+              tot = np.sum(d)
+              cent = np.sum(d[yMin:yMax,xMin:xMax,:])
+              background = tot-cent
+              backgroundrate = background/backgroundarea
+              backgroundrate /= (RESOLUTION + 1) #normalize against the wavelengths
+              self.data-=backgroundrate
+          self.updateData()
+#+end_src
+
+
 
 *** Position Panel
 
