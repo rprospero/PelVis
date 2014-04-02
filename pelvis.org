@@ -157,57 +157,10 @@
           self.update()
   
   
-      def OnExit(self,event):
-          """Quit the program"""
-          self.Close()
+      <<pelvis_on_exit>>
+      <<pelvis_load_up_and_down>>
   
-      def loadUpAndDown(self):
-          """Read in spin flip data"""
-          u3d,uscale = self.loadNormPel("Spin Up State")
-          if u3d is None:
-              return False
-          del self.data
-          d3d,dscale = self.loadNormPel("Spin Down State")
-          self.data = (u3d,d3d)
-          self.scale = (uscale,dscale)
-          return True
-  
-  
-      def OnPolar(self,event):
-          """Display neutron polarization"""
-          print("OnPolar")
-          self.specDlg.setMode("polar")
-          self.updateData = self.updateDataPolar
-          self.update = self.updateSingle
-          self.updateData()
-  
-      def OnFlipping(self,event):
-          """Display the flipping ratio"""
-          print("OnFlip")
-          self.specDlg.setMode("flipping")
-          self.updateData = self.updateDataFlip
-          self.update = self.updateSingle
-          self.updateData()
-  
-      def OnAnalysisSpinUp(self,event):
-          """Display the Spin Up data"""
-          print("OnSpinUp")
-          self.specDlg.setMode("up")
-          self.updateData = self.updateDataUp
-          self.update = self.updateSingle
-          self.updateData()
-  
-      def OnAnalysisSpinDown(self,event):
-          """Display the Spin Down data"""
-          print("OnSpinDown")
-          self.specDlg.setMode("down")
-          self.updateData = self.updateDataDown
-          self.update = self.updateSingle
-          self.updateData()
-  
-      def OnCopy(self,event):
-          """Copy the image to a clipboard"""
-          self.imPanel.copyToClipboard()
+      <<pelvis_menu_commands_2>>
                   
   
   
@@ -490,6 +443,20 @@
           return (data,np.sum(mon.spec))
 #+end_src
 
+#+name:pelvis_load_up_and_down
+#+begin_src python
+      def loadUpAndDown(self):
+          """Read in spin flip data"""
+          u3d,uscale = self.loadNormPel("Spin Up State")
+          if u3d is None:
+              return False
+          del self.data
+          d3d,dscale = self.loadNormPel("Spin Down State")
+          self.data = (u3d,d3d)
+          self.scale = (uscale,dscale)
+          return True
+#+end_src
+
 
 
 **** Menu Commands
@@ -742,9 +709,56 @@
   
 #+end_src
 
+     
+#+name:pelvis_on_exit
+#+begin_src python
+    
+  def OnExit(self,event):
+        """Quit the program"""
+        self.Close()
+#+end_src
 
-**** 
+#+name:pelvis_menu_commands_2
+#+begin_src python
+  def OnPolar(self,event):
+      """Display neutron polarization"""
+      print("OnPolar")
+      self.specDlg.setMode("polar")
+      self.updateData = self.updateDataPolar
+      self.update = self.updateSingle
+      self.updateData()
+    
+  def OnFlipping(self,event):
+      """Display the flipping ratio"""
+      print("OnFlip")
+      self.specDlg.setMode("flipping")
+      self.updateData = self.updateDataFlip
+      self.update = self.updateSingle
+      self.updateData()
+    
+  def OnAnalysisSpinUp(self,event):
+      """Display the Spin Up data"""
+      print("OnSpinUp")
+      self.specDlg.setMode("up")
+      self.updateData = self.updateDataUp
+      self.update = self.updateSingle
+      self.updateData()
+    
+  def OnAnalysisSpinDown(self,event):
+      """Display the Spin Down data"""
+      print("OnSpinDown")
+      self.specDlg.setMode("down")
+      self.updateData = self.updateDataDown
+      self.update = self.updateSingle
+      self.updateData()
+    
+  def OnCopy(self,event):
+      """Copy the image to a clipboard"""
+      self.imPanel.copyToClipboard()
+#+end_src
 
+
+     
 
 **** Updaters
 
