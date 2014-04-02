@@ -514,6 +514,14 @@
 
 **** Menu Commands
 
+     The Image Array command causes Pelvis to export the detector
+     image, one wavelength bin at a time.  It can be useful to find
+     effects which are sensitive to both position and wavelength, but
+     it honestly hasn't seen much use.
+
+     The =path= and =ext= variables are used to get the file name that
+     the user chose and then sandwich the wavelength between them.
+
 #+name: pelvis_on_image_array
 #+begin_src python
 
@@ -538,6 +546,13 @@
               self.progress.SetValue(0)
 #+end_src
 
+     The =OnUpdateButton= isn't really a menu command, but is rather
+     the calback for when the user clicks the update button.  All it
+     does is call the current value of the =updateData= function.
+     This function exists mostly because wxWidgets won't follow the
+     dynamically changing definition for =updateData= and needs a
+     static location for the callback.
+
 #+name: pelvis_on_update_button
 #+begin_src python
       def OnUpdateButton(self,event):
@@ -547,6 +562,11 @@
           self.updateData(event)
 #+end_src
 
+     The =OnOpen= function handles opening a single data set.
+     [[*Handling%20Pel%20Files][loadNormPel]] does all of the actual file loading.  The =data= and
+     =scale= values are set to the actual neutron data and monitor
+     counts, respectively.  The =updateData= and =update= functions
+     are also set to single data file mode.
 
 #+name:pelvis_on_open
 #+begin_src python
@@ -564,6 +584,11 @@
           self.updateData()
 #+end_src
 
+     Similarly to =OnOpen=, =OnOpenSet= loads two data files for
+     examining a polarization measurement.  The actual file loading is
+     handled by [[*Handling%20Pel%20Files][loadUpAndDown]].  Should the files load, the application
+     switches to presenting polarization information.
+
 #+name:pelvis_on_open_set
 #+begin_src python
       def OnOpenSet(self,event):
@@ -571,6 +596,21 @@
           if self.loadUpAndDown():
               self.OnPolar(event)
 #+end_src
+
+     Back when the PAPA detector first arrived, there was a light leak
+     that caused an enormous noise signal across the detector.  The
+     flat files were an attempt to eliminate that.  The flat files are
+     essentiall a position sensitive calculation of the detector noise
+     per unit time.  In practice, this functionality is almost never
+     used and should probably be removed, as it may be out of date or
+     inaccurate. 
+
+     =OnFlat= starts by having the user load in a background run.
+     This run is then flattened into a 3D positional map (the
+     background is assumed to be wavelength independent).  This 2D map
+     is normalized to the time of the measurement.
+
+     The 
 
 #+name:pelvis_flat_files
 #+begin_src python
