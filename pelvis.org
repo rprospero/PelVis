@@ -430,7 +430,16 @@
 
      The =loadPel= command reads in a neutron data file.  It takes as
      a single parameter a message to display to the user about what
-     sort of file should be loaded.
+     sort of file should be loaded.  There is also the ability to load
+     a pre-histogrammed version of the neutron data, stored in the
+     [[docs.numpy.org][numpy's]] native binary format.  In practice, this hasn't been that
+     useful and may be dropped.  The numpy files do read far faster,
+     but they also take up huge amounts of disk space compared to the
+     event files, plus they need preprocessing from said event files
+     to be created in the first place.
+
+     This function also loads the monitor file that corresponds to the
+     data set.
 
 #+name: pelvis_handle_pels
 #+begin_src python  
@@ -457,6 +466,11 @@
       return (data,mon)
 #+end_src
 
+     The =loadNormPel= function loads a neutron data set and a set of
+     counts from the beam monitor.  In the unlikely event that there
+     is a [[flat run]], the flat is subtracted out of the data set.  The
+     neutron data is then normalized to the monitor count.
+
 #+name: pelvis_load_norm_pel
 #+begin_src python
 
@@ -478,6 +492,9 @@
           data /= monsum
           return (data,np.sum(mon.spec))
 #+end_src
+
+     The =loadUpAndDown= function is a helper function to load both
+     spin states of a flipping measurement.
 
 #+name:pelvis_load_up_and_down
 #+begin_src python
