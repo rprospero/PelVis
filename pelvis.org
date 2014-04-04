@@ -1,5 +1,6 @@
 #+TITLE: PELVis: The PEL Visualizer
 #+AUTHOR: Adam Washington
+#+OPTIONS: toc:4
 
 * Introduction
 
