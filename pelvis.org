@@ -959,6 +959,10 @@
      =updateData= functions to the [[*Updaters][proper function]] to handle the data
      type, then sets the mode of the spectrum dialog.
 
+     It currently looks like the update function is always set to
+     updateSingle.  If this is the case, then the code can be
+     simplified.  This is worth investigation.
+
 #+name:pelvis_menu_commands_2
 #+begin_src python
   def OnPolar(self,event):
