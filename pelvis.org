@@ -1002,7 +1002,7 @@
      Edit menu.  This copies the current detector image to the
      clipboard, though everything is really handled by the [[ImagePanel]] class.
 
-#+name:pelvis_menu_commands
+#+name:pelvis_menu_commands_2
 #+begin_src python   
       
   def OnCopy(self,event):
