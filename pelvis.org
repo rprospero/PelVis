@@ -10,11 +10,11 @@
   through python.
 
   If your primary goal is to simply use PELVis, then the
-  [[readme.org][user documentation]] would be the best place to start.
+  [[file:readme.org][user documentation]] would be the best place to start.
 
 * Main application
 
-  The main application is the [[pelvis.py]] script that the user runs to
+  The main application is the pelvis.py script that the user runs to
   view neutron data.
 
 ** Application skeleton
@@ -83,7 +83,7 @@
   from ImagePanel import ImagePanel
 #+end_src
 
-   [[GraphPanel]] is a custom wdiget for displayed 1D graphs in a wxPython
+   [[GraphPanel][GraphPanel]] is a custom widget for displayed 1D graphs in a wxPython
    Frame.
 
 #+name:pelvis_imports
@@ -142,7 +142,7 @@
   import time
 #+end_src
 
-   [[docs.numpy.org][=numpy=]] is a Python library for handling multidimensional arrays.
+   [[http://docs.numpy.org][=numpy=]] is a Python library for handling multidimensional arrays.
    It is many orders of magnitude faster and smaller than using Python
    Lists, plus easier to read, once you're used to it.  By local
    convention, =numpy= is always imported as =np=, just because it's
@@ -154,7 +154,7 @@
   import numpy as np
 #+end_src
 
-   [[matplotlib.org][=matplotlib=]] is a plotting library for python.  It handles all of
+   [[http://matplotlib.org][=matplotlib=]] is a plotting library for python.  It handles all of
    the plots within the application.
 
 #+name:pelvis_imports
@@ -162,7 +162,7 @@
   from matplotlib import pyplot as plt
 #+end_src
 
-   The [[cm]] submodule of matplotlib handles color maps and is needed for
+   The =cm= submodule of matplotlib handles color maps and is needed for
    controlling the display of the 2D detector data.
 
 #+name:pelvis_imports
@@ -181,7 +181,7 @@
 
 ** GUI Controls
 
-   We're using [[https://www.wxwidgets.org/][wxWidgets]] as our GUI toolkit through the [[www.wxpython.org][wxPython]]
+   We're using [[https://www.wxwidgets.org/][wxWidgets]] as our GUI toolkit through the [[http://www.wxpython.org][wxPython]]
    binding library.  wxWidgets was chosen as it is cross platform and
    provided a more complete toolkit than the default Tk toolkit that
    comes with Python.  The largest disadvantage to this decision is
@@ -309,7 +309,7 @@
      and =yPanel= are [[GraphPanel][graphs]] which display the integrated intensity
      along an axis.  =imPanel= displays the actual, 2D detector [[ImagePanel][image]].
      =colorbar= gives the current scale of the color scheme on the
-     imPanel.  =opPanel= is a generic [[Pelvis Option Panel][panel]] for the user to input data
+     imPanel.  =opPanel= is a generic [[Option Panel][panel]] for the user to input data
      about the current region of interest.  =posPanel= displays
      position information to the user.  =cmp= stores the current color
      map for use on the =imPanel=. =specDlg= is a [[SpectrumDialog][dialog box]]
@@ -468,7 +468,7 @@
 #+end_src
 
      A button to force the image display to update is added and bound
-     to the [[OnUpdateButton]] function.
+     to the [[pelvis_on_update_button_link][OnUpdateButton]] function.
 
 #+name:pelvis_frame_init
 #+begin_src python  
@@ -543,7 +543,7 @@
      a single parameter a message to display to the user about what
      sort of file should be loaded.  There is also the ability to load
      a pre-histogrammed version of the neutron data, stored in the
-     [[docs.numpy.org][numpy's]] native binary format.  In practice, this hasn't been that
+     [[http://docs.numpy.org][numpy's]] native binary format.  In practice, this hasn't been that
      useful and may be dropped.  The numpy files do read far faster,
      but they also take up huge amounts of disk space compared to the
      event files, plus they need preprocessing from said event files
@@ -664,6 +664,7 @@
      dynamically changing definition for =updateData= and needs a
      static location for the callback.
 
+<<pelvis_on_update_button_link>>
 #+name: pelvis_on_update_button
 #+begin_src python
       def OnUpdateButton(self,event):
