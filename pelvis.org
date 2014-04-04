@@ -36,25 +36,7 @@
   
   """
   
-  import __future__
-  
-  from reader import PelFile
-  from ImagePanel import ImagePanel
-  from GraphPanel import GraphPanel
-  from colorbarpanel import ColorBarPanel, ColorMapPicker
-  from monfile import MonFile
-  from SpectrumDialog import SpectrumDialog
-  
-  from tempfile import TemporaryFile
-  
-  import math
-  import time
-  
-  import numpy as np
-  from matplotlib import pyplot as plt
-  import matplotlib.cm as cm
-  
-  import wx
+  <<pelvis_imports>>
   
   RESOLUTION = 400
 
@@ -67,6 +49,86 @@
       app.MainLoop()
   
 #+end_src
+** Imports
+
+   The PELVis application uses a large number of packages to handle
+   the work. 
+
+#+name:pelvis_imports
+#+begin_src python
+  import __future__
+#+end_src
+
+#+name:pelvis_imports
+#+begin_src python
+  
+  from reader import PelFile
+#+end_src
+
+#+name:pelvis_imports
+#+begin_src python
+  from ImagePanel import ImagePanel
+#+end_src
+
+#+name:pelvis_imports
+#+begin_src python
+  from GraphPanel import GraphPanel
+#+end_src
+
+#+name:pelvis_imports
+#+begin_src python
+  from colorbarpanel import ColorBarPanel, ColorMapPicker
+#+end_src
+
+#+name:pelvis_imports
+#+begin_src python
+  from monfile import MonFile
+#+end_src
+
+#+name:pelvis_imports
+#+begin_src python
+  from SpectrumDialog import SpectrumDialog
+#+end_src
+
+#+name:pelvis_imports
+#+begin_src python
+  
+  from tempfile import TemporaryFile
+#+end_src
+
+#+name:pelvis_imports
+#+begin_src python
+  
+  import math
+#+end_src
+
+#+name:pelvis_imports
+#+begin_src python
+  import time
+#+end_src
+
+#+name:pelvis_imports
+#+begin_src python
+  
+  import numpy as np
+#+end_src
+
+#+name:pelvis_imports
+#+begin_src python
+  from matplotlib import pyplot as plt
+#+end_src
+
+#+name:pelvis_imports
+#+begin_src python
+  import matplotlib.cm as cm
+#+end_src
+
+#+name:pelvis_imports
+#+begin_src python
+  
+  import wx
+#+end_src
+
 
 ** GUI Controls
 
