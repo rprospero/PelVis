@@ -1015,6 +1015,18 @@
 
 **** Updaters
 
+     There are two updates which need to be performed.  The first is
+     updating the data, which involves taking the 3D arrays of neutron
+     data and turning them into a single, 2D map.  The second is using
+     that 2D data to update the other parts of the application.  All
+     of the function with data in the name handle converting the 3D
+     data into the 2D map, while the remaining functions pass the 2D
+     data to the rest of the application.
+
+     =updateSingleData= is used when only a single file is loaded.  As
+     the only thing we can do is give intensity per pixel, a simple
+     sum is performed along the wavelength axis.
+
 #+name: pelvis_updaters
 #+begin_src python
       def updateSingleData(self,event=None):
@@ -1023,6 +1035,16 @@
           (lmin,lmax) = self.opPanel.getLambdaRange()
           self.flatdata = np.sum(self.data[:,:,lmin:lmax],2)
           self.update()
+#+end_src
+
+     =updateDataFlip= and =updateDataPolar= require both an up and
+     down state from a polarization measurement.  They then calculate
+     the per pixel neutron flipping ratio and polarization,
+     respectively.  a value of 10^{-9} is added to the denominator to
+     prevent divide by zero errors.
+
+#+name:pelvis_updaters
+#+begin_src python
   
       def updateDataFlip(self,event=None):
           """Update changes in wavelength for flipping ratios"""
@@ -1041,7 +1063,16 @@
           d = np.sum(d3d[:,:,lmin:lmax],2)
           self.flatdata = (u-d)/(u+d+1e-6)
           self.update()
-  
+#+end_src
+
+     The =updateDataUp= and =updateDataDown= commands display the
+     neutron intensity per pixel in a single spin state.  They are
+     largely identical to =updateSingleData=, except for the line
+     which selects the spin state.
+
+#+name:pelvis_updaters
+#+begin_src python
+
       def updateDataUp(self,event=None):
           """Update changes in wavelength for the spin up state"""
           (lmin,lmax) = self.opPanel.getLambdaRange()
@@ -1055,6 +1086,15 @@
           (_,d3d)=self.data
           self.flatdata = np.sum(d3d[:,:,lmin:lmax],2)
           self.update()
+#+end_src
+
+     The =updateSingle= function takes the current 2D data, performs
+     the appropriate masking, and updates the data in the [[GraphPanel][GraphPanels]].
+     It also updates the range on the color bar and forces the
+     [[ImagePanel][detector image]] to update.
+
+#+name:pelvis_updaters
+#+begin_src python
   
       def updateSingle(self,event=None):
           """Update the 2D data for the region of interest and intensity"""
