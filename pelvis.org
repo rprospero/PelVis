@@ -55,10 +55,19 @@
    The PELVis application uses a large number of packages to handle
    the work. 
 
+
+   This code was originally written for Python 2.5.  This version of
+   Python did not have the =with= statement and needed it imported
+   from the future.  If PELVis is run on version 2.6 or later, this
+   should not be an issue.  As such, it should be possible to remove
+   this import, but it has not been tested.
 #+name:pelvis_imports
 #+begin_src python
   import __future__
 #+end_src
+
+   The [[PelFile]] class handles all of the data loading from the neutron
+   event files.
 
 #+name:pelvis_imports
 #+begin_src python
@@ -66,30 +75,49 @@
   from reader import PelFile
 #+end_src
 
+   [[ImagePanel]] is a custom widget for displaying 2D graph data in a
+   wxPython frame.
+
 #+name:pelvis_imports
 #+begin_src python
   from ImagePanel import ImagePanel
 #+end_src
+
+   [[GraphPanel]] is a custom wdiget for displayed 1D graphs in a wxPython
+   Frame.
 
 #+name:pelvis_imports
 #+begin_src python
   from GraphPanel import GraphPanel
 #+end_src
 
+   The [[ColorBarPanel]] is a custom widget for displaying a legended
+   color bar for 2D color maps.  The [[ColorMapPicker]] is a custom dialog
+   for chosing a color bar.
+
 #+name:pelvis_imports
 #+begin_src python
   from colorbarpanel import ColorBarPanel, ColorMapPicker
 #+end_src
+
+   The [[MonFile]] class handles reading the SNS monitor count files.
 
 #+name:pelvis_imports
 #+begin_src python
   from monfile import MonFile
 #+end_src
 
+   [[SpectrumDialog]] is a custom dialog which handles viewing and
+   exporting 1D spectral data from the Pelvis application.
+
 #+name:pelvis_imports
 #+begin_src python
   from SpectrumDialog import SpectrumDialog
 #+end_src
+
+   The Python built-in TemporaryFile class is used to cache Flat
+   Files, since they can use a large amount of memory.  If the Flat
+   File functionality is removed, this import can be dropped.
 
 #+name:pelvis_imports
 #+begin_src python
@@ -97,16 +125,28 @@
   from tempfile import TemporaryFile
 #+end_src
 
+   =math= is not used, as it has been essentially superseded by
+   numpy.  This import should be dropped.
+
 #+name:pelvis_imports
 #+begin_src python
   
   import math
 #+end_src
 
+   =time= is used for sleeping in a couple of functions.  This is
+   almost never truly necessary and probably should be dropped.
+
 #+name:pelvis_imports
 #+begin_src python
   import time
 #+end_src
+
+   [[docs.numpy.org][=numpy=]] is a Python library for handling multidimensional arrays.
+   It is many orders of magnitude faster and smaller than using Python
+   Lists, plus easier to read, once you're used to it.  By local
+   convention, =numpy= is always imported as =np=, just because it's
+   called so often.
 
 #+name:pelvis_imports
 #+begin_src python
@@ -114,15 +154,23 @@
   import numpy as np
 #+end_src
 
+   [[matplotlib.org][=matplotlib=]] is a plotting library for python.  It handles all of
+   the plots within the application.
+
 #+name:pelvis_imports
 #+begin_src python
   from matplotlib import pyplot as plt
 #+end_src
 
+   The [[cm]] submodule of matplotlib handles color maps and is needed for
+   controlling the display of the 2D detector data.
+
 #+name:pelvis_imports
 #+begin_src python
   import matplotlib.cm as cm
 #+end_src
+
+   [[http://www.wxpython.org][wx]] is the GUI toolkit used to make the user interface for PelVis
 
 #+name:pelvis_imports
 #+begin_src python
