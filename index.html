@@ -1,0 +1,2543 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+<head>
+<title>PELVis: The PEL Visualizer</title>
+<!-- 2014-04-07 Mon 14:33 -->
+<meta  http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<meta  name="generator" content="Org-mode" />
+<meta  name="author" content="Adam Washington" />
+<style type="text/css">
+ <!--/*--><![CDATA[/*><!--*/
+  .title  { text-align: center; }
+  .todo   { font-family: monospace; color: red; }
+  .done   { color: green; }
+  .tag    { background-color: #eee; font-family: monospace;
+            padding: 2px; font-size: 80%; font-weight: normal; }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  .right  { margin-left: auto; margin-right: 0px;  text-align: right; }
+  .left   { margin-left: 0px;  margin-right: auto; text-align: left; }
+  .center { margin-left: auto; margin-right: auto; text-align: center; }
+  .underline { text-decoration: underline; }
+  #postamble p, #preamble p { font-size: 90%; margin: .2em; }
+  p.verse { margin-left: 3%; }
+  pre {
+    border: 1px solid #ccc;
+    box-shadow: 3px 3px 3px #eee;
+    padding: 8pt;
+    font-family: monospace;
+    overflow: auto;
+    margin: 1.2em;
+  }
+  pre.src {
+    position: relative;
+    overflow: visible;
+    padding-top: 1.2em;
+  }
+  pre.src:before {
+    display: none;
+    position: absolute;
+    background-color: white;
+    top: -10px;
+    right: 10px;
+    padding: 3px;
+    border: 1px solid black;
+  }
+  pre.src:hover:before { display: inline;}
+  pre.src-sh:before    { content: 'sh'; }
+  pre.src-bash:before  { content: 'sh'; }
+  pre.src-emacs-lisp:before { content: 'Emacs Lisp'; }
+  pre.src-R:before     { content: 'R'; }
+  pre.src-perl:before  { content: 'Perl'; }
+  pre.src-java:before  { content: 'Java'; }
+  pre.src-sql:before   { content: 'SQL'; }
+
+  table { border-collapse:collapse; }
+  td, th { vertical-align:top;  }
+  th.right  { text-align: center;  }
+  th.left   { text-align: center;   }
+  th.center { text-align: center; }
+  td.right  { text-align: right;  }
+  td.left   { text-align: left;   }
+  td.center { text-align: center; }
+  dt { font-weight: bold; }
+  .footpara:nth-child(2) { display: inline; }
+  .footpara { display: block; }
+  .footdef  { margin-bottom: 1em; }
+  .figure { padding: 1em; }
+  .figure p { text-align: center; }
+  .inlinetask {
+    padding: 10px;
+    border: 2px solid gray;
+    margin: 10px;
+    background: #ffffcc;
+  }
+  #org-div-home-and-up
+   { text-align: right; font-size: 70%; white-space: nowrap; }
+  textarea { overflow-x: auto; }
+  .linenr { font-size: smaller }
+  .code-highlighted { background-color: #ffff00; }
+  .org-info-js_info-navigation { border-style: none; }
+  #org-info-js_console-label
+    { font-size: 10px; font-weight: bold; white-space: nowrap; }
+  .org-info-js_search-highlight
+    { background-color: #ffff00; color: #000000; font-weight: bold; }
+  /*]]>*/-->
+</style>
+<script type="text/javascript">
+/*
+@licstart  The following is the entire license notice for the
+JavaScript code in this tag.
+
+Copyright (C) 2012  Free Software Foundation, Inc.
+
+The JavaScript code in this tag is free software: you can
+redistribute it and/or modify it under the terms of the GNU
+General Public License (GNU GPL) as published by the Free Software
+Foundation, either version 3 of the License, or (at your option)
+any later version.  The code is distributed WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
+
+As additional permission under GNU GPL version 3 section 7, you
+may distribute non-source (e.g., minimized or compacted) forms of
+that code without the copy of the GNU GPL normally required by
+section 4, provided you include this license notice and a URL
+through which recipients can access the Corresponding Source.
+
+
+@licend  The above is the entire license notice
+for the JavaScript code in this tag.
+*/
+<!--/*--><![CDATA[/*><!--*/
+ function CodeHighlightOn(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(null != target) {
+     elem.cacheClassElem = elem.className;
+     elem.cacheClassTarget = target.className;
+     target.className = "code-highlighted";
+     elem.className   = "code-highlighted";
+   }
+ }
+ function CodeHighlightOff(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(elem.cacheClassElem)
+     elem.className = elem.cacheClassElem;
+   if(elem.cacheClassTarget)
+     target.className = elem.cacheClassTarget;
+ }
+/*]]>*///-->
+</script>
+</head>
+<body>
+<div id="content">
+<h1 class="title">PELVis: The PEL Visualizer</h1>
+<div id="table-of-contents">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents">
+<ul>
+<li><a href="#sec-1">1. Introduction</a></li>
+<li><a href="#sec-2">2. PELVis application</a>
+<ul>
+<li><a href="#sec-2-1">2.1. Application skeleton</a></li>
+<li><a href="#sec-2-2">2.2. Imports</a></li>
+<li><a href="#sec-2-3">2.3. GUI Controls</a>
+<ul>
+<li><a href="#sec-2-3-1">2.3.1. Pelvis Frame</a></li>
+<li><a href="#sec-2-3-2">2.3.2. Position Panel</a></li>
+<li><a href="#sec-2-3-3">2.3.3. Option Panel</a></li>
+<li><a href="#sec-2-3-4">2.3.4. GraphPanel</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#sec-3">3. Utility Classes</a>
+<ul>
+<li><a href="#sec-3-1">3.1. Reader</a>
+<ul>
+<li><a href="#sec-3-1-1">3.1.1. Reader Skeleton</a></li>
+<li><a href="#sec-3-1-2">3.1.2. Image Mapping</a></li>
+<li><a href="#sec-3-1-3">3.1.3. Initialization</a></li>
+<li><a href="#sec-3-1-4">3.1.4. File Reading</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-sec-1" class="outline-2">
+<h2 id="sec-1"><span class="section-number-2">1</span> Introduction</h2>
+<div class="outline-text-2" id="text-1">
+<p>
+This docment is a <a href="http://www.literateprogramming.com/index.html">literate</a> program for analyzing data collected on
+the SESAME beamline. The document itself was written in
+<a href="http://orgmode.org/">Org Mode</a> while the majority of the source is intended to be run
+through python.
+</p>
+
+<p>
+If your primary goal is to simply use PELVis, then the
+<a href="readme.html">user documentation</a> would be the best place to start.
+</p>
+</div>
+</div>
+<div id="outline-container-sec-2" class="outline-2">
+<h2 id="sec-2"><span class="section-number-2">2</span> PELVis application</h2>
+<div class="outline-text-2" id="text-2">
+<p>
+The main user application is the pelvis.py script that the user runs
+to view neutron data.
+</p>
+</div>
+
+<div id="outline-container-sec-2-1" class="outline-3">
+<h3 id="sec-2-1"><span class="section-number-3">2.1</span> Application skeleton</h3>
+<div class="outline-text-3" id="text-2-1">
+<p>
+Below is the rough layout of the PELVis application.  More details can be found in the individual sections
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-python"><span style="color: #e67128;">"""A GUI for handling polarization data generated by a PAPA detector.</span>
+
+<span style="color: #e67128;">This program was written to help with analyzing polarization data produced</span>
+<span style="color: #e67128;">by the PAPA detector.  The general workflow is:</span>
+<span style="color: #e67128;">1)Load Neutron Data</span>
+<span style="color: #e67128;">2)Subtract Background</span>
+<span style="color: #e67128;">3)Select Region of Interest</span>
+<span style="color: #e67128;">4)Plot Spectrum data</span>
+
+<span style="color: #e67128;">The primary class is PelvisFrame, which controls the whole program.</span>
+<span style="color: #e67128;">PelvisFrame contains a PositionPanel, to examine single pixels, and</span>
+<span style="color: #e67128;">a PelvisOptionPanel, which accepts user parameters.</span>
+
+<span style="color: #e67128;">"""</span>
+
+&lt;&lt;pelvis_imports&gt;&gt;
+
+<span style="color: #dbdb95;">RESOLUTION</span> = 400
+
+&lt;&lt;position_panel&gt;&gt;
+&lt;&lt;pelvis_option_panel&gt;&gt;
+&lt;&lt;pelvis_frame&gt;&gt;
+<span style="color: #ffad29; font-weight: bold;">if</span> <span style="color: #23d7d7;">__name__</span>==<span style="color: #e67128;">"__main__"</span>:
+    app=wx.PySimpleApp()
+    pelvisframe = PelvisFrame(app.Yield)
+    app.MainLoop()
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-sec-2-2" class="outline-3">
+<h3 id="sec-2-2"><span class="section-number-3">2.2</span> Imports</h3>
+<div class="outline-text-3" id="text-2-2">
+<p>
+The PELVis application uses a large number of packages to handle
+the work. 
+</p>
+
+
+<p>
+This code was originally written for Python 2.5.  This version of
+Python did not have the <code>with</code> statement and needed it imported
+from the future.  If PELVis is run on version 2.6 or later, this
+should not be an issue.  As such, it should be possible to remove
+this import, but it has not been tested.
+</p>
+<div class="org-src-container">
+
+<pre class="src src-python" id="pelvis_imports"><span style="color: #ffad29; font-weight: bold;">import</span> __future__
+</pre>
+</div>
+
+<p>
+The <a href="#sec-3-1">PelFile</a> class handles all of the data loading from the neutron
+event files.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-python" id="pelvis_imports"><span style="color: #ffad29; font-weight: bold;">from</span> reader <span style="color: #ffad29; font-weight: bold;">import</span> PelFile
+</pre>
+</div>
+
+<p>
+<i>ImagePanel</i> is a custom widget for displaying 2D graph data in a
+wxPython frame.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-python" id="pelvis_imports"><span style="color: #ffad29; font-weight: bold;">from</span> ImagePanel <span style="color: #ffad29; font-weight: bold;">import</span> ImagePanel
+</pre>
+</div>
+
+<p>
+<a href="#sec-2-3-4">GraphPanel</a> is a custom widget for displayed 1D graphs in a wxPython
+Frame.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-python" id="pelvis_imports"><span style="color: #ffad29; font-weight: bold;">from</span> GraphPanel <span style="color: #ffad29; font-weight: bold;">import</span> GraphPanel
+</pre>
+</div>
+
+<p>
+The <i>ColorBarPanel</i> is a custom widget for displaying a legended
+color bar for 2D color maps.  The <i>ColorMapPicker</i> is a custom dialog
+for chosing a color bar.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-python" id="pelvis_imports"><span style="color: #ffad29; font-weight: bold;">from</span> colorbarpanel <span style="color: #ffad29; font-weight: bold;">import</span> ColorBarPanel, ColorMapPicker
+</pre>
+</div>
+
+<p>
+The <i>MonFile</i> class handles reading the SNS monitor count files.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-python" id="pelvis_imports"><span style="color: #ffad29; font-weight: bold;">from</span> monfile <span style="color: #ffad29; font-weight: bold;">import</span> MonFile
+</pre>
+</div>
+
+<p>
+<i>SpectrumDialog</i> is a custom dialog which handles viewing and
+exporting 1D spectral data from the Pelvis application.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-python" id="pelvis_imports"><span style="color: #ffad29; font-weight: bold;">from</span> SpectrumDialog <span style="color: #ffad29; font-weight: bold;">import</span> SpectrumDialog
+</pre>
+</div>
+
+<p>
+The Python built-in TemporaryFile class is used to cache Flat
+Files, since they can use a large amount of memory.  If the Flat
+File functionality is removed, this import can be dropped.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-python" id="pelvis_imports"><span style="color: #ffad29; font-weight: bold;">from</span> tempfile <span style="color: #ffad29; font-weight: bold;">import</span> TemporaryFile
+</pre>
+</div>
+
+<p>
+<code>math</code> is not used, as it has been essentially superseded by
+numpy.  This import should be dropped.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-python" id="pelvis_imports"><span style="color: #ffad29; font-weight: bold;">import</span> math
+</pre>
+</div>
+
+<p>
+<code>time</code> is used for sleeping in a couple of functions.  This is
+almost never truly necessary and probably should be dropped.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-python" id="pelvis_imports"><span style="color: #ffad29; font-weight: bold;">import</span> time
+</pre>
+</div>
+
+<p>
+<a href="http://docs.numpy.org"><code>numpy</code></a> is a Python library for handling multidimensional arrays.
+It is many orders of magnitude faster and smaller than using Python
+Lists, plus easier to read, once you're used to it.  By local
+convention, <code>numpy</code> is always imported as <code>np</code>, just because it's
+called so often.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-python" id="pelvis_imports"><span style="color: #ffad29; font-weight: bold;">import</span> numpy <span style="color: #ffad29; font-weight: bold;">as</span> np
+</pre>
+</div>
+
+<p>
+<a href="http://matplotlib.org"><code>matplotlib</code></a> is a plotting library for python.  It handles all of
+the plots within the application.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-python" id="pelvis_imports"><span style="color: #ffad29; font-weight: bold;">from</span> matplotlib <span style="color: #ffad29; font-weight: bold;">import</span> pyplot <span style="color: #ffad29; font-weight: bold;">as</span> plt
+</pre>
+</div>
+
+<p>
+The <code>cm</code> submodule of matplotlib handles color maps and is needed for
+controlling the display of the 2D detector data.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-python" id="pelvis_imports"><span style="color: #ffad29; font-weight: bold;">import</span> matplotlib.cm <span style="color: #ffad29; font-weight: bold;">as</span> cm
+</pre>
+</div>
+
+<p>
+<a href="http://www.wxpython.org">wx</a> is the GUI toolkit used to make the user interface for PelVis
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-python" id="pelvis_imports"><span style="color: #ffad29; font-weight: bold;">import</span> wx
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-sec-2-3" class="outline-3">
+<h3 id="sec-2-3"><span class="section-number-3">2.3</span> GUI Controls</h3>
+<div class="outline-text-3" id="text-2-3">
+<p>
+We're using <a href="https://www.wxwidgets.org/">wxWidgets</a> as our GUI toolkit through the <a href="http://www.wxpython.org">wxPython</a>
+binding library.  wxWidgets was chosen as it is cross platform and
+provided a more complete toolkit than the default Tk toolkit that
+comes with Python.  The largest disadvantage to this decision is
+that wxPython has not yet been officially ported to Python 3.
+</p>
+</div>
+
+<div id="outline-container-sec-2-3-1" class="outline-4">
+<h4 id="sec-2-3-1"><span class="section-number-4">2.3.1</span> Pelvis Frame</h4>
+<div class="outline-text-4" id="text-2-3-1">
+<p>
+The Pelvis Frame is the main UI for the application.
+Unfortunately, it also contains a large amount of application
+logic, which should be extracted out into its own class.  That
+would certainly make working on the Reduction programs easier.
+If you're looking for a good improvement to make to the code.
+This would be it.
+</p>
+
+<p>
+The class starts off with a large number of constant definitions.
+These constants are identifiers for menu commands, which are
+needed for the wxWidget menu system.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-python" id="pelvis_frame"><span style="color: #ffad29; font-weight: bold;">class</span> <span style="color: #34cae2;">PelvisFrame</span>(wx.Frame):
+    <span style="color: #e67128;">"""The main application window for PELvis"""</span>
+
+    <span style="color: #74af68;">#</span><span style="color: #74af68;">Menu ID constants</span>
+    <span style="color: #dbdb95;">ID_OPEN</span> = 100
+    <span style="color: #dbdb95;">ID_OPENTWO</span> = 110
+    <span style="color: #dbdb95;">ID_SAVE</span> = 130
+    <span style="color: #dbdb95;">ID_SPECTRUM</span>=140
+    <span style="color: #dbdb95;">ID_IMAGE_ARRAY</span>=160
+    <span style="color: #dbdb95;">ID_EXIT</span> = 190
+
+    <span style="color: #dbdb95;">ID_GREY</span> = 200
+    <span style="color: #dbdb95;">ID_HUEVAL</span> = 220
+    <span style="color: #dbdb95;">ID_SPECTRAL</span> = 230
+    <span style="color: #dbdb95;">ID_PICKER</span> = 290
+    <span style="color: #dbdb95;">ID_POLAR</span> = 300
+    <span style="color: #dbdb95;">ID_FLIPPING</span> = 310
+    <span style="color: #dbdb95;">ID_SPIN_UP</span> = 320
+    <span style="color: #dbdb95;">ID_SPIN_DOWN</span> = 330
+
+    <span style="color: #dbdb95;">ID_FLAT</span> = 420
+    <span style="color: #dbdb95;">ID_FAKEFLAT</span> = 430
+    <span style="color: #dbdb95;">ID_ROD</span> = 440
+    <span style="color: #dbdb95;">ID_EXPORT_ROI</span> = 450
+    <span style="color: #dbdb95;">ID_IMPORT_ROI</span> = 460
+
+    <span style="color: #dbdb95;">ID_COPY</span> = 500
+
+    <span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">__init__</span>(<span style="color: #ffad29; font-weight: bold;">self</span>,Yield):
+        &lt;&lt;pelvis_frame_init&gt;&gt;
+
+    &lt;&lt;pelvis_handle_pels&gt;&gt;
+
+    &lt;&lt;pelvis_on_image_array&gt;&gt;
+
+    &lt;&lt;pelvis_load_norm_pel&gt;&gt;
+
+<span style="color: #74af68;">#    </span><span style="color: #74af68;">def getLambdaRange(self):</span>
+<span style="color: #74af68;">#        </span><span style="color: #74af68;">try:</span>
+<span style="color: #74af68;">#            </span><span style="color: #74af68;">lmin = int(float(self.lambdaMin.GetValue())*10)</span>
+<span style="color: #74af68;">#        </span><span style="color: #74af68;">except ValueError:</span>
+<span style="color: #74af68;">#            </span><span style="color: #74af68;">lmin = 0</span>
+<span style="color: #74af68;">#        </span><span style="color: #74af68;">try:</span>
+<span style="color: #74af68;">#            </span><span style="color: #74af68;">lmax = int(float(self.lambdaMax.GetValue())*10)</span>
+<span style="color: #74af68;">#        </span><span style="color: #74af68;">except ValueError:</span>
+<span style="color: #74af68;">#            </span><span style="color: #74af68;">lmax = 200 </span>
+<span style="color: #74af68;">#        </span><span style="color: #74af68;">return (lmin,lmax)</span>
+
+    &lt;&lt;pelvis_updaters&gt;&gt;
+
+    &lt;&lt;pelvis_on_update_button&gt;&gt;
+
+    &lt;&lt;pelvis_on_open&gt;&gt;
+
+    &lt;&lt;pelvis_on_open_set&gt;&gt;
+
+    &lt;&lt;pelvis_flat_files&gt;&gt;
+
+    &lt;&lt;pelvis_menu_commands&gt;&gt;  
+    <span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">setColorMap</span>(<span style="color: #ffad29; font-weight: bold;">self</span>,cmap):
+        <span style="color: #e67128;">"""Changes to the given colormap"""</span>
+        <span style="color: #ffad29; font-weight: bold;">self</span>.imPanel.cmap = cmap
+        <span style="color: #ffad29; font-weight: bold;">self</span>.colorbar.setCmap(cmap)
+        <span style="color: #ffad29; font-weight: bold;">self</span>.update()
+
+
+    &lt;&lt;pelvis_on_exit&gt;&gt;
+    &lt;&lt;pelvis_load_up_and_down&gt;&gt;
+
+    &lt;&lt;pelvis_menu_commands_2&gt;&gt;
+</pre>
+</div>
+</div>
+
+<ol class="org-ol"><li>Initialization<br  /><div class="outline-text-5" id="text-2-3-1-1">
+<p>
+The frame is created with a single parameter: <code>Yield</code>.  This points
+to a function which allows Pelvis to temporarily return control
+back to the GUI.  This is necessary to amintain responsiveness
+of the user interface while performing long calculations
+(e.g. loading a file).
+</p>
+
+<p>
+We start by creating a wxFrame.  We also set the initial data to
+an empty file, store the <code>Yield</code> command, and create a default
+data mask that accepts all pixels.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-python" id="pelvis_frame_init"><span style="color: #e67128;">"""Create a PELvis frame</span>
+
+<span style="color: #e67128;">Keyword arguments:</span>
+<span style="color: #e67128;">Yield -- A function to give control back to the main event loop</span>
+
+<span style="color: #e67128;">"""</span>
+wx.Frame.__init__(<span style="color: #ffad29; font-weight: bold;">self</span>,<span style="color: #008b8b;">None</span>,wx.ID_ANY,<span style="color: #e67128;">"PEL Visualizer"</span>)
+<span style="color: #ffad29; font-weight: bold;">self</span>.data = PelFile()
+<span style="color: #ffad29; font-weight: bold;">self</span>.Yield = Yield
+<span style="color: #ffad29; font-weight: bold;">self</span>.mask = np.ones((128,16),dtype=np.<span style="color: #23d7d7;">bool</span>)
+</pre>
+</div>
+
+
+<p>
+Now we can create the actual components of the GUI.  The <code>xPanel</code>
+and <code>yPanel</code> are <a href="#sec-2-3-4">graphs</a> which display the integrated intensity
+along an axis.  <code>imPanel</code> displays the actual, 2D detector <i>image</i>.
+<code>colorbar</code> gives the current scale of the color scheme on the
+imPanel.  <code>opPanel</code> is a generic <a href="#sec-2-3-3">panel</a> for the user to input data
+about the current region of interest.  <code>posPanel</code> displays
+position information to the user.  <code>cmp</code> stores the current color
+map for use on the <code>imPanel</code>. <code>specDlg</code> is a <i>dialog box</i>
+which handles displaying and saving wavelength spectrums.
+Finally, <code>imageSaveDialog</code> is a custom file saving dialog for
+handling saving the current detector image to a file.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-python" id="pelvis_frame_init"><span style="color: #74af68;">#</span><span style="color: #74af68;">Create items in the frame</span>
+<span style="color: #ffad29; font-weight: bold;">self</span>.yPanel = GraphPanel(<span style="color: #ffad29; font-weight: bold;">self</span>,(2,8),64,GraphPanel.VERTICAL)
+<span style="color: #ffad29; font-weight: bold;">self</span>.xPanel = GraphPanel(<span style="color: #ffad29; font-weight: bold;">self</span>,(8,2),64,GraphPanel.INVERTED)
+<span style="color: #ffad29; font-weight: bold;">self</span>.colorbar = ColorBarPanel(<span style="color: #ffad29; font-weight: bold;">self</span>,cm.jet)
+<span style="color: #ffad29; font-weight: bold;">self</span>.opPanel = PelvisOptionPanel(<span style="color: #ffad29; font-weight: bold;">self</span>)
+<span style="color: #ffad29; font-weight: bold;">self</span>.posPanel = PositionPanel(<span style="color: #ffad29; font-weight: bold;">self</span>)
+<span style="color: #ffad29; font-weight: bold;">self</span>.imPanel = ImagePanel(<span style="color: #ffad29; font-weight: bold;">self</span>,<span style="color: #ffad29; font-weight: bold;">self</span>.posPanel.<span style="color: #23d7d7;">set</span>,
+                          <span style="color: #ffad29; font-weight: bold;">self</span>.opPanel.setPosMin,<span style="color: #ffad29; font-weight: bold;">self</span>.opPanel.setPosMax)
+<span style="color: #ffad29; font-weight: bold;">self</span>.specDlg = SpectrumDialog(<span style="color: #ffad29; font-weight: bold;">self</span>)
+
+<span style="color: #ffad29; font-weight: bold;">self</span>.<span style="color: #23d7d7;">cmp</span> = <span style="color: #008b8b;">None</span> <span style="color: #74af68;">#</span><span style="color: #74af68;">color map</span>
+<span style="color: #ffad29; font-weight: bold;">self</span>.imageSaveDialog=wx.FileDialog(<span style="color: #ffad29; font-weight: bold;">self</span>,<span style="color: #e67128;">"Choose graphics file"</span>,wildcard=<span style="color: #e67128;">"Portable Network Graphic (png)|*.PNG|Windows Bitmap (bmp)|*.BMP|Joint Photographic Experts Group (jpg)|*.JPG|Portable Network Monocrome (pnm)|*.PNM|Tagged Image File Format (tif)|*.TIF|Archaic, useless format (pcx)|*.PCX"</span>,style=wx.FD_SAVE|wx.FD_OVERWRITE_PROMPT)
+</pre>
+</div>
+
+<p>
+The Pelvis Frame class has two dynamic member functions.  The
+first is <code>update</code>, which is responsible for setting the image in
+the image panel.  The function assumes that the 3D array of data
+that has been displayed hasn't changed, but that some of the
+parameters for the display (e.g. wavelength range, intensity
+caps) may have changed.  The other member function, <code>updateData</code>,
+is used whenever the underlying 3D array may have changed.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-python" id="pelvis_frame_init"><span style="color: #ffad29; font-weight: bold;">self</span>.update = <span style="color: #ffad29; font-weight: bold;">self</span>.updateSingle<span style="color: #74af68;">#</span><span style="color: #74af68;">update the image</span>
+<span style="color: #ffad29; font-weight: bold;">self</span>.updateData = <span style="color: #ffad29; font-weight: bold;">self</span>.updateSingleData<span style="color: #74af68;">#</span><span style="color: #74af68;">update the data in the image</span>
+</pre>
+</div>
+
+<p>
+Below is the creation and layout of the menu for the PELVis
+application.  To add an entry to a menu, we need to append both a
+message code (e.g. <code>ID_EXIT</code>) and a title.  If the title contains
+a tab character, a hotkey can follow that tab character to allow
+for a more keyboard oriented interaction with the program.
+Additionally, if there is an ampersand in front of a character,
+then that character will serve as the hotkey for that command
+when accessing the menu through the keyboard.  The <code>Append</code>
+function will also accept tooltext for the menu, but the current
+version of wxpython seems to be ignoring it.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-python" id="pelvis_frame_init"><span style="color: #74af68;">#</span><span style="color: #74af68;">Create the menu</span>
+<span style="color: #dbdb95;">menubar</span> = wx.MenuBar()
+<span style="color: #dbdb95;">filemenu</span> = wx.Menu()
+<span style="color: #dbdb95;">editmenu</span> = wx.Menu()
+<span style="color: #dbdb95;">scalemenu</span> = wx.Menu()
+<span style="color: #dbdb95;">analysismenu</span> = wx.Menu()
+<span style="color: #dbdb95;">noisemenu</span> = wx.Menu()
+
+<span style="color: #74af68;">#</span><span style="color: #74af68;">populate the menu</span>
+filemenu.Append(<span style="color: #ffad29; font-weight: bold;">self</span>.ID_OPEN,<span style="color: #e67128;">"&amp;Open\tCtrl-O"</span>,<span style="color: #e67128;">" Open a PEL file"</span>)
+filemenu.Append(<span style="color: #ffad29; font-weight: bold;">self</span>.ID_OPENTWO,<span style="color: #e67128;">"&amp;Polarized Set"</span>,<span style="color: #e67128;">" Open two PEL files"</span>)
+filemenu.Append(<span style="color: #ffad29; font-weight: bold;">self</span>.ID_SAVE,<span style="color: #e67128;">"&amp;Save\tCtrl-S"</span>,<span style="color: #e67128;">" Save an image file"</span>)
+filemenu.Append(<span style="color: #ffad29; font-weight: bold;">self</span>.ID_SPECTRUM,<span style="color: #e67128;">"Spectrum"</span>,<span style="color: #e67128;">" View the TOF spectrum"</span>)
+filemenu.Append(<span style="color: #ffad29; font-weight: bold;">self</span>.ID_IMAGE_ARRAY,<span style="color: #e67128;">"&amp;Export Images..."</span>,<span style="color: #e67128;">" Save a series of TOF snapshots"</span>)
+filemenu.Append(<span style="color: #ffad29; font-weight: bold;">self</span>.ID_EXIT,<span style="color: #e67128;">"&amp;Quit\tCtrl-Q"</span>,<span style="color: #e67128;">" Quit"</span>)
+
+editmenu.Append(<span style="color: #ffad29; font-weight: bold;">self</span>.ID_COPY,<span style="color: #e67128;">"&amp;Copy\tCtrl-c"</span>,<span style="color: #e67128;">"Copy the current image to the clipboard"</span>)
+
+scalemenu.Append(<span style="color: #ffad29; font-weight: bold;">self</span>.ID_GREY,<span style="color: #e67128;">"Greyscale\tCtrl-G"</span>,<span style="color: #e67128;">"Monochrome images"</span>)
+scalemenu.Append(<span style="color: #ffad29; font-weight: bold;">self</span>.ID_HUEVAL,<span style="color: #e67128;">"Hue and Value\tCtrl-H"</span>,<span style="color: #e67128;">"Scaled Rainbow Images"</span>)
+scalemenu.Append(<span style="color: #ffad29; font-weight: bold;">self</span>.ID_SPECTRAL,<span style="color: #e67128;">"spectral"</span>,<span style="color: #e67128;">"Uses spectrum of light"</span>)
+scalemenu.Append(<span style="color: #ffad29; font-weight: bold;">self</span>.ID_PICKER,<span style="color: #e67128;">"Map Picker..."</span>,<span style="color: #e67128;">" Select from the full list of colormaps"</span>)
+
+analysismenu.Append(<span style="color: #ffad29; font-weight: bold;">self</span>.ID_POLAR,<span style="color: #e67128;">"Check Polarization\tCtrl-P"</span>,<span style="color: #e67128;">"2d plot of polarization data"</span>)
+analysismenu.Append(<span style="color: #ffad29; font-weight: bold;">self</span>.ID_FLIPPING,<span style="color: #e67128;">"Check Flipping Ratio\tCtrl-F"</span>,<span style="color: #e67128;">"2d plot of  spin up over spin down"</span>)
+analysismenu.Append(<span style="color: #ffad29; font-weight: bold;">self</span>.ID_SPIN_UP,<span style="color: #e67128;">"View Spin Up State\tCtrl-U"</span>,<span style="color: #e67128;">"2d plot of  spin up"</span>)
+analysismenu.Append(<span style="color: #ffad29; font-weight: bold;">self</span>.ID_SPIN_DOWN,<span style="color: #e67128;">"View Spin Down State\tCtrl-D"</span>,<span style="color: #e67128;">"2d plot of  spin down"</span>)
+
+noisemenu.Append(<span style="color: #ffad29; font-weight: bold;">self</span>.ID_FLAT,<span style="color: #e67128;">"&amp;Load Flat"</span>,<span style="color: #e67128;">" Load a blank run for background subtraction"</span>)
+noisemenu.Append(<span style="color: #ffad29; font-weight: bold;">self</span>.ID_FAKEFLAT,<span style="color: #e67128;">"Si&amp;mulate Flat"</span>,<span style="color: #e67128;">" Drop out background within the same image"</span>)
+noisemenu.Append(<span style="color: #ffad29; font-weight: bold;">self</span>.ID_ROD,<span style="color: #e67128;">"Region of &amp;Disinterest"</span>,<span style="color: #e67128;">" Drop out background within the same image"</span>)
+noisemenu.Append(<span style="color: #ffad29; font-weight: bold;">self</span>.ID_EXPORT_ROI,<span style="color: #e67128;">"Export ROI"</span>,<span style="color: #e67128;">" Export a binary file corresponding to where the data is above the minimum intensity."</span>)
+noisemenu.Append(<span style="color: #ffad29; font-weight: bold;">self</span>.ID_IMPORT_ROI,<span style="color: #e67128;">"Import ROI"</span>,<span style="color: #e67128;">" Add another exclusion mask."</span>)
+</pre>
+</div>
+
+<p>
+Each menu item needs to be bound to a function.  This is
+performed by connecting the menu signal (e.g. <code>ID_EXIT</code>) to the
+corresponding function (e.g. <code>OnExit</code>).  There's probably a
+better way of doing this through some config file, but that will
+be left as an exercise to the reader.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-python" id="pelvis_frame_init"><span style="color: #74af68;">#</span><span style="color: #74af68;">Bind events to the menu</span>
+<span style="color: #ffad29; font-weight: bold;">self</span>.Connect(<span style="color: #ffad29; font-weight: bold;">self</span>.ID_EXIT,-1,wx.wxEVT_COMMAND_MENU_SELECTED,<span style="color: #ffad29; font-weight: bold;">self</span>.OnExit)
+<span style="color: #ffad29; font-weight: bold;">self</span>.Connect(<span style="color: #ffad29; font-weight: bold;">self</span>.ID_OPEN,-1,wx.wxEVT_COMMAND_MENU_SELECTED,<span style="color: #ffad29; font-weight: bold;">self</span>.OnOpen)
+<span style="color: #ffad29; font-weight: bold;">self</span>.Connect(<span style="color: #ffad29; font-weight: bold;">self</span>.ID_OPENTWO,-1,wx.wxEVT_COMMAND_MENU_SELECTED,<span style="color: #ffad29; font-weight: bold;">self</span>.OnOpenSet)
+<span style="color: #ffad29; font-weight: bold;">self</span>.Connect(<span style="color: #ffad29; font-weight: bold;">self</span>.ID_SAVE,-1,wx.wxEVT_COMMAND_MENU_SELECTED,<span style="color: #ffad29; font-weight: bold;">self</span>.OnSave)
+<span style="color: #ffad29; font-weight: bold;">self</span>.Connect(<span style="color: #ffad29; font-weight: bold;">self</span>.ID_SPECTRUM,-1,wx.wxEVT_COMMAND_MENU_SELECTED,<span style="color: #ffad29; font-weight: bold;">self</span>.OnSpectrum)
+<span style="color: #ffad29; font-weight: bold;">self</span>.Connect(<span style="color: #ffad29; font-weight: bold;">self</span>.ID_IMAGE_ARRAY,-1,wx.wxEVT_COMMAND_MENU_SELECTED,<span style="color: #ffad29; font-weight: bold;">self</span>.OnImageArray)
+<span style="color: #ffad29; font-weight: bold;">self</span>.Connect(<span style="color: #ffad29; font-weight: bold;">self</span>.ID_GREY,-1,wx.wxEVT_COMMAND_MENU_SELECTED,<span style="color: #ffad29; font-weight: bold;">self</span>.OnGrey)
+<span style="color: #ffad29; font-weight: bold;">self</span>.Connect(<span style="color: #ffad29; font-weight: bold;">self</span>.ID_HUEVAL,-1,wx.wxEVT_COMMAND_MENU_SELECTED,<span style="color: #ffad29; font-weight: bold;">self</span>.OnHueVal)
+<span style="color: #ffad29; font-weight: bold;">self</span>.Connect(<span style="color: #ffad29; font-weight: bold;">self</span>.ID_SPECTRAL,-1,wx.wxEVT_COMMAND_MENU_SELECTED,<span style="color: #ffad29; font-weight: bold;">self</span>.OnSpectral)
+<span style="color: #ffad29; font-weight: bold;">self</span>.Connect(<span style="color: #ffad29; font-weight: bold;">self</span>.ID_PICKER,-1,wx.wxEVT_COMMAND_MENU_SELECTED,<span style="color: #ffad29; font-weight: bold;">self</span>.OnPicker)
+<span style="color: #ffad29; font-weight: bold;">self</span>.Connect(<span style="color: #ffad29; font-weight: bold;">self</span>.ID_POLAR,-1,wx.wxEVT_COMMAND_MENU_SELECTED,<span style="color: #ffad29; font-weight: bold;">self</span>.OnPolar)
+<span style="color: #ffad29; font-weight: bold;">self</span>.Connect(<span style="color: #ffad29; font-weight: bold;">self</span>.ID_FLIPPING,-1,wx.wxEVT_COMMAND_MENU_SELECTED,<span style="color: #ffad29; font-weight: bold;">self</span>.OnFlipping)
+<span style="color: #ffad29; font-weight: bold;">self</span>.Connect(<span style="color: #ffad29; font-weight: bold;">self</span>.ID_SPIN_UP,-1,wx.wxEVT_COMMAND_MENU_SELECTED,<span style="color: #ffad29; font-weight: bold;">self</span>.OnAnalysisSpinUp)
+<span style="color: #ffad29; font-weight: bold;">self</span>.Connect(<span style="color: #ffad29; font-weight: bold;">self</span>.ID_SPIN_DOWN,-1,wx.wxEVT_COMMAND_MENU_SELECTED,<span style="color: #ffad29; font-weight: bold;">self</span>.OnAnalysisSpinDown)
+
+<span style="color: #ffad29; font-weight: bold;">self</span>.Connect(<span style="color: #ffad29; font-weight: bold;">self</span>.ID_FLAT,-1,wx.wxEVT_COMMAND_MENU_SELECTED,<span style="color: #ffad29; font-weight: bold;">self</span>.OnFlat)
+<span style="color: #ffad29; font-weight: bold;">self</span>.Connect(<span style="color: #ffad29; font-weight: bold;">self</span>.ID_FAKEFLAT,-1,wx.wxEVT_COMMAND_MENU_SELECTED,<span style="color: #ffad29; font-weight: bold;">self</span>.OnFakeFlat)
+<span style="color: #ffad29; font-weight: bold;">self</span>.Connect(<span style="color: #ffad29; font-weight: bold;">self</span>.ID_ROD,-1,wx.wxEVT_COMMAND_MENU_SELECTED,<span style="color: #ffad29; font-weight: bold;">self</span>.OnROD)
+<span style="color: #ffad29; font-weight: bold;">self</span>.Connect(<span style="color: #ffad29; font-weight: bold;">self</span>.ID_EXPORT_ROI,-1,wx.wxEVT_COMMAND_MENU_SELECTED,<span style="color: #ffad29; font-weight: bold;">self</span>.OnExportROI)
+<span style="color: #ffad29; font-weight: bold;">self</span>.Connect(<span style="color: #ffad29; font-weight: bold;">self</span>.ID_IMPORT_ROI,-1,wx.wxEVT_COMMAND_MENU_SELECTED,<span style="color: #ffad29; font-weight: bold;">self</span>.OnImportROI)
+<span style="color: #ffad29; font-weight: bold;">self</span>.Connect(<span style="color: #ffad29; font-weight: bold;">self</span>.ID_COPY,-1,wx.wxEVT_COMMAND_MENU_SELECTED,<span style="color: #ffad29; font-weight: bold;">self</span>.OnCopy)
+</pre>
+</div>
+
+<p>
+We can now add the menus into the menubar and assign that menubar
+to the application.  Adding an ampersand into the title of a
+menu assigns an Alt hotkey to that menu (e.g. pressing Alt+F
+will open the <code>&amp;File</code> menu).
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-python" id="pelvis_frame_init">menubar.Append(filemenu,<span style="color: #e67128;">"&amp;File"</span>)
+menubar.Append(editmenu,<span style="color: #e67128;">"&amp;Edit"</span>)
+menubar.Append(scalemenu,<span style="color: #e67128;">"&amp;Color"</span>)
+menubar.Append(analysismenu,<span style="color: #e67128;">"&amp;Analysis"</span>)
+menubar.Append(noisemenu,<span style="color: #e67128;">"&amp;Noise"</span>)
+<span style="color: #ffad29; font-weight: bold;">self</span>.SetMenuBar(menubar)
+</pre>
+</div>
+
+<p>
+We can now add all of the GUI components to the window.  A
+progress bar is added to the bottom of the window to give
+feedback on the loading of files.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-python" id="pelvis_frame_init"><span style="color: #74af68;">#</span><span style="color: #74af68;">arrange window</span>
+<span style="color: #dbdb95;">sizer</span> = wx.GridBagSizer()
+sizer.Add(<span style="color: #ffad29; font-weight: bold;">self</span>.colorbar,pos=wx.GBPosition(0,9),span=wx.GBSpan(9,1))
+sizer.Add(<span style="color: #ffad29; font-weight: bold;">self</span>.imPanel,pos=wx.GBPosition(0,1),span=wx.GBSpan(8,8))
+sizer.Add(<span style="color: #ffad29; font-weight: bold;">self</span>.yPanel,pos=wx.GBPosition(0,0),span=wx.GBSpan(8,1))
+sizer.Add(<span style="color: #ffad29; font-weight: bold;">self</span>.xPanel,pos=wx.GBPosition(8,1),span=wx.GBSpan(1,8))
+sizer.Add(<span style="color: #ffad29; font-weight: bold;">self</span>.opPanel,pos=wx.GBPosition(0,10),span=wx.GBSpan(8,1),flag=wx.EXPAND)
+sizer.Add(<span style="color: #ffad29; font-weight: bold;">self</span>.posPanel,pos=wx.GBPosition(8,0),flag=wx.EXPAND)
+<span style="color: #ffad29; font-weight: bold;">self</span>.progress = wx.Gauge(<span style="color: #ffad29; font-weight: bold;">self</span>,<span style="color: #23d7d7;">range</span>=1000)
+sizer.Add(<span style="color: #ffad29; font-weight: bold;">self</span>.progress,pos=wx.GBPosition(9,0),span=wx.GBSpan(1,11),flag=wx.EXPAND)
+</pre>
+</div>
+
+<p>
+A button to force the image display to update is added and bound
+to the <a href="#pelvis_on_update_button_link">OnUpdateButton</a> function.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-python" id="pelvis_frame_init"><span style="color: #dbdb95;">updateButton</span> = wx.Button(<span style="color: #ffad29; font-weight: bold;">self</span>,-1,<span style="color: #e67128;">"Update"</span>)
+updateButton.Bind(wx.EVT_BUTTON,<span style="color: #ffad29; font-weight: bold;">self</span>.OnUpdateButton)
+sizer.Add(updateButton,flag=wx.EXPAND,pos=wx.GBPosition(8,10))
+</pre>
+</div>
+
+<p>
+All that remains is some final cleanup.  The data is set to an
+empty file, the background is set to empty, as the window
+undergoes stanard intialization.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-python" id="pelvis_frame_init"><span style="color: #ffad29; font-weight: bold;">self</span>.data = <span style="color: #ffad29; font-weight: bold;">self</span>.makePel()
+<span style="color: #ffad29; font-weight: bold;">self</span>.flatrun = <span style="color: #008b8b;">None</span><span style="color: #74af68;">#</span><span style="color: #74af68;">background data</span>
+
+sizer.SetSizeHints(<span style="color: #ffad29; font-weight: bold;">self</span>)
+<span style="color: #ffad29; font-weight: bold;">self</span>.SetSizer(sizer)
+<span style="color: #ffad29; font-weight: bold;">self</span>.Show(<span style="color: #008b8b;">True</span>)
+</pre>
+</div>
+</div>
+</li>
+
+
+
+<li>Handling Pel Files<br  /><div class="outline-text-5" id="text-2-3-1-2">
+<p>
+There's a large amount of references to Pel files in this
+section, which might be confusing, since you will almost never
+encounter an actual Pel file.  The PELVis program was originally
+written to view neutron data comes of off the PAPA detector.  The
+data off of the PAPA was saved in a binary format called the PAPA
+Electronic Log, or PEL for short.  
+</p>
+
+<p>
+The software which came with the detector was written in
+Labview 5.  <a href="http://ni.com/labview">Labview</a> files are stored in a proprietary format
+which can only be read by Labview itself.  Modern versions of
+Labview are not backwards compatible enough to read Labview 5
+code.  Versions of Labview old enough to read the code are
+generally unavailable and difficult to install on modern
+operating systems.  Thus, while the vendor's supplied code could
+open the files, we could not extended it to perform the sorts of
+calulcations that we would like.  Thus, it was necessary to write
+a new program from scratch to read these files.  This is that
+application.
+</p>
+
+<p>
+Once we obtained the Helium-3 detector, we replaced the PAPA
+detector, as the PAPA had terrible noise issues.  However, PELVis
+had grown to the point where the reading of the data file was
+only a small part of the functionality.  By changing the <i>reader</i>
+code to handle the SNS file format (which was quite similar to
+the Pel format), we were able to continue using the same suite.
+</p>
+
+<p>
+The <code>makePel</code> function creates a blank neutron run.  It's just a
+default for when the user hasn't loaded any data yet.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-python" id="pelvis_handle_pels"><span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">makePel</span>(<span style="color: #ffad29; font-weight: bold;">self</span>):
+    <span style="color: #e67128;">"""Create a blank Pel object for loading detector data"""</span>
+    <span style="color: #dbdb95;">data</span> = PelFile()
+    <span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">statusfunc</span>(x):
+        <span style="color: #ffad29; font-weight: bold;">self</span>.progress.SetValue(x)
+        <span style="color: #ffad29; font-weight: bold;">self</span>.Yield()
+    <span style="color: #dbdb95;">data.statusfunc</span> = statusfunc
+    <span style="color: #ffad29; font-weight: bold;">return</span> data
+</pre>
+</div>
+
+<p>
+The <code>loadPel</code> command reads in a neutron data file.  It takes as
+a single parameter a message to display to the user about what
+sort of file should be loaded.  There is also the ability to load
+a pre-histogrammed version of the neutron data, stored in the
+<a href="http://docs.numpy.org">numpy's</a> native binary format.  In practice, this hasn't been that
+useful and may be dropped.  The numpy files do read far faster,
+but they also take up huge amounts of disk space compared to the
+event files, plus they need preprocessing from said event files
+to be created in the first place.
+</p>
+
+<p>
+This function also loads the monitor file that corresponds to the
+data set.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-python" id="pelvis_handle_pels"><span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">loadPel</span>(<span style="color: #ffad29; font-weight: bold;">self</span>,message):
+    <span style="color: #e67128;">"""Load a .pel file and its monitor data.</span>
+
+<span style="color: #e67128;">    Keyword arguments:</span>
+<span style="color: #e67128;">    message -- The title for the load file dialog.</span>
+
+<span style="color: #e67128;">    """</span>
+    <span style="color: #dbdb95;">dlg</span>=wx.FileDialog(<span style="color: #ffad29; font-weight: bold;">self</span>,message,wildcard=<span style="color: #e67128;">"He3 data|*neutron_event.dat|Preformatted Histograms|*.npy"</span>,style=wx.FD_OPEN)
+    <span style="color: #ffad29; font-weight: bold;">if</span> dlg.ShowModal()==wx.ID_OK:
+    <span style="color: #74af68;">#            </span><span style="color: #74af68;">self.SetCursor(wx.CURSOR_WAIT)</span>
+        <span style="color: #dbdb95;">path</span> = dlg.GetPath()
+        <span style="color: #ffad29; font-weight: bold;">if</span> path[-3:] == <span style="color: #e67128;">"dat"</span>:
+            data = <span style="color: #ffad29; font-weight: bold;">self</span>.makePel()
+            data.readfileimage(path)
+        <span style="color: #ffad29; font-weight: bold;">elif</span> path[-3:] == <span style="color: #e67128;">"npy"</span>:
+            data = np.load(path)
+    <span style="color: #74af68;">#            </span><span style="color: #74af68;">self.SetCursor(wx.CURSOR_ARROW)</span>
+    <span style="color: #ffad29; font-weight: bold;">else</span>:
+        <span style="color: #ffad29; font-weight: bold;">return</span> (<span style="color: #008b8b;">None</span>,<span style="color: #008b8b;">None</span>)
+    mon = MonFile(path[:-17]+<span style="color: #e67128;">"bmon_histo.dat"</span>)
+    <span style="color: #ffad29; font-weight: bold;">return</span> (data,mon)
+</pre>
+</div>
+
+<p>
+The <code>loadNormPel</code> function loads a neutron data set and a set of
+counts from the beam monitor.  In the unlikely event that there
+is a <i>flat run</i>, the flat is subtracted out of the data set.  The
+neutron data is then normalized to the monitor count.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-python" id="pelvis_load_norm_pel"><span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">loadNormPel</span>(<span style="color: #ffad29; font-weight: bold;">self</span>,message):
+    <span style="color: #e67128;">"""Load a .pel file, normalize it by monitor, and subtract background"""</span>
+    (data,mon) = <span style="color: #ffad29; font-weight: bold;">self</span>.loadPel(message)
+    <span style="color: #ffad29; font-weight: bold;">if</span> <span style="color: #23d7d7;">isinstance</span>(data,PelFile):
+        <span style="color: #dbdb95;">data</span> = np.asarray(data.make3d(),np.float32)
+    <span style="color: #ffad29; font-weight: bold;">if</span> mon <span style="color: #ffad29; font-weight: bold;">is</span> <span style="color: #008b8b;">None</span>:
+        <span style="color: #ffad29; font-weight: bold;">return</span> (data,1)
+    <span style="color: #ffad29; font-weight: bold;">if</span> <span style="color: #ffad29; font-weight: bold;">self</span>.flatrun != <span style="color: #008b8b;">None</span>:
+        <span style="color: #dbdb95;">flatrun</span> = np.load(<span style="color: #ffad29; font-weight: bold;">self</span>.flatrun)
+        <span style="color: #ffad29; font-weight: bold;">self</span>.flatrun.seek(0)
+        <span style="color: #dbdb95;">flatrun</span> *= mon.time
+        <span style="color: #dbdb95;">data</span> -= flatrun
+    <span style="color: #dbdb95;">spec</span> = mon.spec
+    <span style="color: #dbdb95;">monsum</span> = np.<span style="color: #23d7d7;">sum</span>(spec)
+    <span style="color: #ffad29; font-weight: bold;">print</span>(<span style="color: #e67128;">"Integrated monitor counts: "</span> + <span style="color: #23d7d7;">str</span>(monsum))
+    <span style="color: #dbdb95;">data</span> /= monsum
+    <span style="color: #ffad29; font-weight: bold;">return</span> (data,np.<span style="color: #23d7d7;">sum</span>(mon.spec))
+</pre>
+</div>
+
+<p>
+The <code>loadUpAndDown</code> function is a helper function to load both
+spin states of a flipping measurement.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-python" id="pelvis_load_up_and_down"><span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">loadUpAndDown</span>(<span style="color: #ffad29; font-weight: bold;">self</span>):
+    <span style="color: #e67128;">"""Read in spin flip data"""</span>
+    <span style="color: #dbdb95;">u3d</span>,<span style="color: #dbdb95;">uscale</span> = <span style="color: #ffad29; font-weight: bold;">self</span>.loadNormPel(<span style="color: #e67128;">"Spin Up State"</span>)
+    <span style="color: #ffad29; font-weight: bold;">if</span> u3d <span style="color: #ffad29; font-weight: bold;">is</span> <span style="color: #008b8b;">None</span>:
+        <span style="color: #ffad29; font-weight: bold;">return</span> <span style="color: #008b8b;">False</span>
+    <span style="color: #ffad29; font-weight: bold;">del</span> <span style="color: #ffad29; font-weight: bold;">self</span>.data
+    <span style="color: #dbdb95;">d3d</span>,<span style="color: #dbdb95;">dscale</span> = <span style="color: #ffad29; font-weight: bold;">self</span>.loadNormPel(<span style="color: #e67128;">"Spin Down State"</span>)
+    <span style="color: #ffad29; font-weight: bold;">self</span>.data = (u3d,d3d)
+    <span style="color: #ffad29; font-weight: bold;">self</span>.scale = (uscale,dscale)
+    <span style="color: #ffad29; font-weight: bold;">return</span> <span style="color: #008b8b;">True</span>
+</pre>
+</div>
+</div>
+</li>
+
+
+<li>Menu Commands<br  /><div class="outline-text-5" id="text-2-3-1-3">
+<p>
+The Image Array command causes Pelvis to export the detector
+image, one wavelength bin at a time.  It can be useful to find
+effects which are sensitive to both position and wavelength, but
+it honestly hasn't seen much use.
+</p>
+
+<p>
+The <code>path</code> and <code>ext</code> variables are used to get the file name that
+the user chose and then sandwich the wavelength between them.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-python" id="pelvis_on_image_array"><span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">OnImageArray</span>(<span style="color: #ffad29; font-weight: bold;">self</span>,event):
+    <span style="color: #e67128;">"""Exports the 2d detector image by wavelength"""</span>
+    <span style="color: #dbdb95;">dlg</span> = <span style="color: #ffad29; font-weight: bold;">self</span>.imageSaveDialog
+    <span style="color: #ffad29; font-weight: bold;">if</span> dlg.ShowModal()==wx.ID_OK:
+        <span style="color: #dbdb95;">path</span>=dlg.GetPath()
+        <span style="color: #dbdb95;">ext</span> = path[-4:]
+        <span style="color: #dbdb95;">path</span> = path[:-4]
+        (lmin,lmax) = <span style="color: #ffad29; font-weight: bold;">self</span>.opPanel.getLambdaRange()
+        <span style="color: #ffad29; font-weight: bold;">for</span> i <span style="color: #ffad29; font-weight: bold;">in</span> <span style="color: #23d7d7;">range</span>(lmin,lmax):
+            <span style="color: #23d7d7;">file</span>=path+(<span style="color: #e67128;">"%03i"</span>%i)+ext
+            <span style="color: #ffad29; font-weight: bold;">self</span>.opPanel.setLambdaRange(0.1*i,0.1*(i+1))
+            <span style="color: #ffad29; font-weight: bold;">self</span>.updateData()
+            <span style="color: #ffad29; font-weight: bold;">self</span>.update()
+            <span style="color: #ffad29; font-weight: bold;">self</span>.imPanel.saveImage(<span style="color: #23d7d7;">file</span>)
+            <span style="color: #ffad29; font-weight: bold;">self</span>.progress.SetValue(1000*(i-lmin)/(lmax-lmin))
+            <span style="color: #ffad29; font-weight: bold;">self</span>.Yield()
+        <span style="color: #ffad29; font-weight: bold;">self</span>.opPanel.setLambdaRange(lmin*0.1,lmax*0.1)
+        <span style="color: #ffad29; font-weight: bold;">self</span>.updateData()
+        <span style="color: #ffad29; font-weight: bold;">self</span>.progress.SetValue(0)
+</pre>
+</div>
+
+<p>
+The <code>OnUpdateButton</code> isn't really a menu command, but is rather
+the calback for when the user clicks the update button.  All it
+does is call the current value of the <code>updateData</code> function.
+This function exists mostly because wxWidgets won't follow the
+dynamically changing definition for <code>updateData</code> and needs a
+static location for the callback.
+</p>
+
+<p>
+<a id="pelvis_on_update_button_link" name="pelvis_on_update_button_link"></a>
+</p>
+<div class="org-src-container">
+
+<pre class="src src-python" id="pelvis_on_update_button"><span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">OnUpdateButton</span>(<span style="color: #ffad29; font-weight: bold;">self</span>,event):
+    <span style="color: #e67128;">"""Refresh the data when the user pushes the "Update" button"""</span>
+    <span style="color: #74af68;">#</span><span style="color: #74af68;">This function is needed for wxWidgets to allow</span>
+    <span style="color: #74af68;">#</span><span style="color: #74af68;">for dynamically changing the bound function</span>
+    <span style="color: #ffad29; font-weight: bold;">self</span>.updateData(event)
+</pre>
+</div>
+
+<p>
+The <code>OnOpen</code> function handles opening a single data set.
+<i>loadNormPel</i> does all of the actual file loading.  The <code>data</code> and
+<code>scale</code> values are set to the actual neutron data and monitor
+counts, respectively.  The <code>updateData</code> and <code>update</code> functions
+are also set to single data file mode.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-python" id="pelvis_on_open"><span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">OnOpen</span>(<span style="color: #ffad29; font-weight: bold;">self</span>,event):
+    <span style="color: #e67128;">"""Load a single .pel file for display"""</span>
+    <span style="color: #dbdb95;">data</span>,<span style="color: #dbdb95;">scale</span> = <span style="color: #ffad29; font-weight: bold;">self</span>.loadNormPel(<span style="color: #e67128;">"Choose the Pel File to Open"</span>)
+    <span style="color: #ffad29; font-weight: bold;">if</span> data <span style="color: #ffad29; font-weight: bold;">is</span> <span style="color: #008b8b;">None</span>:
+        <span style="color: #ffad29; font-weight: bold;">return</span>
+    <span style="color: #ffad29; font-weight: bold;">self</span>.data = data
+    <span style="color: #ffad29; font-weight: bold;">self</span>.scale = scale
+    <span style="color: #ffad29; font-weight: bold;">self</span>.progress.SetValue(0)
+    <span style="color: #ffad29; font-weight: bold;">self</span>.specDlg.setMode(<span style="color: #e67128;">"up"</span>)
+    <span style="color: #ffad29; font-weight: bold;">self</span>.updateData = <span style="color: #ffad29; font-weight: bold;">self</span>.updateSingleData
+    <span style="color: #ffad29; font-weight: bold;">self</span>.update = <span style="color: #ffad29; font-weight: bold;">self</span>.updateSingle
+    <span style="color: #ffad29; font-weight: bold;">self</span>.updateData()
+</pre>
+</div>
+
+<p>
+Similarly to <code>OnOpen</code>, <code>OnOpenSet</code> loads two data files for
+examining a polarization measurement.  The actual file loading is
+handled by <i>loadUpAndDown</i>.  Should the files load, the application
+switches to presenting polarization information.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-python" id="pelvis_on_open_set"><span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">OnOpenSet</span>(<span style="color: #ffad29; font-weight: bold;">self</span>,event):
+    <span style="color: #e67128;">"""Load a spin flip measurement for display"""</span>
+    <span style="color: #ffad29; font-weight: bold;">if</span> <span style="color: #ffad29; font-weight: bold;">self</span>.loadUpAndDown():
+        <span style="color: #ffad29; font-weight: bold;">self</span>.OnPolar(event)
+</pre>
+</div>
+
+<p>
+Back when the PAPA detector first arrived, there was a light leak
+that caused an enormous noise signal across the detector.  The
+flat files were an attempt to eliminate that.  The flat files are
+essentiall a position sensitive calculation of the detector noise
+per unit time.  In practice, this functionality is almost never
+used and should probably be removed, as it may be out of date or
+inaccurate. 
+</p>
+
+<p>
+<code>OnFlat</code> starts by having the user load in a background run.
+This run is then flattened into a 3D positional map (the
+background is assumed to be wavelength independent).  This 2D map
+is normalized to the time of the measurement.
+</p>
+
+<p>
+The <code>OnFakeFlat</code> function tries to use the background to simulate
+having performed a flat measurement.  Honestly, this is probably
+better perofrmed by simple background subtraction and should be
+removed from the program.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-python" id="pelvis_flat_files"><span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">OnFlat</span>(<span style="color: #ffad29; font-weight: bold;">self</span>,event):
+    <span style="color: #e67128;">"""Load a blank run for background subtraction"""</span>
+    (data,mon) = <span style="color: #ffad29; font-weight: bold;">self</span>.loadPel(<span style="color: #e67128;">"Choose a Blank Run"</span>)
+    <span style="color: #ffad29; font-weight: bold;">if</span> data == <span style="color: #008b8b;">None</span>:
+        <span style="color: #ffad29; font-weight: bold;">return</span>
+    <span style="color: #ffad29; font-weight: bold;">if</span> <span style="color: #23d7d7;">isinstance</span>(data,PelFile):
+        flatrun = data.make3d()
+    <span style="color: #ffad29; font-weight: bold;">elif</span> <span style="color: #23d7d7;">isinstance</span>(data,np.ndarray):
+        flatrun = data
+    flatrun = np.<span style="color: #23d7d7;">sum</span>(flatrun,axis=2)
+    flatrun /= RESOLUTION
+    flatrun /= <span style="color: #23d7d7;">float</span>(mon.time)
+    flatrun = np.expand_dims(flatrun,2)
+    <span style="color: #ffad29; font-weight: bold;">self</span>.flatrun = TemporaryFile()
+    np.save(<span style="color: #ffad29; font-weight: bold;">self</span>.flatrun,flatrun)
+    <span style="color: #ffad29; font-weight: bold;">self</span>.flatrun.seek(0)
+    <span style="color: #ffad29; font-weight: bold;">self</span>.progress.SetValue(0)
+
+<span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">OnFakeFlat</span>(<span style="color: #ffad29; font-weight: bold;">self</span>,event):
+    <span style="color: #e67128;">"""Create a fake background run from outside the region of interest."""</span>
+    (xMin,xMax,yMin,yMax)=<span style="color: #ffad29; font-weight: bold;">self</span>.opPanel.getRoi()
+    totarea = 512*512
+    centarea = (yMax-yMin)*(xMax-xMin)
+    backgroundarea = totarea-centarea
+    <span style="color: #ffad29; font-weight: bold;">if</span> <span style="color: #23d7d7;">type</span>(<span style="color: #ffad29; font-weight: bold;">self</span>.data) <span style="color: #ffad29; font-weight: bold;">is</span> <span style="color: #23d7d7;">tuple</span>:
+        (u,d)=<span style="color: #ffad29; font-weight: bold;">self</span>.data
+
+        totu = np.<span style="color: #23d7d7;">sum</span>(u)
+        totd = np.<span style="color: #23d7d7;">sum</span>(d)
+        centu = np.<span style="color: #23d7d7;">sum</span>(u[yMin:yMax,xMin:xMax,:])
+        centd = np.<span style="color: #23d7d7;">sum</span>(d[yMin:yMax,xMin:xMax,:])
+
+        backgroundu = totu-centu
+        backgroundd = totd-centd
+        backgroundrateu = backgroundu/backgroundarea
+        backgroundrated = backgroundd/backgroundarea
+        backgroundrateu /= (RESOLUTION + 1) <span style="color: #74af68;">#</span><span style="color: #74af68;">normalize against the wavelengths</span>
+        backgroundrated /= (RESOLUTION + 1) <span style="color: #74af68;">#</span><span style="color: #74af68;">normalize against the wavelengths</span>
+        <span style="color: #74af68;">###</span><span style="color: #74af68;">Stupid Memory Errors</span>
+        <span style="color: #ffad29; font-weight: bold;">del</span> <span style="color: #ffad29; font-weight: bold;">self</span>.data
+        u -= backgroundrateu
+        d -= backgroundrated
+        <span style="color: #74af68;">###</span>
+        <span style="color: #ffad29; font-weight: bold;">self</span>.data=(u,d)
+    <span style="color: #ffad29; font-weight: bold;">else</span>:
+        d=<span style="color: #ffad29; font-weight: bold;">self</span>.data
+        tot = np.<span style="color: #23d7d7;">sum</span>(d)
+        cent = np.<span style="color: #23d7d7;">sum</span>(d[yMin:yMax,xMin:xMax,:])
+        background = tot-cent
+        backgroundrate = background/backgroundarea
+        backgroundrate /= (RESOLUTION + 1) <span style="color: #74af68;">#</span><span style="color: #74af68;">normalize against the wavelengths</span>
+        <span style="color: #ffad29; font-weight: bold;">self</span>.data-=backgroundrate
+    <span style="color: #ffad29; font-weight: bold;">self</span>.updateData()
+</pre>
+</div>
+
+<p>
+The <code>OnROD</code> command is really just the background subtraction
+function.  The <code>ROD</code> standards for "Region of Disinterest", which
+is a play on the phrase "Region of Interest".
+</p>
+
+<p>
+The code simply finds the average per pixel count rate in the current
+selected region of interest and subtracts it from all the pixel.
+Note that the background subtraction is performed per wavelength
+bin, so wavelength specific backgrounds are handled appropriately.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-python" id="pelvis_menu_commands"><span style="color: #74af68;">#</span><span style="color: #74af68;">Subtract out the region of disinterest</span>
+<span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">OnROD</span>(<span style="color: #ffad29; font-weight: bold;">self</span>,event):
+    <span style="color: #e67128;">"""Take the region of interest as background noise"""</span>
+    (xMin,xMax,yMin,yMax)=<span style="color: #ffad29; font-weight: bold;">self</span>.opPanel.getRoi()
+    <span style="color: #dbdb95;">area</span> = (yMax-yMin)*(xMax-xMin)
+    <span style="color: #ffad29; font-weight: bold;">if</span> <span style="color: #23d7d7;">type</span>(<span style="color: #ffad29; font-weight: bold;">self</span>.data) <span style="color: #ffad29; font-weight: bold;">is</span> <span style="color: #23d7d7;">tuple</span>:
+        <span style="color: #dbdb95;">u</span>,<span style="color: #dbdb95;">d</span>=<span style="color: #ffad29; font-weight: bold;">self</span>.data
+        <span style="color: #ffad29; font-weight: bold;">del</span> <span style="color: #ffad29; font-weight: bold;">self</span>.data
+        <span style="color: #dbdb95;">totu</span> = np.<span style="color: #23d7d7;">sum</span>(np.<span style="color: #23d7d7;">sum</span>(u[yMin:yMax,xMin:xMax,:],axis=0),axis=0)
+        <span style="color: #dbdb95;">totd</span> = np.<span style="color: #23d7d7;">sum</span>(np.<span style="color: #23d7d7;">sum</span>(d[yMin:yMax,xMin:xMax,:],axis=0),axis=0)
+        <span style="color: #dbdb95;">totu</span> /= area
+        <span style="color: #dbdb95;">totd</span> /= area
+        <span style="color: #dbdb95;">u</span> -= totu
+        <span style="color: #dbdb95;">d</span> -= totd
+        <span style="color: #ffad29; font-weight: bold;">self</span>.data=(u,d)
+    <span style="color: #ffad29; font-weight: bold;">else</span>:
+        <span style="color: #dbdb95;">d</span>=<span style="color: #ffad29; font-weight: bold;">self</span>.data
+        <span style="color: #dbdb95;">totd</span> = np.<span style="color: #23d7d7;">sum</span>(np.<span style="color: #23d7d7;">sum</span>(d[yMin:yMax,xMin:xMax,:],axis=0),axis=0)
+        <span style="color: #74af68;">#</span><span style="color: #74af68;">totd = np.atleast_3d(totd)</span>
+        <span style="color: #dbdb95;">totd</span> /= area
+        <span style="color: #74af68;">#</span><span style="color: #74af68;">print(totd.shape)</span>
+        <span style="color: #74af68;">#</span><span style="color: #74af68;">print(self.data.shape)</span>
+        <span style="color: #ffad29; font-weight: bold;">self</span>.data -= totd
+    <span style="color: #ffad29; font-weight: bold;">self</span>.updateData()
+</pre>
+</div>
+
+<p>
+The <code>OnExportROI</code> function creates a 2D binary map of all of the
+pixels where the intensity is less that the minimum intensity and
+saves the map to a file.  The map can either be a text file for
+readability or a binary file in numpy format for speed and
+compactness.  Not that <code>OnExportROI</code> does <b>not</b> change the
+current mask for the application. 
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-python" id="pelvis_menu_commands"><span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">OnExportROI</span>(<span style="color: #ffad29; font-weight: bold;">self</span>,event):
+    <span style="color: #e67128;">"""Save a file containing a map of where the current data</span>
+<span style="color: #e67128;">    image is greater than vmin"""</span>
+    <span style="color: #dbdb95;">vMin</span>,<span style="color: #dbdb95;">_</span> = <span style="color: #ffad29; font-weight: bold;">self</span>.opPanel.getIntensityRange()
+    <span style="color: #dbdb95;">mask</span> = <span style="color: #ffad29; font-weight: bold;">self</span>.flatdata &gt; vMin
+    <span style="color: #74af68;"># </span><span style="color: #74af68;">(vMin,vMax) = self.opPanel.getIntensityRange()#</span>
+    <span style="color: #74af68;"># </span><span style="color: #74af68;">(xMin,xMax,yMin,yMax) = self.opPanel.getRoi()#</span>
+    <span style="color: #74af68;"># </span><span style="color: #74af68;">(lMin,lMax) = self.opPanel.getLambdaRange()#</span>
+    <span style="color: #74af68;"># </span><span style="color: #74af68;">(lMin,lMax) = (lMin/10,lMax/10)#</span>
+    <span style="color: #74af68;"># </span><span style="color: #74af68;">mask = [["xMin",xMin], ["xMax",xMax], ["yMin",yMin], ["yMax",yMax], \</span>
+    <span style="color: #74af68;">#         </span><span style="color: #74af68;">["lMin",lMin], ["lMax",lMax], ["vMin",vMin], ["vMax",vMax]]#</span>
+    <span style="color: #dbdb95;">dlg</span> = wx.FileDialog(<span style="color: #ffad29; font-weight: bold;">self</span>,
+                        <span style="color: #e67128;">"Where to save the mask file?"</span>,
+                        wildcard=<span style="color: #e67128;">"Numpy dump (npy)|*.npy|Text (dat)|*.dat"</span>,
+                        style=wx.FD_SAVE|wx.FD_OVERWRITE_PROMPT)
+    <span style="color: #ffad29; font-weight: bold;">if</span> dlg.ShowModal()==wx.ID_OK:
+        <span style="color: #dbdb95;">path</span>=dlg.GetPath()
+        <span style="color: #dbdb95;">ext</span> = path[-4:]
+        <span style="color: #ffad29; font-weight: bold;">if</span> ext == <span style="color: #e67128;">".dat"</span>:
+            np.savetxt(path,mask,fmt=<span style="color: #e67128;">"%d"</span>)
+        <span style="color: #ffad29; font-weight: bold;">else</span>:
+            np.save(path,mask)
+</pre>
+</div>
+
+<p>
+The <code>OnImportROI</code> sets the detector mask used for specifying the
+region of interest.  It can load either of the mask formats
+exported by <code>OnExportROI</code>.  A mask is loaded additively - if a
+pixel is masked in either the current mask or in the loaded mask
+file, it will be masked in the final mask.  Currently, the only
+way to remove a pixel from the mask is to restart the
+application.  Obviously, this is suboptimal and a simple
+<code>RemoveMask</code> function should be written to return to an unmasked
+state.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-python" id="pelvis_menu_commands"><span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">OnImportROI</span>(<span style="color: #ffad29; font-weight: bold;">self</span>,event):
+    <span style="color: #e67128;">"""Adds another mask to the current system mask"""</span>
+    <span style="color: #dbdb95;">dlg</span> = wx.FileDialog(<span style="color: #ffad29; font-weight: bold;">self</span>,
+                        <span style="color: #e67128;">"Which Mask File?"</span>,
+                        wildcard=<span style="color: #e67128;">"Numpy dump (npy)|*.npy|Text (dat)|*.dat"</span>,
+                        style=wx.FD_OPEN)
+    time.sleep(.1)
+    <span style="color: #ffad29; font-weight: bold;">if</span> dlg.ShowModal()==wx.ID_OK:
+        <span style="color: #dbdb95;">path</span> = dlg.GetPath()
+        <span style="color: #dbdb95;">ext</span> = path[-4:]
+        <span style="color: #ffad29; font-weight: bold;">if</span> ext == <span style="color: #e67128;">".dat"</span>:
+            newmask = np.loadtxt(path,dtype=np.<span style="color: #23d7d7;">bool</span>)
+            newmask=<span style="color: #23d7d7;">dict</span>(newmask)<span style="color: #74af68;">#</span>
+        <span style="color: #ffad29; font-weight: bold;">else</span>:
+            newmask = np.load(path)
+        <span style="color: #ffad29; font-weight: bold;">self</span>.mask = np.logical_and(<span style="color: #ffad29; font-weight: bold;">self</span>.mask,newmask)
+        <span style="color: #74af68;">#</span><span style="color: #74af68;">self.opPanel.setPosMin(newmask["xMin"],newmask["yMin"])#</span>
+        <span style="color: #74af68;">#</span><span style="color: #74af68;">self.opPanel.setPosMax(newmask["xMax"],newmask["yMax"])#</span>
+        <span style="color: #74af68;">#</span><span style="color: #74af68;">self.opPanel.setLambdaRange(newmask["lMin"],newmask["lMax"])#</span>
+        <span style="color: #74af68;">#</span><span style="color: #74af68;">self.opPanel.setIntensityRange(newmask["vMin"],newmask["vMax"])#</span>
+        <span style="color: #ffad29; font-weight: bold;">self</span>.updateData()
+</pre>
+</div>
+
+<p>
+<code>OnSave</code> save the current detector image to a graphics file.  The
+actual image saving is handled by the <i>ImagePanel</i> class.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-python" id="pelvis_menu_commands"><span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">OnSave</span>(<span style="color: #ffad29; font-weight: bold;">self</span>,event):
+    <span style="color: #e67128;">"""Save the current 2D image to a file"""</span>
+    <span style="color: #ffad29; font-weight: bold;">print</span>(<span style="color: #e67128;">"OnSave"</span>)
+<span style="color: #74af68;">#        </span><span style="color: #74af68;">dlg=wx.FileDialog(self,"Choose graphics file",wildcard="Windows Bitmap (bmp)|*.BMP|Portable Network Graphic (png)|*.PNG|Joint Photographic Experts Group (jpg)|*.JPG|Portable Network Monocrome (pnm)|*.PNM|Tagged Image File Format (tif)|*.TIF|Archaic, useless format (pcx)|*.PCX",style=wx.FD_SAVE|wx.FD_OVERWRITE_PROMPT)</span>
+    <span style="color: #dbdb95;">dlg</span> = <span style="color: #ffad29; font-weight: bold;">self</span>.imageSaveDialog
+    <span style="color: #ffad29; font-weight: bold;">if</span> dlg.ShowModal()==wx.ID_OK:
+        <span style="color: #ffad29; font-weight: bold;">self</span>.imPanel.saveImage(dlg.GetPath())
+</pre>
+</div>
+
+<p>
+The <code>OnSpectrum</code> function formats the data into a 1D format for
+use by the <i>SpectrumDialog</i> in actually giving the spectral
+information.  The data is masked by both the mask generated by
+<code>OnImportROI</code> and by the user's chosen region of interest.  The
+total counts per wavelength bin are then sent to the
+SpectrumDialog, along with the scale from the monitor count. 
+</p>
+
+<p>
+The user's chosen intensity range display is also sent to the
+spectrum dialog.  This is helpful in getting proper bounds for
+graphing the polarization and flipping ratio, since dividing by
+small numbers can give strange boundary ranges.  Unfortunately,
+this is NOT useful with raw intensity rates, since the intensity
+range per pixel on the detector doesn't necessarily correspond to
+what we're interested in with  the intensity per wavelength bin.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-python" id="pelvis_menu_commands"><span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">OnSpectrum</span>(<span style="color: #ffad29; font-weight: bold;">self</span>,event):
+    <span style="color: #e67128;">"""Display a plot of the region of interest versus wavelength"""</span>
+    <span style="color: #ffad29; font-weight: bold;">print</span>(<span style="color: #e67128;">"OnSpectrum"</span>)
+    (xMin,xMax,yMin,yMax)=<span style="color: #ffad29; font-weight: bold;">self</span>.opPanel.getRoi()
+    <span style="color: #ffad29; font-weight: bold;">if</span> <span style="color: #23d7d7;">type</span>(<span style="color: #ffad29; font-weight: bold;">self</span>.data) <span style="color: #ffad29; font-weight: bold;">is</span> <span style="color: #23d7d7;">tuple</span>:
+        <span style="color: #dbdb95;">u3d</span>,<span style="color: #dbdb95;">d3d</span> = <span style="color: #ffad29; font-weight: bold;">self</span>.data
+        <span style="color: #dbdb95;">u3d</span> = u3d[:,:,:]
+        <span style="color: #dbdb95;">d3d</span> = d3d[:,:,:]
+        <span style="color: #dbdb95;">u3d</span>[np.logical_not(<span style="color: #ffad29; font-weight: bold;">self</span>.mask)] = 0
+        <span style="color: #dbdb95;">d3d</span>[np.logical_not(<span style="color: #ffad29; font-weight: bold;">self</span>.mask)] = 0
+        <span style="color: #dbdb95;">u</span> = np.<span style="color: #23d7d7;">sum</span>(np.<span style="color: #23d7d7;">sum</span>(u3d[yMin:yMax,xMin:xMax],0),0)
+        <span style="color: #dbdb95;">d</span> = np.<span style="color: #23d7d7;">sum</span>(np.<span style="color: #23d7d7;">sum</span>(d3d[yMin:yMax,xMin:xMax],0),0)
+        <span style="color: #dbdb95;">uscale</span>,<span style="color: #dbdb95;">dscale</span> = <span style="color: #ffad29; font-weight: bold;">self</span>.scale
+        <span style="color: #ffad29; font-weight: bold;">self</span>.specDlg.setScale(uscale,dscale)            
+        <span style="color: #ffad29; font-weight: bold;">self</span>.specDlg.setData(u,d)
+    <span style="color: #ffad29; font-weight: bold;">else</span>:
+        <span style="color: #dbdb95;">copy</span> = <span style="color: #ffad29; font-weight: bold;">self</span>.data[:,:,:]
+        <span style="color: #dbdb95;">copy</span>[np.logical_not(<span style="color: #ffad29; font-weight: bold;">self</span>.mask)] = 0
+        <span style="color: #dbdb95;">u</span> = np.<span style="color: #23d7d7;">sum</span>(np.<span style="color: #23d7d7;">sum</span>(copy[yMin:yMax,xMin:xMax],0),0)
+        <span style="color: #74af68;">#            </span><span style="color: #74af68;">u *= self.scale</span>
+        <span style="color: #ffad29; font-weight: bold;">self</span>.specDlg.setScale(<span style="color: #ffad29; font-weight: bold;">self</span>.scale)
+        <span style="color: #ffad29; font-weight: bold;">self</span>.specDlg.setData(u)
+    <span style="color: #ffad29; font-weight: bold;">self</span>.specDlg.setIntensityRange(<span style="color: #ffad29; font-weight: bold;">self</span>.opPanel.getIntensityRange())
+    <span style="color: #ffad29; font-weight: bold;">self</span>.specDlg.Show()
+</pre>
+</div>
+
+<p>
+There are a couple of menu functions for setting the color scheme
+of the detector image.  <code>OnGrey</code> gives a greyscale image, as one
+would expect.  <code>OnHueVal</code> gives an image where the intensity if
+encoded into the Hue, with the saturation and Value both pegged
+at the maximum.  Finally, <code>OnSpectral</code> is the default, with a
+color scheme that starts at zero and passes through the range of
+hues before arriving at white.
+</p>
+
+<p>
+If the user wants a different color map, they can use the
+<i>ColorMapPicker</i> to chose from any of the installed color maps.
+PELVis currently does not support creating custom color spectra.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-python" id="pelvis_menu_commands"><span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">OnGrey</span>(<span style="color: #ffad29; font-weight: bold;">self</span>,event):
+    <span style="color: #e67128;">"""Set the colormap to gray"""</span>
+    <span style="color: #ffad29; font-weight: bold;">self</span>.imPanel.cmap = cm.gray
+    <span style="color: #ffad29; font-weight: bold;">self</span>.colorbar.setCmap(cm.gray)
+    <span style="color: #ffad29; font-weight: bold;">self</span>.update()
+
+<span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">OnHueVal</span>(<span style="color: #ffad29; font-weight: bold;">self</span>,event):
+    <span style="color: #e67128;">"""Set the colormap to a rainbow"""</span>
+    <span style="color: #ffad29; font-weight: bold;">self</span>.imPanel.cmap = cm.jet
+    <span style="color: #ffad29; font-weight: bold;">self</span>.colorbar.setCmap(cm.jet)
+    <span style="color: #ffad29; font-weight: bold;">self</span>.update()
+
+<span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">OnSpectral</span>(<span style="color: #ffad29; font-weight: bold;">self</span>,event):
+    <span style="color: #e67128;">"""Set the colormap to the spectral map"""</span>
+    <span style="color: #ffad29; font-weight: bold;">self</span>.imPanel.cmap = cm.spectral
+    <span style="color: #ffad29; font-weight: bold;">self</span>.colorbar.setCmap(cm.spectral)
+    <span style="color: #ffad29; font-weight: bold;">self</span>.update()
+
+<span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">OnPicker</span>(<span style="color: #ffad29; font-weight: bold;">self</span>,event):
+    <span style="color: #e67128;">"""Let the user pick a color map from a list"""</span>
+    <span style="color: #ffad29; font-weight: bold;">if</span> <span style="color: #ffad29; font-weight: bold;">self</span>.<span style="color: #23d7d7;">cmp</span> <span style="color: #ffad29; font-weight: bold;">is</span> <span style="color: #008b8b;">None</span>:
+        <span style="color: #ffad29; font-weight: bold;">self</span>.<span style="color: #23d7d7;">cmp</span> = ColorMapPicker(<span style="color: #ffad29; font-weight: bold;">self</span>,<span style="color: #ffad29; font-weight: bold;">self</span>.setColorMap)
+    <span style="color: #ffad29; font-weight: bold;">self</span>.<span style="color: #23d7d7;">cmp</span>.Show()
+</pre>
+</div>
+
+<p>
+The <code>OnExit</code> function is run when the user closes the program
+from the menu.  It's not that interesting.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-python" id="pelvis_on_exit"><span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">OnExit</span>(<span style="color: #ffad29; font-weight: bold;">self</span>,event):
+      <span style="color: #e67128;">"""Quit the program"""</span>
+      <span style="color: #ffad29; font-weight: bold;">self</span>.Close()
+</pre>
+</div>
+
+<p>
+There are four functions to set the current data interpretation
+mode for the application.  Each one sets the <code>update</code> and
+<code>updateData</code> functions to the <a href="#sec-2-3-1-4">proper function</a> to handle the data
+type, then sets the mode of the spectrum dialog.
+</p>
+
+<p>
+It currently looks like the update function is always set to
+updateSingle.  If this is the case, then the code can be
+simplified.  This is worth investigation.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-python" id="pelvis_menu_commands_2"><span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">OnPolar</span>(<span style="color: #ffad29; font-weight: bold;">self</span>,event):
+    <span style="color: #e67128;">"""Display neutron polarization"""</span>
+    <span style="color: #ffad29; font-weight: bold;">print</span>(<span style="color: #e67128;">"OnPolar"</span>)
+    <span style="color: #ffad29; font-weight: bold;">self</span>.specDlg.setMode(<span style="color: #e67128;">"polar"</span>)
+    <span style="color: #ffad29; font-weight: bold;">self</span>.updateData = <span style="color: #ffad29; font-weight: bold;">self</span>.updateDataPolar
+    <span style="color: #ffad29; font-weight: bold;">self</span>.update = <span style="color: #ffad29; font-weight: bold;">self</span>.updateSingle
+    <span style="color: #ffad29; font-weight: bold;">self</span>.updateData()
+
+<span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">OnFlipping</span>(<span style="color: #ffad29; font-weight: bold;">self</span>,event):
+    <span style="color: #e67128;">"""Display the flipping ratio"""</span>
+    <span style="color: #ffad29; font-weight: bold;">print</span>(<span style="color: #e67128;">"OnFlip"</span>)
+    <span style="color: #ffad29; font-weight: bold;">self</span>.specDlg.setMode(<span style="color: #e67128;">"flipping"</span>)
+    <span style="color: #ffad29; font-weight: bold;">self</span>.updateData = <span style="color: #ffad29; font-weight: bold;">self</span>.updateDataFlip
+    <span style="color: #ffad29; font-weight: bold;">self</span>.update = <span style="color: #ffad29; font-weight: bold;">self</span>.updateSingle
+    <span style="color: #ffad29; font-weight: bold;">self</span>.updateData()
+
+<span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">OnAnalysisSpinUp</span>(<span style="color: #ffad29; font-weight: bold;">self</span>,event):
+    <span style="color: #e67128;">"""Display the Spin Up data"""</span>
+    <span style="color: #ffad29; font-weight: bold;">print</span>(<span style="color: #e67128;">"OnSpinUp"</span>)
+    <span style="color: #ffad29; font-weight: bold;">self</span>.specDlg.setMode(<span style="color: #e67128;">"up"</span>)
+    <span style="color: #ffad29; font-weight: bold;">self</span>.updateData = <span style="color: #ffad29; font-weight: bold;">self</span>.updateDataUp
+    <span style="color: #ffad29; font-weight: bold;">self</span>.update = <span style="color: #ffad29; font-weight: bold;">self</span>.updateSingle
+    <span style="color: #ffad29; font-weight: bold;">self</span>.updateData()
+
+<span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">OnAnalysisSpinDown</span>(<span style="color: #ffad29; font-weight: bold;">self</span>,event):
+    <span style="color: #e67128;">"""Display the Spin Down data"""</span>
+    <span style="color: #ffad29; font-weight: bold;">print</span>(<span style="color: #e67128;">"OnSpinDown"</span>)
+    <span style="color: #ffad29; font-weight: bold;">self</span>.specDlg.setMode(<span style="color: #e67128;">"down"</span>)
+    <span style="color: #ffad29; font-weight: bold;">self</span>.updateData = <span style="color: #ffad29; font-weight: bold;">self</span>.updateDataDown
+    <span style="color: #ffad29; font-weight: bold;">self</span>.update = <span style="color: #ffad29; font-weight: bold;">self</span>.updateSingle
+    <span style="color: #ffad29; font-weight: bold;">self</span>.updateData()
+</pre>
+</div>
+
+<p>
+<code>OnCopy</code> is called when a user selects the Copy command from the
+Edit menu.  This copies the current detector image to the
+clipboard, though everything is really handled by the <i>ImagePanel</i> class.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-python" id="pelvis_menu_commands_2"><span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">OnCopy</span>(<span style="color: #ffad29; font-weight: bold;">self</span>,event):
+    <span style="color: #e67128;">"""Copy the image to a clipboard"""</span>
+    <span style="color: #ffad29; font-weight: bold;">self</span>.imPanel.copyToClipboard()
+</pre>
+</div>
+</div>
+</li>
+
+
+
+<li>Updaters<br  /><div class="outline-text-5" id="text-2-3-1-4">
+<p>
+There are two updates which need to be performed.  The first is
+updating the data, which involves taking the 3D arrays of neutron
+data and turning them into a single, 2D map.  The second is using
+that 2D data to update the other parts of the application.  All
+of the function with data in the name handle converting the 3D
+data into the 2D map, while the remaining functions pass the 2D
+data to the rest of the application.
+</p>
+
+<p>
+<code>updateSingleData</code> is used when only a single file is loaded.  As
+the only thing we can do is give intensity per pixel, a simple
+sum is performed along the wavelength axis.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-python" id="pelvis_updaters"><span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">updateSingleData</span>(<span style="color: #ffad29; font-weight: bold;">self</span>,event=<span style="color: #008b8b;">None</span>):
+    <span style="color: #e67128;">"""Update changes in wavelength on a single file"""</span>
+    <span style="color: #ffad29; font-weight: bold;">print</span>(<span style="color: #e67128;">"Make 2d"</span>)
+    (lmin,lmax) = <span style="color: #ffad29; font-weight: bold;">self</span>.opPanel.getLambdaRange()
+    <span style="color: #ffad29; font-weight: bold;">self</span>.flatdata = np.<span style="color: #23d7d7;">sum</span>(<span style="color: #ffad29; font-weight: bold;">self</span>.data[:,:,lmin:lmax],2)
+    <span style="color: #ffad29; font-weight: bold;">self</span>.update()
+</pre>
+</div>
+
+<p>
+<code>updateDataFlip</code> and <code>updateDataPolar</code> require both an up and
+down state from a polarization measurement.  They then calculate
+the per pixel neutron flipping ratio and polarization,
+respectively.  a value of 10<sup>-9</sup> is added to the denominator to
+prevent divide by zero errors.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-python" id="pelvis_updaters"><span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">updateDataFlip</span>(<span style="color: #ffad29; font-weight: bold;">self</span>,event=<span style="color: #008b8b;">None</span>):
+    <span style="color: #e67128;">"""Update changes in wavelength for flipping ratios"""</span>
+    (lmin,lmax) = <span style="color: #ffad29; font-weight: bold;">self</span>.opPanel.getLambdaRange()
+    (u3d,d3d)=<span style="color: #ffad29; font-weight: bold;">self</span>.data
+    <span style="color: #dbdb95;">u</span> = np.<span style="color: #23d7d7;">sum</span>(u3d[:,:,lmin:lmax],2)
+    <span style="color: #dbdb95;">d</span> = np.<span style="color: #23d7d7;">sum</span>(d3d[:,:,lmin:lmax],2)
+    <span style="color: #ffad29; font-weight: bold;">self</span>.flatdata = u/(d+1e-6)
+    <span style="color: #ffad29; font-weight: bold;">self</span>.update()
+
+<span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">updateDataPolar</span>(<span style="color: #ffad29; font-weight: bold;">self</span>,event=<span style="color: #008b8b;">None</span>):
+    <span style="color: #e67128;">"""Update changes in wavelength for polarizations"""</span>
+    (lmin,lmax) = <span style="color: #ffad29; font-weight: bold;">self</span>.opPanel.getLambdaRange()
+    (u3d,d3d)=<span style="color: #ffad29; font-weight: bold;">self</span>.data
+    <span style="color: #dbdb95;">u</span> = np.<span style="color: #23d7d7;">sum</span>(u3d[:,:,lmin:lmax],2)
+    <span style="color: #dbdb95;">d</span> = np.<span style="color: #23d7d7;">sum</span>(d3d[:,:,lmin:lmax],2)
+    <span style="color: #ffad29; font-weight: bold;">self</span>.flatdata = (u-d)/(u+d+1e-6)
+    <span style="color: #ffad29; font-weight: bold;">self</span>.update()
+</pre>
+</div>
+
+<p>
+The <code>updateDataUp</code> and <code>updateDataDown</code> commands display the
+neutron intensity per pixel in a single spin state.  They are
+largely identical to <code>updateSingleData</code>, except for the line
+which selects the spin state.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-python" id="pelvis_updaters"><span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">updateDataUp</span>(<span style="color: #ffad29; font-weight: bold;">self</span>,event=<span style="color: #008b8b;">None</span>):
+    <span style="color: #e67128;">"""Update changes in wavelength for the spin up state"""</span>
+    (lmin,lmax) = <span style="color: #ffad29; font-weight: bold;">self</span>.opPanel.getLambdaRange()
+    (u3d,_)=<span style="color: #ffad29; font-weight: bold;">self</span>.data
+    <span style="color: #ffad29; font-weight: bold;">self</span>.flatdata = np.<span style="color: #23d7d7;">sum</span>(u3d[:,:,lmin:lmax],2)
+    <span style="color: #ffad29; font-weight: bold;">self</span>.update()
+
+<span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">updateDataDown</span>(<span style="color: #ffad29; font-weight: bold;">self</span>,event=<span style="color: #008b8b;">None</span>):
+    <span style="color: #e67128;">"""Update changes in wavelength for the spin down state"""</span>
+    (lmin,lmax) = <span style="color: #ffad29; font-weight: bold;">self</span>.opPanel.getLambdaRange()
+    (_,d3d)=<span style="color: #ffad29; font-weight: bold;">self</span>.data
+    <span style="color: #ffad29; font-weight: bold;">self</span>.flatdata = np.<span style="color: #23d7d7;">sum</span>(d3d[:,:,lmin:lmax],2)
+    <span style="color: #ffad29; font-weight: bold;">self</span>.update()
+</pre>
+</div>
+
+<p>
+The <code>updateSingle</code> function takes the current 2D data, performs
+the appropriate masking, and updates the data in the <a href="#sec-2-3-4">GraphPanels</a>.
+It also updates the range on the color bar and forces the
+<i>detector image</i> to update.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-python" id="pelvis_updaters"><span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">updateSingle</span>(<span style="color: #ffad29; font-weight: bold;">self</span>,event=<span style="color: #008b8b;">None</span>):
+    <span style="color: #e67128;">"""Update the 2D data for the region of interest and intensity"""</span>
+    (vMin,vMax) = <span style="color: #ffad29; font-weight: bold;">self</span>.opPanel.getIntensityRange()
+    (xMin,xMax,yMin,yMax) = <span style="color: #ffad29; font-weight: bold;">self</span>.opPanel.getRoi()
+    <span style="color: #dbdb95;">data</span> = <span style="color: #ffad29; font-weight: bold;">self</span>.flatdata[:,:]
+
+    <span style="color: #74af68;">#</span><span style="color: #74af68;">Mask to zero during the summing parts</span>
+    <span style="color: #dbdb95;">data</span>[np.logical_not(<span style="color: #ffad29; font-weight: bold;">self</span>.mask)] = 0
+    <span style="color: #ffad29; font-weight: bold;">self</span>.posPanel.data = data
+    <span style="color: #ffad29; font-weight: bold;">self</span>.posPanel.setRange(xMin,yMin,xMax,yMax)
+    <span style="color: #dbdb95;">x</span>=np.arange(128,0,-1)
+    <span style="color: #dbdb95;">y</span>=np.<span style="color: #23d7d7;">sum</span>(data[:,xMin:xMax],axis=1)
+    <span style="color: #ffad29; font-weight: bold;">self</span>.yPanel.SetPlot(x,y)
+    <span style="color: #74af68;">#</span><span style="color: #74af68;">handle the x-plot</span>
+    <span style="color: #dbdb95;">x</span>=np.arange(0,16,1)
+    <span style="color: #dbdb95;">y</span>=np.<span style="color: #23d7d7;">sum</span>(data[yMin:yMax,:],axis=0)
+    <span style="color: #ffad29; font-weight: bold;">self</span>.xPanel.SetPlot(x,y)
+    <span style="color: #ffad29; font-weight: bold;">if</span> vMin <span style="color: #ffad29; font-weight: bold;">is</span> <span style="color: #008b8b;">None</span>:
+        <span style="color: #dbdb95;">vMin</span> = np.<span style="color: #23d7d7;">min</span>(data)
+    <span style="color: #ffad29; font-weight: bold;">if</span> vMax <span style="color: #ffad29; font-weight: bold;">is</span> <span style="color: #008b8b;">None</span>:
+        <span style="color: #dbdb95;">vMax</span> = np.<span style="color: #23d7d7;">max</span>(data)
+    <span style="color: #ffad29; font-weight: bold;">self</span>.colorbar.setRange(vMin,vMax)
+    <span style="color: #ffad29; font-weight: bold;">self</span>.colorbar.update()
+    <span style="color: #74af68;">#</span><span style="color: #74af68;">mask to vmin for the plotting</span>
+    <span style="color: #dbdb95;">data</span>[np.logical_not(<span style="color: #ffad29; font-weight: bold;">self</span>.mask)] = vMin
+    <span style="color: #ffad29; font-weight: bold;">self</span>.imPanel.update(<span style="color: #ffad29; font-weight: bold;">self</span>.flatdata,vMin,vMax)
+</pre>
+</div>
+</div>
+</li></ol>
+</div>
+
+<div id="outline-container-sec-2-3-2" class="outline-4">
+<h4 id="sec-2-3-2"><span class="section-number-4">2.3.2</span> Position Panel</h4>
+<div class="outline-text-4" id="text-2-3-2">
+<p>
+This is a class to provide a small panel which provides
+information about single pixels of detector data via the cursor
+position.  It also provides aggregate information over the region
+of interest.
+</p>
+</div>
+
+<ol class="org-ol"><li>Position Panel Class Skeleton<br  /><div class="outline-text-5" id="text-2-3-2-1">
+<div class="org-src-container">
+
+<pre class="src src-python" id="position_panel"><span style="color: #ffad29; font-weight: bold;">class</span> <span style="color: #34cae2;">PositionPanel</span>(wx.Panel):
+    <span style="color: #e67128;">"""A panel with pixel information</span>
+
+<span style="color: #e67128;">    The intent of this panel is to provide information about</span>
+<span style="color: #e67128;">    single pixels of detector data via cursor position.  It</span>
+<span style="color: #e67128;">    also provides aggregate information over the region of</span>
+<span style="color: #e67128;">    interest.</span>
+
+<span style="color: #e67128;">    """</span>
+
+    <span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">__init__</span>(<span style="color: #ffad29; font-weight: bold;">self</span>,parent):
+        <span style="color: #e67128;">"""Create a PositionPanel"""</span>
+        &lt;&lt;position_panel_init&gt;&gt;
+    &lt;&lt;position_panel_updating&gt;&gt;
+</pre>
+</div>
+</div>
+</li>
+<li>Initialization of the PositionPanel<br  /><div class="outline-text-5" id="text-2-3-2-2">
+<p>
+Creating a new PositionPanel requires only a single parameter:
+the parent frame which will hold the panel.  The constructor
+begins by creating the text controls that display the X and Y
+position of the cursor, as well as the value under the cursor (Z)
+and the integrated value over the region of interest (ROI).
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-python" id="position_panel_init">wx.Panel.__init__(<span style="color: #ffad29; font-weight: bold;">self</span>,parent)
+<span style="color: #dbdb95;">sizer</span>=wx.GridBagSizer(3,2)
+sizer.Add(wx.StaticText(<span style="color: #ffad29; font-weight: bold;">self</span>,-1,<span style="color: #e67128;">"X:"</span>),pos=wx.GBPosition(0,0))
+<span style="color: #ffad29; font-weight: bold;">self</span>.x = wx.TextCtrl(<span style="color: #ffad29; font-weight: bold;">self</span>,-1,<span style="color: #e67128;">""</span>)   
+sizer.Add(<span style="color: #ffad29; font-weight: bold;">self</span>.x,pos=wx.GBPosition(0,1))
+sizer.Add(wx.StaticText(<span style="color: #ffad29; font-weight: bold;">self</span>,-1,<span style="color: #e67128;">"Y:"</span>),pos=wx.GBPosition(1,0))
+<span style="color: #ffad29; font-weight: bold;">self</span>.y = wx.TextCtrl(<span style="color: #ffad29; font-weight: bold;">self</span>,-1,<span style="color: #e67128;">""</span>)
+sizer.Add(<span style="color: #ffad29; font-weight: bold;">self</span>.y,pos=wx.GBPosition(1,1))
+sizer.Add(wx.StaticText(<span style="color: #ffad29; font-weight: bold;">self</span>,-1,<span style="color: #e67128;">"Z:"</span>),pos=wx.GBPosition(2,0))
+<span style="color: #ffad29; font-weight: bold;">self</span>.intensity = wx.TextCtrl(<span style="color: #ffad29; font-weight: bold;">self</span>,-1,<span style="color: #e67128;">""</span>)
+sizer.Add(<span style="color: #ffad29; font-weight: bold;">self</span>.intensity,pos=wx.GBPosition(2,1))
+<span style="color: #ffad29; font-weight: bold;">self</span>.integrate = wx.TextCtrl(<span style="color: #ffad29; font-weight: bold;">self</span>,-1,<span style="color: #e67128;">""</span>)
+sizer.Add(wx.StaticText(<span style="color: #ffad29; font-weight: bold;">self</span>,-1,<span style="color: #e67128;">"ROI:"</span>),pos=wx.GBPosition(3,0))
+sizer.Add(<span style="color: #ffad29; font-weight: bold;">self</span>.integrate,pos=wx.GBPosition(3,1))
+</pre>
+</div>
+
+<p>
+We give a default region of interest that covers the entire detector.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-python" id="position_panel_init"><span style="color: #74af68;">#</span><span style="color: #74af68;">Set the starting region of interest</span>
+<span style="color: #ffad29; font-weight: bold;">self</span>.minX = 0
+<span style="color: #ffad29; font-weight: bold;">self</span>.minY = 0
+<span style="color: #ffad29; font-weight: bold;">self</span>.maxX = 16
+<span style="color: #ffad29; font-weight: bold;">self</span>.maxY = 128
+</pre>
+</div>
+
+<p>
+The text controls are for display purposes only, so we'll ensure
+that they aren't editable.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-python" id="position_panel_init"><span style="color: #ffad29; font-weight: bold;">self</span>.x.SetEditable(<span style="color: #008b8b;">False</span>)
+<span style="color: #ffad29; font-weight: bold;">self</span>.y.SetEditable(<span style="color: #008b8b;">False</span>)
+<span style="color: #ffad29; font-weight: bold;">self</span>.intensity.SetEditable(<span style="color: #008b8b;">False</span>)
+</pre>
+</div>
+
+<p>
+The class member <code>self.data</code> is a pointer to the actual data
+being examined.  We'll initialize it to <code>None</code> to begin with.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-python" id="position_panel_init"><span style="color: #ffad29; font-weight: bold;">self</span>.data = <span style="color: #008b8b;">None</span> <span style="color: #74af68;">#</span><span style="color: #74af68;">A 2D numpy array of the data being examined.</span>
+</pre>
+</div>
+
+<p>
+Finally, we need to do the standard GUI layout code.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-python" id="position_panel_init"><span style="color: #ffad29; font-weight: bold;">self</span>.SetAutoLayout(<span style="color: #008b8b;">True</span>)
+sizer.SetSizeHints(<span style="color: #ffad29; font-weight: bold;">self</span>)
+<span style="color: #ffad29; font-weight: bold;">self</span>.SetSizer(sizer)
+<span style="color: #ffad29; font-weight: bold;">self</span>.Layout()
+</pre>
+</div>
+</div>
+</li>
+<li>Update position data<br  /><div class="outline-text-5" id="text-2-3-2-3">
+<p>
+As implied by the name, the primary function of the position
+panel is to provide the direct numbers for the value under the
+user's cursor.  To do that, it must know where the mouse is.  The
+<code>set</code> function takes the x and y position of the cursor and
+updates the panel accordingly.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-python" id="position_panel_updating"><span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">set</span>(<span style="color: #ffad29; font-weight: bold;">self</span>,x,y):
+    <span style="color: #e67128;">"""Updates the position being examined"""</span>
+    <span style="color: #ffad29; font-weight: bold;">self</span>.x.SetValue(<span style="color: #23d7d7;">str</span>(x))
+    <span style="color: #ffad29; font-weight: bold;">self</span>.y.SetValue(<span style="color: #23d7d7;">str</span>(y))
+    <span style="color: #ffad29; font-weight: bold;">if</span> <span style="color: #ffad29; font-weight: bold;">self</span>.data <span style="color: #ffad29; font-weight: bold;">is</span> <span style="color: #008b8b;">None</span>:
+        <span style="color: #ffad29; font-weight: bold;">return</span>
+    <span style="color: #ffad29; font-weight: bold;">self</span>.intensity.SetValue(<span style="color: #23d7d7;">str</span>(<span style="color: #ffad29; font-weight: bold;">self</span>.data[y,x]))
+</pre>
+</div>
+
+<p>
+Obviously, this is of no use if the panel doesn't know the
+detector values.  The <code>setData</code> function provides a 2D array of
+values for the Panel to report on.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-python" id="position_panel_updating"><span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">setData</span>(<span style="color: #ffad29; font-weight: bold;">self</span>,data):
+    <span style="color: #e67128;">"""Updates the data being examined"""</span>
+    <span style="color: #ffad29; font-weight: bold;">self</span>.data=data
+</pre>
+</div>
+
+<p>
+The remaining functions deal with the region of interest
+integration.  The <code>setRange</code> function controls the region of
+interest while the <code>updateIntegration</code> function handles
+calculating 
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-python" id="position_panel_updating"><span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">setRange</span>(<span style="color: #ffad29; font-weight: bold;">self</span>,minX,minY,maxX,maxY):
+    <span style="color: #e67128;">"""Updates the region of interest for integration"""</span>
+    <span style="color: #ffad29; font-weight: bold;">self</span>.minX = minX
+    <span style="color: #ffad29; font-weight: bold;">self</span>.minY = minY
+    <span style="color: #ffad29; font-weight: bold;">self</span>.maxX = maxX
+    <span style="color: #ffad29; font-weight: bold;">self</span>.maxY = maxY
+    <span style="color: #ffad29; font-weight: bold;">self</span>.updateIntegration()
+<span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">updateIntegration</span>(<span style="color: #ffad29; font-weight: bold;">self</span>):
+    <span style="color: #e67128;">"""Calculates the sum of the data over the region of interest"""</span>
+    <span style="color: #ffad29; font-weight: bold;">self</span>.integrate.SetValue(
+        <span style="color: #23d7d7;">str</span>(np.<span style="color: #23d7d7;">sum</span>(<span style="color: #ffad29; font-weight: bold;">self</span>.data[<span style="color: #ffad29; font-weight: bold;">self</span>.minY:<span style="color: #ffad29; font-weight: bold;">self</span>.maxY,<span style="color: #ffad29; font-weight: bold;">self</span>.minX:<span style="color: #ffad29; font-weight: bold;">self</span>.maxX])))
+</pre>
+</div>
+</div>
+</li></ol>
+</div>
+
+<div id="outline-container-sec-2-3-3" class="outline-4">
+<h4 id="sec-2-3-3"><span class="section-number-4">2.3.3</span> Option Panel</h4>
+<div class="outline-text-4" id="text-2-3-3">
+<p>
+The class PelvisOptionPanel creates a panel of labeled text boxes
+for user entry.  This is used to control values such as the
+wavelength range, region of interest, and intensity values.
+</p>
+
+<p>
+As an experiment in software architecture, the class generates the
+layout of the panel from a list of configurations.  Each list item
+is a tuple of four values
+</p>
+
+<table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
+
+
+<colgroup>
+<col  class="left" />
+
+<col  class="left" />
+
+<col  class="right" />
+
+<col  class="left" />
+
+<col  class="left" />
+</colgroup>
+<tbody>
+<tr>
+<td class="left">Position</td>
+<td class="left">0</td>
+<td class="right">1</td>
+<td class="left">2</td>
+<td class="left">3</td>
+</tr>
+
+<tr>
+<td class="left">Value</td>
+<td class="left">Name</td>
+<td class="right">Relative list position</td>
+<td class="left">Label</td>
+<td class="left">Default Value</td>
+</tr>
+
+<tr>
+<td class="left">Type</td>
+<td class="left">string</td>
+<td class="right">int</td>
+<td class="left">string</td>
+<td class="left">string</td>
+</tr>
+
+<tr>
+<td class="left">Example</td>
+<td class="left">"lambdaMax"</td>
+<td class="right">30</td>
+<td class="left">"Maximum Wavelength"</td>
+<td class="left">"19.7"</td>
+</tr>
+</tbody>
+</table>
+
+<p>
+The panel generates a set of text controls with the given labels
+and default values.  The text controls are arranged from top to
+bottom by the order of the relative list position from smallest to
+largest.
+</p>
+
+<p>
+The advantage to this setup is that adding new options onto the
+panel is trivial.  Putting a new item into the list adds a new
+option onto the panel.  The disadvantage is that the data is a
+little more cumbersome to access as the values are not members of
+the class.  This could be fixed with Python accessors and
+properties, but I have not done so yet.  As this design decision
+was made to ease life for future maintainers and, seeing as you're
+reading this, you are the future maintainer, feel free to return
+to hard coded values if you find it easier to handle.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-python" id="pelvis_option_panel"><span style="color: #ffad29; font-weight: bold;">class</span> <span style="color: #34cae2;">PelvisOptionPanel</span>(wx.Panel):
+    <span style="color: #e67128;">"""A panel for user parameters</span>
+
+<span style="color: #e67128;">    The panel gets it's parameters and appearance from the built in</span>
+<span style="color: #e67128;">    DEFAULTS variable.  This was designed to allow the easy addition</span>
+<span style="color: #e67128;">    of more parameters in the future.</span>
+
+<span style="color: #e67128;">    """</span>
+    <span style="color: #74af68;">#</span><span style="color: #74af68;">Each parameter is a tuple</span>
+    <span style="color: #74af68;">#</span><span style="color: #74af68;">0 - variable name</span>
+    <span style="color: #74af68;">#</span><span style="color: #74af68;">1 - position in list</span>
+    <span style="color: #74af68;">#</span><span style="color: #74af68;">2 - label</span>
+    <span style="color: #74af68;">#</span><span style="color: #74af68;">3 - default value</span>
+    <span style="color: #dbdb95;">DEFAULTS</span> = [(<span style="color: #e67128;">"lambdaMax"</span>,0,<span style="color: #e67128;">"Maximum Wavelength"</span>,<span style="color: #e67128;">"20"</span>),
+                (<span style="color: #e67128;">"lambdaMin"</span>,10,<span style="color: #e67128;">"Minimum Wavelength"</span>,<span style="color: #e67128;">"0"</span>),
+                (<span style="color: #e67128;">"intMax"</span>,20,<span style="color: #e67128;">"Maximum Intensity"</span>,<span style="color: #e67128;">""</span>),
+                (<span style="color: #e67128;">"intMin"</span>,30,<span style="color: #e67128;">"Minimum Intensity"</span>,<span style="color: #e67128;">""</span>),
+                (<span style="color: #e67128;">"xMin"</span>,40,<span style="color: #e67128;">"Minimun X"</span>,<span style="color: #e67128;">"0"</span>),
+                (<span style="color: #e67128;">"xMax"</span>,50,<span style="color: #e67128;">"Maximum X"</span>,<span style="color: #e67128;">"16"</span>),
+                (<span style="color: #e67128;">"yMin"</span>,60,<span style="color: #e67128;">"Minimun Y"</span>,<span style="color: #e67128;">"0"</span>),
+                (<span style="color: #e67128;">"yMax"</span>,70,<span style="color: #e67128;">"Maximum Y"</span>,<span style="color: #e67128;">"128"</span>)]
+
+    <span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">__init__</span>(<span style="color: #ffad29; font-weight: bold;">self</span>,parent):
+        <span style="color: #e67128;">"""Creates a PelvisOptionPanel"""</span>
+        &lt;&lt;pelvis_option_panel_init&gt;&gt;
+
+    &lt;&lt;pelvis_option_panel_wavelength&gt;&gt;
+
+    &lt;&lt;pelvis_option_panel_intensity&gt;&gt;
+
+    &lt;&lt;pelvis_option_panel_roi&gt;&gt;
+</pre>
+</div>
+</div>
+
+<ol class="org-ol"><li>Initialization<br  /><div class="outline-text-5" id="text-2-3-3-1">
+<p>
+We begin by initializing the superclass and creating a sizer for
+the panel
+</p>
+<div class="org-src-container">
+
+<pre class="src src-python" id="pelvis_option_panel_init">wx.Panel.__init__(<span style="color: #ffad29; font-weight: bold;">self</span>,parent)
+<span style="color: #dbdb95;">sizer</span>=wx.BoxSizer(wx.VERTICAL)
+</pre>
+</div>
+
+<p>
+We then create the text controls.  The controls are held in the
+local dictionary <code>options</code>, which will need to be used every time
+we want to access one of the values.
+</p>
+<div class="org-src-container">
+
+<pre class="src src-python" id="pelvis_option_panel_init"><span style="color: #ffad29; font-weight: bold;">self</span>.options={}<span style="color: #74af68;">#</span><span style="color: #74af68;">member which holds the created text controls</span>
+
+<span style="color: #ffad29; font-weight: bold;">self</span>.DEFAULTS.sort(<span style="color: #ffad29; font-weight: bold;">lambda</span> x,y: x[1]-y[1])
+<span style="color: #ffad29; font-weight: bold;">for</span> option <span style="color: #ffad29; font-weight: bold;">in</span> <span style="color: #ffad29; font-weight: bold;">self</span>.DEFAULTS:
+    (key,_,title,val) = option
+    sizer.Add(wx.StaticText(<span style="color: #ffad29; font-weight: bold;">self</span>,-1,title))
+    <span style="color: #ffad29; font-weight: bold;">self</span>.options[key] = wx.TextCtrl(<span style="color: #ffad29; font-weight: bold;">self</span>,-1,val)
+    sizer.Add(<span style="color: #ffad29; font-weight: bold;">self</span>.options[key])
+</pre>
+</div>
+
+<p>
+Finally, we perform the standard cleanup for a wxPanel
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-python" id="pelvis_option_panel_init"><span style="color: #ffad29; font-weight: bold;">self</span>.SetAutoLayout(<span style="color: #008b8b;">True</span>)
+<span style="color: #ffad29; font-weight: bold;">self</span>.specDlg = SpectrumDialog(<span style="color: #ffad29; font-weight: bold;">self</span>)
+sizer.SetSizeHints(<span style="color: #ffad29; font-weight: bold;">self</span>)
+<span style="color: #ffad29; font-weight: bold;">self</span>.SetSizer(sizer)
+<span style="color: #ffad29; font-weight: bold;">self</span>.Layout()
+</pre>
+</div>
+</div>
+</li>
+<li>Wavelength Range<br  /><div class="outline-text-5" id="text-2-3-3-2">
+<p>
+When a set of parameters is added, it's useful to put in a
+standard getter and setter.  The setters are fairly standard, but
+the getter can be a little tricky, since the user might add a
+non-standard value.  It's good to provide default values if the
+user's input cannot be parsed.
+</p>
+
+<p>
+Note that the code below is <b>wrong</b>.  It holds true while
+the RESOLUTION is 200, which is the default case, but the
+multiplication by ten should be replaced with a value dependent
+on the current resolution.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-python" id="pelvis_option_panel_wavelength"><span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">getLambdaRange</span>(<span style="color: #ffad29; font-weight: bold;">self</span>):
+    <span style="color: #e67128;">"""Gives a tuple with the minimum and maximum wavelength indices"""</span>
+    <span style="color: #ffad29; font-weight: bold;">try</span>:
+        <span style="color: #dbdb95;">lmin</span> = <span style="color: #23d7d7;">int</span>(<span style="color: #23d7d7;">float</span>(<span style="color: #ffad29; font-weight: bold;">self</span>.options[<span style="color: #e67128;">"lambdaMin"</span>].GetValue())*10)
+    <span style="color: #ffad29; font-weight: bold;">except</span> <span style="color: #34cae2;">ValueError</span>:
+        <span style="color: #dbdb95;">lmin</span> = 0
+    <span style="color: #ffad29; font-weight: bold;">try</span>:
+        <span style="color: #dbdb95;">lmax</span> = <span style="color: #23d7d7;">int</span>(<span style="color: #23d7d7;">float</span>(<span style="color: #ffad29; font-weight: bold;">self</span>.options[<span style="color: #e67128;">"lambdaMax"</span>].GetValue())*10)
+    <span style="color: #ffad29; font-weight: bold;">except</span> <span style="color: #34cae2;">ValueError</span>:
+        <span style="color: #dbdb95;">lmax</span> = RESOLUTION
+    <span style="color: #ffad29; font-weight: bold;">return</span> (lmin,lmax)
+
+<span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">setLambdaRange</span>(<span style="color: #ffad29; font-weight: bold;">self</span>,<span style="color: #23d7d7;">min</span>,<span style="color: #23d7d7;">max</span>):
+    <span style="color: #e67128;">"""Set the minimum and maximum wavelengths"""</span>
+    <span style="color: #ffad29; font-weight: bold;">self</span>.options[<span style="color: #e67128;">"lambdaMin"</span>].SetValue(<span style="color: #23d7d7;">str</span>(<span style="color: #23d7d7;">min</span>))
+    <span style="color: #ffad29; font-weight: bold;">self</span>.options[<span style="color: #e67128;">"lambdaMax"</span>].SetValue(<span style="color: #23d7d7;">str</span>(<span style="color: #23d7d7;">max</span>))
+</pre>
+</div>
+</div>
+</li>
+<li>Intensity Range<br  /><div class="outline-text-5" id="text-2-3-3-3">
+<p>
+We create similar getters and setters for the minimum and maximum
+intensity.  The values create bounds for both the 2D color plot
+and the spectrum display.  They're also used as part of the mask
+making routines.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-python" id="pelvis_option_panel_intensity"><span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">getIntensityRange</span>(<span style="color: #ffad29; font-weight: bold;">self</span>):
+    <span style="color: #e67128;">"""Return a tuple with the floor and ceilling for intensity</span>
+
+<span style="color: #e67128;">    If a value isn't specified, or is not a number, None is returned</span>
+<span style="color: #e67128;">    for that part of the range.</span>
+
+<span style="color: #e67128;">    """</span>
+    <span style="color: #ffad29; font-weight: bold;">try</span>:
+        <span style="color: #dbdb95;">vMin</span> = <span style="color: #23d7d7;">float</span>(<span style="color: #ffad29; font-weight: bold;">self</span>.options[<span style="color: #e67128;">"intMin"</span>].GetValue())
+    <span style="color: #ffad29; font-weight: bold;">except</span> <span style="color: #34cae2;">ValueError</span>:
+        <span style="color: #dbdb95;">vMin</span> = <span style="color: #008b8b;">None</span>
+    <span style="color: #ffad29; font-weight: bold;">try</span>:
+        <span style="color: #dbdb95;">vMax</span> = <span style="color: #23d7d7;">float</span>(<span style="color: #ffad29; font-weight: bold;">self</span>.options[<span style="color: #e67128;">"intMax"</span>].GetValue())
+    <span style="color: #ffad29; font-weight: bold;">except</span> <span style="color: #34cae2;">ValueError</span>:
+        <span style="color: #dbdb95;">vMax</span> = <span style="color: #008b8b;">None</span>
+    <span style="color: #ffad29; font-weight: bold;">return</span> (vMin,vMax)
+
+<span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">setIntensityRange</span>(<span style="color: #ffad29; font-weight: bold;">self</span>,<span style="color: #23d7d7;">min</span>,<span style="color: #23d7d7;">max</span>):
+    <span style="color: #ffad29; font-weight: bold;">self</span>.options[<span style="color: #e67128;">"intMin"</span>].SetValue(<span style="color: #23d7d7;">str</span>(<span style="color: #23d7d7;">min</span>))
+    <span style="color: #ffad29; font-weight: bold;">self</span>.options[<span style="color: #e67128;">"intMax"</span>].SetValue(<span style="color: #23d7d7;">str</span>(<span style="color: #23d7d7;">max</span>))
+    <span style="color: #ffad29; font-weight: bold;">self</span>.specDlg.setIntensityRange((<span style="color: #23d7d7;">min</span>,<span style="color: #23d7d7;">max</span>))
+</pre>
+</div>
+</div>
+</li>
+<li>Region of Interest<br  /><div class="outline-text-5" id="text-2-3-3-4">
+<p>
+Finally, we need getters and setters for our region of interest.
+The getter works pretty much the same as the others, but the
+setter has been split into two functions: one for the upper left
+corner and another for the lower right.  This allows us to set
+the region of interest with two mouse clicks.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-python" id="pelvis_option_panel_roi"><span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">getRoi</span>(<span style="color: #ffad29; font-weight: bold;">self</span>):
+    <span style="color: #e67128;">"""Returns a 4-tuple with the region of interest</span>
+
+<span style="color: #e67128;">    Returns (xmin,xmax,ymin,ymax).  Minimum values, if</span>
+<span style="color: #e67128;">    unspecified, are set to zero.  Maximum values, if</span>
+<span style="color: #e67128;">    unspecified, are set to 512.</span>
+
+<span style="color: #e67128;">    """</span>
+    <span style="color: #ffad29; font-weight: bold;">try</span>:
+        <span style="color: #dbdb95;">xMin</span> = <span style="color: #23d7d7;">int</span>(<span style="color: #ffad29; font-weight: bold;">self</span>.options[<span style="color: #e67128;">"xMin"</span>].GetValue())
+    <span style="color: #ffad29; font-weight: bold;">except</span> <span style="color: #34cae2;">ValueError</span>:
+        <span style="color: #dbdb95;">xMin</span> = 0
+    <span style="color: #ffad29; font-weight: bold;">try</span>:
+        <span style="color: #dbdb95;">xMax</span> = <span style="color: #23d7d7;">int</span>(<span style="color: #ffad29; font-weight: bold;">self</span>.options[<span style="color: #e67128;">"xMax"</span>].GetValue())
+    <span style="color: #ffad29; font-weight: bold;">except</span> <span style="color: #34cae2;">ValueError</span>:
+        <span style="color: #dbdb95;">xMax</span> = 512
+    <span style="color: #ffad29; font-weight: bold;">try</span>:
+        <span style="color: #dbdb95;">yMin</span> = <span style="color: #23d7d7;">int</span>(<span style="color: #ffad29; font-weight: bold;">self</span>.options[<span style="color: #e67128;">"yMin"</span>].GetValue())
+    <span style="color: #ffad29; font-weight: bold;">except</span> <span style="color: #34cae2;">ValueError</span>:
+        <span style="color: #dbdb95;">yMin</span> = 0
+    <span style="color: #ffad29; font-weight: bold;">try</span>:
+        <span style="color: #dbdb95;">yMax</span> = <span style="color: #23d7d7;">int</span>(<span style="color: #ffad29; font-weight: bold;">self</span>.options[<span style="color: #e67128;">"yMax"</span>].GetValue())
+    <span style="color: #ffad29; font-weight: bold;">except</span> <span style="color: #34cae2;">ValueError</span>:
+        <span style="color: #dbdb95;">yMax</span> = 512
+    <span style="color: #ffad29; font-weight: bold;">return</span> (xMin,xMax,yMin,yMax)
+
+<span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">setPosMin</span>(<span style="color: #ffad29; font-weight: bold;">self</span>,x,y):
+    <span style="color: #e67128;">"""Takes the x and y coordinates for the NW corner of the ROI."""</span>
+    <span style="color: #ffad29; font-weight: bold;">self</span>.options[<span style="color: #e67128;">"xMin"</span>].SetValue(<span style="color: #23d7d7;">str</span>(x))
+    <span style="color: #ffad29; font-weight: bold;">self</span>.options[<span style="color: #e67128;">"yMin"</span>].SetValue(<span style="color: #23d7d7;">str</span>(y))
+
+<span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">setPosMax</span>(<span style="color: #ffad29; font-weight: bold;">self</span>,x,y):
+    <span style="color: #e67128;">"""Takes the x and y coordinates for the SE corner of the ROI."""</span>
+    <span style="color: #ffad29; font-weight: bold;">self</span>.options[<span style="color: #e67128;">"xMax"</span>].SetValue(<span style="color: #23d7d7;">str</span>(x))
+    <span style="color: #ffad29; font-weight: bold;">self</span>.options[<span style="color: #e67128;">"yMax"</span>].SetValue(<span style="color: #23d7d7;">str</span>(y))
+</pre>
+</div>
+</div>
+</li></ol>
+</div>
+
+<div id="outline-container-sec-2-3-4" class="outline-4">
+<h4 id="sec-2-3-4"><span class="section-number-4">2.3.4</span> GraphPanel</h4>
+</div>
+</div>
+</div>
+
+<div id="outline-container-sec-3" class="outline-2">
+<h2 id="sec-3"><span class="section-number-2">3</span> Utility Classes</h2>
+<div class="outline-text-2" id="text-3">
+<p>
+This section is for libraries which are used by more than one part
+of the system.  These are usually the modules which read and write
+data files, as they are needed by both the GUI and command line applications.
+</p>
+</div>
+<div id="outline-container-sec-3-1" class="outline-3">
+<h3 id="sec-3-1"><span class="section-number-3">3.1</span> Reader</h3>
+<div class="outline-text-3" id="text-3-1">
+<p>
+The <code>reader</code> module handles reading and interpreting neutron event
+files.  It's main purpose is to take a data file, which is a binary
+record of events, and turn it into a histogram of events in space
+and time.
+</p>
+</div>
+
+<div id="outline-container-sec-3-1-1" class="outline-4">
+<h4 id="sec-3-1-1"><span class="section-number-4">3.1.1</span> Reader Skeleton</h4>
+<div class="outline-text-4" id="text-3-1-1">
+<div class="org-src-container">
+
+<pre class="src src-python"><span style="color: #e67128;">"""This module contains classes for reading PEL files</span>
+
+<span style="color: #e67128;">This module contains a single class: PelFile.  This class reads the header</span>
+<span style="color: #e67128;">information and neutron data saved in PEL files.  more information about</span>
+<span style="color: #e67128;">the format of these files can be found in the Lexitech PAPA Software Manual.</span>
+
+<span style="color: #e67128;">"""</span>
+
+<span style="color: #ffad29; font-weight: bold;">import</span> __future__
+
+<span style="color: #ffad29; font-weight: bold;">import</span> struct
+<span style="color: #74af68;">#</span><span style="color: #74af68;">import re</span>
+<span style="color: #ffad29; font-weight: bold;">import</span> numpy <span style="color: #ffad29; font-weight: bold;">as</span> np
+
+<span style="color: #ffad29; font-weight: bold;">from</span> time <span style="color: #ffad29; font-weight: bold;">import</span> clock
+<span style="color: #ffad29; font-weight: bold;">from</span> collections <span style="color: #ffad29; font-weight: bold;">import</span> namedtuple
+
+<span style="color: #dbdb95;">RESOLUTION</span> = 400
+
+&lt;&lt;reader_mapim&gt;&gt;
+
+<span style="color: #ffad29; font-weight: bold;">class</span> <span style="color: #34cae2;">PelFile</span>:
+        <span style="color: #e67128;">"""Handles the data stored in PEL files"""</span>
+        <span style="color: #dbdb95;">data</span> = np.ndarray(shape=(0),dtype=np.int64)<span style="color: #74af68;">#</span><span style="color: #74af68;">Raw detector data</span>
+
+        &lt;&lt;reader_pelfile_init&gt;&gt;                
+
+        &lt;&lt;reader_pelfile_parseHeader&gt;&gt;
+        &lt;&lt;reader_pelfile_convertTime&gt;&gt;
+        &lt;&lt;reader_pelvis_make3d&gt;&gt;
+
+        <span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">spectrum</span>(<span style="color: #ffad29; font-weight: bold;">self</span>,output):
+                <span style="color: #e67128;">"""Save the neutron spectrum to a text file"""</span>
+                <span style="color: #ffad29; font-weight: bold;">with</span> <span style="color: #23d7d7;">open</span>(output,<span style="color: #e67128;">'w'</span>) <span style="color: #ffad29; font-weight: bold;">as</span> of:
+                        <span style="color: #dbdb95;">timearr</span> = (<span style="color: #ffad29; font-weight: bold;">self</span>.data &gt;&gt; 32) &amp; 0x7FFFFFFF
+                        <span style="color: #dbdb95;">timearr</span> = <span style="color: #ffad29; font-weight: bold;">self</span>.convertTime(timearr)
+                        <span style="color: #dbdb95;">timearr</span> /= 10
+
+                        <span style="color: #74af68;">#</span><span style="color: #74af68;">Get the spectrum and wavelengths</span>
+                        (spec,lmbda) = np.histogram(timearr,bins = \
+                                                    np.arange(2.0,50.0,0.1))
+                        <span style="color: #dbdb95;">hist</span> = np.column_stack((lmbda[1:],spec))
+                        <span style="color: #ffad29; font-weight: bold;">for</span> point <span style="color: #ffad29; font-weight: bold;">in</span> hist:
+                                of.write(<span style="color: #e67128;">"%f %i\n"</span> % (point[0],point[1]))
+                        of.close()
+                        <span style="color: #ffad29; font-weight: bold;">return</span> (spec,lmbda)
+
+
+        <span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">statusfunc</span>(<span style="color: #ffad29; font-weight: bold;">self</span>,x):
+                <span style="color: #e67128;">"""Status update function</span>
+
+<span style="color: #e67128;">                This function is called to tell other program components</span>
+<span style="color: #e67128;">                the progress in loading the PelFile.  The progress is given</span>
+<span style="color: #e67128;">                on a scale of 0 to 1000.  This function should be overwritten</span>
+<span style="color: #e67128;">                by whatever function is loading the pel file to do what it</span>
+<span style="color: #e67128;">                needs with the load time information.</span>
+
+<span style="color: #e67128;">                """</span>
+                <span style="color: #ffad29; font-weight: bold;">return</span>
+
+        <span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">getgains</span>(<span style="color: #ffad29; font-weight: bold;">self</span>,h):
+                <span style="color: #e67128;">"""Pulls the PMT gains information into a numpy array"""</span>
+                <span style="color: #ffad29; font-weight: bold;">return</span> np.array([h.x1Gain,h.x2Gain,h.x3Gain,h.x4Gain,h.x5Gain,h.x6Gain,h.x7Gain,h.x8Gain,h.x9Gain,h.x10Gain,
+                        h.y1Gain,h.y2Gain,h.y3Gain,h.y4Gain,h.y5Gain,h.y6Gain,h.y7Gain,h.y8Gain,h.y9Gain,h.y10Gain],np.double)
+
+        <span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">readfileimage</span>(<span style="color: #ffad29; font-weight: bold;">self</span>,path):
+                <span style="color: #e67128;">"""Reads a raw Pel File into memory."""</span>
+                <span style="color: #dbdb95;">start</span>=clock()
+                <span style="color: #dbdb95;">statusfunc</span> = <span style="color: #ffad29; font-weight: bold;">self</span>.statusfunc
+                <span style="color: #ffad29; font-weight: bold;">with</span> <span style="color: #23d7d7;">open</span>(path,<span style="color: #e67128;">"rb"</span>) <span style="color: #ffad29; font-weight: bold;">as</span> infile:
+                    <span style="color: #74af68;">#</span><span style="color: #74af68;">self.header = self.parseHeader(infile.read(256))</span>
+                    <span style="color: #74af68;">#</span><span style="color: #74af68;">Raw File has no header</span>
+                    <span style="color: #74af68;">#</span><span style="color: #74af68;">point = infile.read(8)</span>
+                    <span style="color: #ffad29; font-weight: bold;">self</span>.data = np.fromfile(infile,np.int32,-1)
+                infile.close()
+                <span style="color: #dbdb95;">stop</span>=clock()
+
+        <span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">make1d</span>(<span style="color: #ffad29; font-weight: bold;">self</span>,mins,maxs,mask=<span style="color: #008b8b;">None</span>):
+                <span style="color: #e67128;">"""Make a 1D histogram from the spectrum data."""</span>
+
+                <span style="color: #dbdb95;">c</span> = <span style="color: #ffad29; font-weight: bold;">self</span>.make3d()
+                <span style="color: #ffad29; font-weight: bold;">if</span> mask <span style="color: #ffad29; font-weight: bold;">is</span> <span style="color: #008b8b;">None</span>:
+                    <span style="color: #dbdb95;">xmin</span>,<span style="color: #dbdb95;">ymin</span> = mins
+                    <span style="color: #dbdb95;">xmax</span>,<span style="color: #dbdb95;">ymax</span> = maxs
+                    <span style="color: #dbdb95;">c</span> = c[ymin:ymax,xmin:xmax]
+                <span style="color: #ffad29; font-weight: bold;">else</span>:
+                    <span style="color: #dbdb95;">c</span>[np.logical_not(mask)] = 0
+                <span style="color: #ffad29; font-weight: bold;">return</span> np.<span style="color: #23d7d7;">sum</span>(np.<span style="color: #23d7d7;">sum</span>(c,axis=0,dtype=np.float64()),axis=0)
+
+
+<span style="color: #ffad29; font-weight: bold;">if</span> <span style="color: #23d7d7;">__name__</span>==<span style="color: #e67128;">"__main__"</span>:
+        data = PelFile()
+
+        data.readfileimage(<span style="color: #e67128;">"C:/Documents and Settings/adlwashi/Desktop/20091102101415-AM12.pel"</span>)
+        <span style="color: #ffad29; font-weight: bold;">print</span>(<span style="color: #e67128;">"Read File"</span>)
+        data.spectrum(<span style="color: #e67128;">"spectrum.txt"</span>)
+        <span style="color: #74af68;">#</span><span style="color: #74af68;">print("Reverse Grey")</span>
+        <span style="color: #74af68;">#</span><span style="color: #74af68;">data.reverseGrey()</span>
+        <span style="color: #74af68;">#</span><span style="color: #74af68;">temp = set([data.fullGrayCode(i) for i in range(512)])</span>
+        <span style="color: #74af68;">#</span><span style="color: #74af68;">for i in temp:</span>
+        <span style="color: #74af68;">#        </span><span style="color: #74af68;">print "%03o" % i</span>
+        <span style="color: #74af68;">#</span><span style="color: #74af68;">print(len(temp))</span>
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-sec-3-1-2" class="outline-4">
+<h4 id="sec-3-1-2"><span class="section-number-4">3.1.2</span> Image Mapping</h4>
+<div class="outline-text-4" id="text-3-1-2">
+<p>
+The TOF for each event is given as a count since the T<sub>0</sub> pulse,
+where the each count is 100ns.  The convertTime function takes a
+numpy array of counts and turns it into a wavelength into a
+wavelength bin, where the bins are spaced by <code>20/RESOLUTION</code>.  For
+instance, if RESOLUTION is 200 and the neutron has a 2 Angstrom
+wavelength, then the bin is 20.
+</p>
+
+<p>
+The relationship between TOF and wavelength is controlled almost
+completely by the variables <code>distanceToG4</code> and
+<code>distanceToDetector</code>.  This sum should be the distance, in meters,
+from the neutron moderator to the Helium-3 detector.  The
+<code>distanceToG4</code> variable is based on Jak doskow's drawings on how
+far it should be from the neutron moderator to the exit of G4.
+The actual distance to the detector can then be measured with a
+tape measure.
+</p>
+
+<p>
+According to Dave Baxter's measurements, there is an 860us delay
+between the T0 signal and when the neutrons first start coming out
+of the moderator.  This value is subtracted off of the times to
+compensate.  This value should be checked occasionally to make
+sure that it has not changed.  If you are seeing neutrons with
+negative wavelengths, or if the proton pulse is not occuring at
+zero angstroms, then this value needs to be changed.  The best way
+of checking it is via the neutron monitor, as the proton flash is
+quite visible in the output and the results are given in 50
+microsecond bins.
+</p>
+
+<p>
+<a id="convertTime" name="convertTime"></a>
+</p>
+<div class="org-src-container">
+
+<pre class="src src-python" id="reader_pelfile_convertTime"><span style="color: #74af68;">#</span><span style="color: #74af68;">Remember to use in-place operations to save on memory overhead</span>
+<span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">convertTime</span>(<span style="color: #ffad29; font-weight: bold;">self</span>,timearr):
+        <span style="color: #e67128;">"""Convert an array of TOF data into neutron wavelengths."""</span>
+        <span style="color: #74af68;">#</span><span style="color: #74af68;">convert timearr into microseconds</span>
+        <span style="color: #dbdb95;">timearr</span> *= 0.1 <span style="color: #74af68;">#</span><span style="color: #74af68;">Convert to microseconds</span>
+        <span style="color: #74af68;">#</span><span style="color: #74af68;">convert timearr into wavelength</span>
+        <span style="color: #dbdb95;">distanceToG4</span> = 3.7338+2.5297
+        <span style="color: #dbdb95;">distanceToDetector</span> = 3.835 <span style="color: #74af68;">#</span><span style="color: #74af68;">FIXME</span>
+        <span style="color: #dbdb95;">timearr</span> -= 860
+        <span style="color: #dbdb95;">timearr</span> *= 3.956034e-7/(distanceToDetector+distanceToG4)/1e-10*1e-6*(RESOLUTION/20) <span style="color: #74af68;">#</span><span style="color: #74af68;">The last term is to handle fractional angstroms</span>
+        <span style="color: #ffad29; font-weight: bold;">return</span> timearr
+</pre>
+</div>
+
+
+<p>
+The SNS software for the Helium-3 detector returns a set of
+events.  Each even has a channel number, the distance along the
+channel, and a time of flight.  However, each channel on our
+detector has two tubes in series.  Thus, we need to convert the
+position on the channel to the position on the tube and assign
+the data to the right tube.
+</p>
+
+<p>
+Paul wrote this code and it has some idiosyncratic behavior.  For
+example, the test of 
+</p>
+<pre class="example">
+0.5*ti!=int(0.5*ti)
+</pre>
+<p>
+is really just a test to see if ti is odd or even.  It should
+probably be replaced with a simple
+</p>
+<pre class="example">
+ti%2==1
+</pre>
+<p>
+which returns the same result for all values.  In fact, I have a
+sneaking suspicion that the entire thing can be done through
+numpy, eliminating the need for slow python loops, but I haven't
+proved it yet.
+</p>
+
+<p>
+The function takes a single input value, which is a 2D array of
+neutron counts with dimensions <code>XDIM</code> x <code>YDIM</code>.  It returns an array
+with dimensions <code>XDIMM</code> and <code>YDIMM</code>.  The <code>ZPAD</code> variable is used
+to account for dead pixels at the top or bottom of the tubes.
+The <code>maparray</code> variable gives the order of the tubes on the
+detector.  This has been found by calibration, but it should be
+checked periodically (e.g. biennially) to ensure that it's still accurate.
+</p>
+
+<p>
+<a id="mapim" name="mapim"></a>
+</p>
+<div class="org-src-container">
+
+<pre class="src src-python" id="reader_mapim"><span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">mapim</span>(imarray):
+    <span style="color: #dbdb95;">XDIM</span>=8
+    <span style="color: #dbdb95;">YDIM</span>=256
+    <span style="color: #dbdb95;">XDIMIM</span>=16
+    <span style="color: #dbdb95;">YDIMIM</span>=128
+    <span style="color: #dbdb95;">ZPAD</span>=0
+<span style="color: #74af68;">#    </span><span style="color: #74af68;">maparray=[2, 15, 1, 16, 4, 13, 3, 14, 6, 11, 5, 12, 8, 9, 7, 10]</span>
+<span style="color: #74af68;">#    </span><span style="color: #74af68;">maparray =[2, 1, 4, 3, 6, 5, 8, 7, 10, 9, 12, 11, 14, 13, 16, 15]#Old July 2013</span>
+<span style="color: #74af68;">#    </span><span style="color: #74af68;">maparray =[2, 1, 4, 3, 6, 5, 8, 7, 14, 10, 13, 12, 9, 11, 16, 15]# SESANS October 2013</span>
+<span style="color: #74af68;">#    </span><span style="color: #74af68;">maparray =[2, 1, 4, 3, 6, 5, 8, 7, 14, 10, 13, 12, 9, 11, 16, 15]# SESANS July 2013</span>
+    <span style="color: #dbdb95;">maparray</span> =[4, 3, 1, 2, 6, 5, 15, 16, 8, 13, 7, 14, 10, 11, 9, 12] <span style="color: #74af68;"># </span><span style="color: #74af68;">From tube mapping October 2013</span>
+    <span style="color: #74af68;">#    </span><span style="color: #74af68;">maparray = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]</span>
+<span style="color: #74af68;">#    </span><span style="color: #74af68;">maparray = [12, 9, 11, 14, 10, 7, 1, 2, 3, 4, 5, 6, 8, 13, 15, 16]</span>
+<span style="color: #74af68;">#    </span><span style="color: #74af68;">maparray =[2, 1, 4, 3, 6, 15, 5, 16, 8, 7, 13, 14, 11, 12, 9, 10]</span>
+<span style="color: #74af68;">#    </span><span style="color: #74af68;">maparray =[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]</span>
+    <span style="color: #dbdb95;">newimarray</span>=np.zeros((YDIMIM+ZPAD,XDIMIM))
+    <span style="color: #ffad29; font-weight: bold;">for</span> i <span style="color: #ffad29; font-weight: bold;">in</span> <span style="color: #23d7d7;">range</span>(<span style="color: #23d7d7;">len</span>(maparray)):
+        <span style="color: #dbdb95;">ti</span>=maparray[i]
+        <span style="color: #ffad29; font-weight: bold;">if</span> 0.5*ti!=<span style="color: #23d7d7;">int</span>(0.5*ti):
+           <span style="color: #ffad29; font-weight: bold;">for</span> j <span style="color: #ffad29; font-weight: bold;">in</span> <span style="color: #23d7d7;">range</span>(YDIMIM):
+                <span style="color: #dbdb95;">tj</span>=j
+                <span style="color: #ffad29; font-weight: bold;">if</span> ti&lt;9:
+                    <span style="color: #dbdb95;">newimarray</span>[j+ZPAD,i]=imarray[YDIMIM-1-tj,(ti-1)/2]
+                <span style="color: #ffad29; font-weight: bold;">else</span>:
+                    <span style="color: #dbdb95;">newimarray</span>[j,i]=imarray[YDIMIM-1-tj,(ti-1)/2]
+        <span style="color: #ffad29; font-weight: bold;">else</span>:
+            <span style="color: #ffad29; font-weight: bold;">for</span> j <span style="color: #ffad29; font-weight: bold;">in</span> <span style="color: #23d7d7;">range</span>(YDIMIM):
+                <span style="color: #dbdb95;">tj</span>=j+YDIMIM
+                <span style="color: #ffad29; font-weight: bold;">if</span> ti&lt;9:
+                    <span style="color: #dbdb95;">newimarray</span>[j+ZPAD,i]=imarray[tj,ti/2-1]
+                <span style="color: #ffad29; font-weight: bold;">else</span>:
+                    <span style="color: #dbdb95;">newimarray</span>[j,i]=imarray[tj,ti/2-1]
+    <span style="color: #ffad29; font-weight: bold;">return</span> newimarray
+</pre>
+</div>
+
+
+<p>
+The make3D function is the primary function for turning an array
+of neutron events into a histogram of events versus position and
+wavelength.
+</p>
+
+<p>
+The data type is 64 bits per event.  The first 32 bits are the
+TOF information, which can be turned into a wavelength by the
+<a href="#convertTime">3.1.2</a> function.  The next 32 bits are the position
+information.
+</p>
+
+<p>
+We begin by setting some default variables.  The <code>statusfunc</code> is
+a function that can be called with the current progress on
+loading the file.  It expects a value between 0 and 1000, where 0
+is having just started and 1000 means that the process is
+complete.  The <code>cube</code> variable is the actual 3D array of neutron
+events.  If there is no data in the file, we can immediately
+return an empty array.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-python" id="reader_pelvis_make3d"><span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">make3d</span>(<span style="color: #ffad29; font-weight: bold;">self</span>):
+        <span style="color: #e67128;">"""Make a 3D histogram from the raw data."""</span>
+        <span style="color: #dbdb95;">start</span>=clock()                
+        <span style="color: #dbdb95;">statusfunc</span> = <span style="color: #ffad29; font-weight: bold;">self</span>.statusfunc
+        <span style="color: #dbdb95;">l</span> = <span style="color: #23d7d7;">len</span>(<span style="color: #ffad29; font-weight: bold;">self</span>.data)
+        <span style="color: #dbdb95;">sd</span> =<span style="color: #ffad29; font-weight: bold;">self</span>.data
+        <span style="color: #dbdb95;">i</span>=0;
+
+        <span style="color: #dbdb95;">cube</span> = np.zeros([128,16,RESOLUTION],dtype=np.float32)
+
+        <span style="color: #74af68;">#</span><span style="color: #74af68;">If there's no data, return an empty array</span>
+        <span style="color: #ffad29; font-weight: bold;">if</span> l==0:
+                <span style="color: #ffad29; font-weight: bold;">return</span> cube
+</pre>
+</div>
+
+<p>
+The 64-bit events are broken down into the 32-bit array of
+position information, <code>Z</code>, and the 32-bit array of the time
+information, <code>timearr</code>.  The time information is then converted
+into a wavelength bin.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-python" id="reader_pelvis_make3d"><span style="color: #74af68;">#</span>
+        <span style="color: #dbdb95;">Z</span> = <span style="color: #ffad29; font-weight: bold;">self</span>.data[1::2] &amp; 0xFFFF<span style="color: #74af68;">#</span><span style="color: #74af68;">position data</span>
+
+        <span style="color: #dbdb95;">timearr</span> = <span style="color: #ffad29; font-weight: bold;">self</span>.convertTime(np.asarray(<span style="color: #ffad29; font-weight: bold;">self</span>.data[0::2], \
+                                              dtype=np.float64))<span style="color: #74af68;">#</span><span style="color: #74af68;">time data</span>
+        <span style="color: #dbdb95;">timearr</span> = np.asarray(np.floor(timearr),np.uint16)
+</pre>
+</div>
+
+<p>
+a lot of this code used to purely work with integers.  As such,
+numpy was set to <a href="http://docs.scipy.org/doc/numpy/reference/generated/numpy.seterr.html">raise an exception on integer overflow</a>.  This is
+largely unnecessary now and could probably be removed.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-python" id="reader_pelvis_make3d"><span style="color: #74af68;">#</span>
+        <span style="color: #74af68;">#</span><span style="color: #74af68;">Loop over 20 angstroms in steps of 0.1 angstroms</span>
+        np.seterr(over=<span style="color: #e67128;">'raise'</span>)
+</pre>
+</div>
+
+<p>
+It's possible to run the entire histogram calculation in a single
+numpy call, which would actually be faster than the code below.
+The problem is that the entire application would hang while the
+calculation was performed, which leaves you wondering if
+everything just crashed.  This slower version was implemented,
+since it was easier to put in feedback as to how much time would
+be left.
+</p>
+
+<p>
+The function cycles through each time of flight bin.  The <code>place</code>
+variable stores the indexes of events which fall into this time
+of flight bin.  If there are any such events, then their position
+information is histogrammed into a 1D array.  This array can then
+be converted into a 2D array, since we know the number of
+channels and the number of points per channel.  Finally, the
+<a href="#mapim">3.1.2</a> function takes the point and channel numbers and returns a
+2D array of position information.  Finally, this array is copied
+into the appropriate wavelength bin in the <code>cube</code> array.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-python" id="reader_pelvis_make3d"><span style="color: #74af68;">#</span>
+        <span style="color: #ffad29; font-weight: bold;">for</span> i <span style="color: #ffad29; font-weight: bold;">in</span> <span style="color: #23d7d7;">range</span>(RESOLUTION):
+                <span style="color: #dbdb95;">place</span> = np.where(timearr==i)
+                <span style="color: #ffad29; font-weight: bold;">if</span> <span style="color: #23d7d7;">len</span>(place[0]) &gt; 0:
+                        <span style="color: #dbdb95;">temp</span>,<span style="color: #dbdb95;">_</span> = np.histogram(Z[place],bins = \
+                                              np.arange(8*256+1))
+                        <span style="color: #dbdb95;">temp</span> = temp.reshape(256,8,order=<span style="color: #e67128;">"F"</span>)
+                        <span style="color: #dbdb95;">cube</span>[:,:,i] = mapim(temp)[::-1,:]
+                statusfunc(i*1000.0/RESOLUTION)
+
+
+        <span style="color: #dbdb95;">stop</span>=clock()
+        <span style="color: #ffad29; font-weight: bold;">del</span> timearr
+
+        <span style="color: #ffad29; font-weight: bold;">return</span> cube
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-sec-3-1-3" class="outline-4">
+<h4 id="sec-3-1-3"><span class="section-number-4">3.1.3</span> Initialization</h4>
+<div class="outline-text-4" id="text-3-1-3">
+<p>
+The constructor for the PelFile doesn't need to do much other than
+load a file passed as a parameter.  If there is no file, we don't
+want to do anything.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-python" id="reader_pelfile_init"><span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">__init__</span>(<span style="color: #ffad29; font-weight: bold;">self</span>,<span style="color: #23d7d7;">file</span>=<span style="color: #e67128;">""</span>):
+        <span style="color: #e67128;">"""Create a PelFile"""</span>
+        <span style="color: #ffad29; font-weight: bold;">if</span>(<span style="color: #23d7d7;">file</span>!=<span style="color: #e67128;">""</span>):
+                <span style="color: #ffad29; font-weight: bold;">self</span>.readfileimage(<span style="color: #23d7d7;">file</span>)
+</pre>
+</div>
+</div>
+</div>
+<div id="outline-container-sec-3-1-4" class="outline-4">
+<h4 id="sec-3-1-4"><span class="section-number-4">3.1.4</span> File Reading</h4>
+<div class="outline-text-4" id="text-3-1-4">
+<p>
+The original PEL file format used by the PAPA detector included a
+256 byte header with metadate about the detector status during the
+run.  This function would parse that information into a Python
+<a href="https://docs.python.org/2/library/collections.html">namedTuple</a>, which is fairly similar to a standard struct.  With
+the new Helium-3 detector, this code is no longer necessary or
+useful.  It should not be called and could probably be deleted.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-python" id="reader_pelfile_parseHeader"><span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">parseHeader</span>(<span style="color: #ffad29; font-weight: bold;">self</span>,<span style="color: #23d7d7;">bytes</span>):
+        <span style="color: #e67128;">"""Turn the Pel file header into structured data"""</span>
+        <span style="color: #dbdb95;">Header</span> = namedtuple(
+                <span style="color: #e67128;">'Header'</span>,
+                <span style="color: #e67128;">"pel endian FileMajVer FileMinVer BytesPerSample "</span> +
+                <span style="color: #e67128;">"SysHealth AppMajVer AppMinVer AppBetaVer LensPos "</span> +
+                <span style="color: #e67128;">"DetectorName ProductNumber BitsPerCoord CanEnergy "</span> +
+                <span style="color: #e67128;">"CanTime ADclockFrequ FirmMajVer FirmMinVer FirmBeta Serial "</span> +
+                <span style="color: #e67128;">"AcquisitionMode CanAcqMode Shutter "</span> +
+                <span style="color: #e67128;">"PAPAPowerSupplyVoltageCommand "</span> +
+                <span style="color: #e67128;">"PAPAPowerSupplyVoltageCommandGain "</span> +
+                <span style="color: #e67128;">"PAPAPowerSupplyVoltageCommandOffset "</span> +
+                <span style="color: #e67128;">"PAPAPowerSupplyControlVoltageCommandGain "</span> +
+                <span style="color: #e67128;">"PAPAPowerSupplyControlVoltageCommandOffset "</span> +
+                <span style="color: #e67128;">"PAPAPowerSupplyVoltageEnable "</span> +
+                <span style="color: #e67128;">"EnergyPowerSupplyVoltageCommand "</span> +
+                <span style="color: #e67128;">"EnergyPowerSupplyVoltageCommandGain "</span> +
+                <span style="color: #e67128;">"EnergyPowerSupplyVoltageCommandOffset "</span> +
+                <span style="color: #e67128;">"EnergyPowerSupplyControlVoltageCommandGain "</span> +
+                <span style="color: #e67128;">"EnergyPowerSupplyControlVoltageCommandOffset "</span> +
+                <span style="color: #e67128;">"EnergyPowerSupplyVoltageEnable "</span> +
+                <span style="color: #e67128;">"MCPPowerSupplyVoltageCommand "</span> +
+                <span style="color: #e67128;">"MCPPowerSupplyVoltageCommandGain "</span> +
+                <span style="color: #e67128;">"MCPPowerSupplyVoltageCommandOffset "</span> +
+                <span style="color: #e67128;">"MCPPowerSupplyControlVoltageCommandGain "</span> +
+                <span style="color: #e67128;">"MCPPowerSupplyControlVoltageCommandOffset "</span> +
+                <span style="color: #e67128;">"MCPPowerSupplyVoltageEnable "</span> +
+                <span style="color: #e67128;">"x1Gain x2Gain x3Gain x4Gain x5Gain x6Gain x7Gain x8Gain x9Gain x10Gain "</span> +
+                <span style="color: #e67128;">"y1Gain y2Gain y3Gain y4Gain y5Gain y6Gain y7Gain y8Gain y9Gain y10Gain "</span> +
+                <span style="color: #e67128;">"strobeGain EnergyGain ThresholdGain "</span>+
+                <span style="color: #e67128;">"ADVoltageOffset ADAOffset ADBOffset ADCOffset ADDOffset "</span>+
+                <span style="color: #e67128;">"StrobeTriggerMin StrobeTriggerMax StrobeEndEventFrac "</span> +
+                <span style="color: #e67128;">"EnergyTriggerMin EnergyTriggerMax EnergyEndEventFrac "</span> +
+                <span style="color: #e67128;">"ADAFillSampleIntervalLength ADDFillSampleIntervalLength "</span> +
+                <span style="color: #e67128;">"GateCapturePolarity TimerResetEdgePolarity "</span> +
+                <span style="color: #e67128;">"LeadTimer LagTimer Gray BitShift "</span> +
+                <span style="color: #e67128;">"TemperatureSetPoint1 TemperatureSetPoint2 "</span> +
+                <span style="color: #e67128;">"KP1 KP2 KI1 KI2 KD1 KD2 Temperature1 Temperature2 "</span> +
+                <span style="color: #e67128;">"StrobePulseWidth "</span> +
+                <span style="color: #e67128;">"Year Month Day Hour Minute Second"</span>)
+
+
+        <span style="color: #23d7d7;">format</span> = <span style="color: #e67128;">"4s"</span> <span style="color: #74af68;">#</span><span style="color: #74af68;">header</span>
+        <span style="color: #23d7d7;">format</span> += <span style="color: #e67128;">" ?"</span> <span style="color: #74af68;">#</span><span style="color: #74af68;">endian  Note that this is currently ignored</span>
+        (pelstring,endian) = struct.unpack(<span style="color: #23d7d7;">format</span>,<span style="color: #23d7d7;">bytes</span>[0:5])
+
+        <span style="color: #ffad29; font-weight: bold;">if</span> endian:
+                <span style="color: #23d7d7;">format</span> = <span style="color: #e67128;">"&gt;"</span> <span style="color: #74af68;">#</span><span style="color: #74af68;">big endian</span>
+        <span style="color: #ffad29; font-weight: bold;">else</span>:
+                <span style="color: #23d7d7;">format</span> = <span style="color: #e67128;">"&lt;"</span> <span style="color: #74af68;">#</span><span style="color: #74af68;">little endian</span>
+        <span style="color: #23d7d7;">format</span> += <span style="color: #e67128;">"4s ?"</span> <span style="color: #74af68;">#</span><span style="color: #74af68;">header and endian</span>
+        <span style="color: #23d7d7;">format</span> += <span style="color: #e67128;">"B"</span> <span style="color: #74af68;">#</span><span style="color: #74af68;">Major version</span>
+        <span style="color: #23d7d7;">format</span> += <span style="color: #e67128;">"B"</span> <span style="color: #74af68;">#</span><span style="color: #74af68;">Minor Version</span>
+        <span style="color: #23d7d7;">format</span> += <span style="color: #e67128;">"B"</span> <span style="color: #74af68;">#</span><span style="color: #74af68;">Bytes per sample</span>
+        <span style="color: #23d7d7;">format</span> += <span style="color: #e67128;">"B"</span> <span style="color: #74af68;">#</span><span style="color: #74af68;">System Health</span>
+        <span style="color: #23d7d7;">format</span> += <span style="color: #e67128;">"B"</span> <span style="color: #74af68;">#</span><span style="color: #74af68;">Application Software Major Version</span>
+        <span style="color: #23d7d7;">format</span> += <span style="color: #e67128;">"B"</span> <span style="color: #74af68;">#</span><span style="color: #74af68;">Application Software Minor Version</span>
+        <span style="color: #23d7d7;">format</span> += <span style="color: #e67128;">"B"</span> <span style="color: #74af68;">#</span><span style="color: #74af68;">Application Software Beta Version</span>
+        <span style="color: #23d7d7;">format</span> += <span style="color: #e67128;">"H"</span> <span style="color: #74af68;">#</span><span style="color: #74af68;">Lens focus position</span>
+        <span style="color: #23d7d7;">format</span> += <span style="color: #e67128;">" 40s "</span> <span style="color: #74af68;"># </span><span style="color: #74af68;">Detector Name</span>
+        <span style="color: #23d7d7;">format</span> += <span style="color: #e67128;">"H"</span> <span style="color: #74af68;"># </span><span style="color: #74af68;">Product Number</span>
+        <span style="color: #23d7d7;">format</span> += <span style="color: #e67128;">"B"</span> <span style="color: #74af68;"># </span><span style="color: #74af68;">Bits per coordinate</span>
+        <span style="color: #23d7d7;">format</span> += <span style="color: #e67128;">"B"</span> <span style="color: #74af68;">#</span><span style="color: #74af68;">Detector Energy Capability</span>
+        <span style="color: #23d7d7;">format</span> += <span style="color: #e67128;">"B"</span> <span style="color: #74af68;">#</span><span style="color: #74af68;">Detector Timing Capability</span>
+        <span style="color: #23d7d7;">format</span> += <span style="color: #e67128;">"H"</span> <span style="color: #74af68;">#</span><span style="color: #74af68;">AD Clock Frequency</span>
+        <span style="color: #23d7d7;">format</span> += <span style="color: #e67128;">"B"</span> <span style="color: #74af68;">#</span><span style="color: #74af68;">Firmware Major Version</span>
+        <span style="color: #23d7d7;">format</span> += <span style="color: #e67128;">"B"</span> <span style="color: #74af68;">#</span><span style="color: #74af68;">Firmware Minor Version</span>
+        <span style="color: #23d7d7;">format</span> += <span style="color: #e67128;">"B"</span> <span style="color: #74af68;">#</span><span style="color: #74af68;">Firmware Beta Version</span>
+        <span style="color: #23d7d7;">format</span> += <span style="color: #e67128;">"H"</span> <span style="color: #74af68;">#</span><span style="color: #74af68;">Serial Number</span>
+        <span style="color: #23d7d7;">format</span> += <span style="color: #e67128;">"B"</span> <span style="color: #74af68;">#</span><span style="color: #74af68;">Acquisition Mode</span>
+        <span style="color: #23d7d7;">format</span> += <span style="color: #e67128;">"I"</span> <span style="color: #74af68;">#</span><span style="color: #74af68;">Acquisition Mode Capability</span>
+        <span style="color: #23d7d7;">format</span> += <span style="color: #e67128;">"B"</span> <span style="color: #74af68;">#</span><span style="color: #74af68;">Shutter State</span>
+        <span style="color: #23d7d7;">format</span> += <span style="color: #e67128;">"H"</span> <span style="color: #74af68;">#</span><span style="color: #74af68;">PAPA PMT power supply voltage command</span>
+        <span style="color: #23d7d7;">format</span> += <span style="color: #e67128;">"H"</span> <span style="color: #74af68;">#</span><span style="color: #74af68;">PAPA PMT power supply voltage gain</span>
+        <span style="color: #23d7d7;">format</span> += <span style="color: #e67128;">"H"</span> <span style="color: #74af68;">#</span><span style="color: #74af68;">PAPA PMT power supply voltage command offset</span>
+        <span style="color: #23d7d7;">format</span> += <span style="color: #e67128;">"H"</span> <span style="color: #74af68;">#</span><span style="color: #74af68;">PAPA PMT power supply control voltage command gain</span>
+        <span style="color: #23d7d7;">format</span> += <span style="color: #e67128;">"H"</span> <span style="color: #74af68;">#</span><span style="color: #74af68;">PAPA PMT power supply control voltage command offsert</span>
+        <span style="color: #23d7d7;">format</span> += <span style="color: #e67128;">"B"</span> <span style="color: #74af68;">#</span><span style="color: #74af68;">PAPA PMT power supply voltage enable</span>
+
+        <span style="color: #23d7d7;">format</span> += <span style="color: #e67128;">"H"</span> <span style="color: #74af68;">#</span><span style="color: #74af68;">Energy PMT power supply voltage command</span>
+        <span style="color: #23d7d7;">format</span> += <span style="color: #e67128;">"H"</span> <span style="color: #74af68;">#</span><span style="color: #74af68;">Energy PMT power supply voltage gain</span>
+        <span style="color: #23d7d7;">format</span> += <span style="color: #e67128;">"H"</span> <span style="color: #74af68;">#</span><span style="color: #74af68;">Energy PMT power supply voltage command offset</span>
+        <span style="color: #23d7d7;">format</span> += <span style="color: #e67128;">"H"</span> <span style="color: #74af68;">#</span><span style="color: #74af68;">Energy PMT power supply control voltage command gain</span>
+        <span style="color: #23d7d7;">format</span> += <span style="color: #e67128;">"H"</span> <span style="color: #74af68;">#</span><span style="color: #74af68;">Energy PMT power supply control voltage command offsert</span>
+        <span style="color: #23d7d7;">format</span> += <span style="color: #e67128;">"B"</span> <span style="color: #74af68;">#</span><span style="color: #74af68;">Energy PMT power supply voltage enable</span>
+        <span style="color: #23d7d7;">format</span> += <span style="color: #e67128;">"H"</span> <span style="color: #74af68;">#</span><span style="color: #74af68;">Intensifier MCP power supply voltage command</span>
+        <span style="color: #23d7d7;">format</span> += <span style="color: #e67128;">"H"</span> <span style="color: #74af68;">#</span><span style="color: #74af68;">Intensifier MCP power supply voltage gain</span>
+        <span style="color: #23d7d7;">format</span> += <span style="color: #e67128;">"H"</span> <span style="color: #74af68;">#</span><span style="color: #74af68;">Intensifier MCP power supply voltage command offset</span>
+        <span style="color: #23d7d7;">format</span> += <span style="color: #e67128;">"H"</span> <span style="color: #74af68;">#</span><span style="color: #74af68;">Intensifier MCP power supply control voltage command gain</span>
+        <span style="color: #23d7d7;">format</span> += <span style="color: #e67128;">"H"</span> <span style="color: #74af68;">#</span><span style="color: #74af68;">Intensifier MCP power supply control voltage command offsert</span>
+        <span style="color: #23d7d7;">format</span> += <span style="color: #e67128;">"B"</span> <span style="color: #74af68;">#</span><span style="color: #74af68;">Intensifier MCP power supply voltage enable</span>
+        <span style="color: #23d7d7;">format</span> += <span style="color: #e67128;">" 10H "</span> <span style="color: #74af68;">#</span><span style="color: #74af68;">X Channel gains</span>
+        <span style="color: #23d7d7;">format</span> += <span style="color: #e67128;">" 10H "</span> <span style="color: #74af68;">#</span><span style="color: #74af68;">Y Channel gains</span>
+        <span style="color: #23d7d7;">format</span> += <span style="color: #e67128;">"H"</span> <span style="color: #74af68;">#</span><span style="color: #74af68;">Strobe PMT Channel Gain</span>
+        <span style="color: #23d7d7;">format</span> += <span style="color: #e67128;">"H"</span> <span style="color: #74af68;">#</span><span style="color: #74af68;">Energy PMT Channel Gain</span>
+        <span style="color: #23d7d7;">format</span> += <span style="color: #e67128;">"H"</span> <span style="color: #74af68;">#</span><span style="color: #74af68;">Threshold Channel Gain</span>
+        <span style="color: #23d7d7;">format</span> += <span style="color: #e67128;">"H"</span> <span style="color: #74af68;">#</span><span style="color: #74af68;">AD Voltage Offset</span>
+        <span style="color: #23d7d7;">format</span> += <span style="color: #e67128;">"H"</span> <span style="color: #74af68;">#</span><span style="color: #74af68;">AD Channel A Offset</span>
+        <span style="color: #23d7d7;">format</span> += <span style="color: #e67128;">"H"</span> <span style="color: #74af68;">#</span><span style="color: #74af68;">AD Channel B Offset</span>
+        <span style="color: #23d7d7;">format</span> += <span style="color: #e67128;">"H"</span> <span style="color: #74af68;">#</span><span style="color: #74af68;">AD Channel C Offset</span>
+        <span style="color: #23d7d7;">format</span> += <span style="color: #e67128;">"H"</span> <span style="color: #74af68;">#</span><span style="color: #74af68;">AD Channel D Offset</span>
+        <span style="color: #23d7d7;">format</span> += <span style="color: #e67128;">"H"</span> <span style="color: #74af68;">#</span><span style="color: #74af68;">PAPA Strobe Trigger min</span>
+        <span style="color: #23d7d7;">format</span> += <span style="color: #e67128;">"H"</span> <span style="color: #74af68;">#</span><span style="color: #74af68;">PAPA Strobe Trigger max</span>
+        <span style="color: #23d7d7;">format</span> += <span style="color: #e67128;">"H"</span> <span style="color: #74af68;">#</span><span style="color: #74af68;">PAPA Strobe end event fraction</span>
+        <span style="color: #23d7d7;">format</span> += <span style="color: #e67128;">"H"</span> <span style="color: #74af68;">#</span><span style="color: #74af68;">Energy Trigger min</span>
+        <span style="color: #23d7d7;">format</span> += <span style="color: #e67128;">"H"</span> <span style="color: #74af68;">#</span><span style="color: #74af68;">Energy Trigger max</span>
+        <span style="color: #23d7d7;">format</span> += <span style="color: #e67128;">"H"</span> <span style="color: #74af68;">#</span><span style="color: #74af68;">Energy end event fraction</span>
+        <span style="color: #23d7d7;">format</span> += <span style="color: #e67128;">"B"</span> <span style="color: #74af68;">#</span><span style="color: #74af68;">AD A filter sample interval length</span>
+        <span style="color: #23d7d7;">format</span> += <span style="color: #e67128;">"B"</span> <span style="color: #74af68;">#</span><span style="color: #74af68;">AD D filter sample interval length</span>
+        <span style="color: #23d7d7;">format</span> += <span style="color: #e67128;">"B"</span> <span style="color: #74af68;">#</span><span style="color: #74af68;">Gate Capture Polarity</span>
+        <span style="color: #23d7d7;">format</span> += <span style="color: #e67128;">"B"</span> <span style="color: #74af68;">#</span><span style="color: #74af68;">Timer reset edge Polarity</span>
+        <span style="color: #23d7d7;">format</span> += <span style="color: #e67128;">"H"</span> <span style="color: #74af68;">#</span><span style="color: #74af68;">Coincidence lead timer</span>
+        <span style="color: #23d7d7;">format</span> += <span style="color: #e67128;">"H"</span> <span style="color: #74af68;">#</span><span style="color: #74af68;">Coincidence lag timer</span>
+        <span style="color: #23d7d7;">format</span> += <span style="color: #e67128;">"B"</span> <span style="color: #74af68;">#</span><span style="color: #74af68;">Gray to binary conversion adder</span>
+        <span style="color: #23d7d7;">format</span> += <span style="color: #e67128;">"B"</span> <span style="color: #74af68;">#</span><span style="color: #74af68;">Binary big shift</span>
+        <span style="color: #23d7d7;">format</span> += <span style="color: #e67128;">" 2H "</span> <span style="color: #74af68;">#</span><span style="color: #74af68;">Zone temperature set point</span>
+        <span style="color: #23d7d7;">format</span> += <span style="color: #e67128;">" 2H "</span> <span style="color: #74af68;">#</span><span style="color: #74af68;">Zone KP Gain</span>
+        <span style="color: #23d7d7;">format</span> += <span style="color: #e67128;">" 2H "</span> <span style="color: #74af68;">#</span><span style="color: #74af68;">Zone KI Gain</span>
+        <span style="color: #23d7d7;">format</span> += <span style="color: #e67128;">" 2H "</span> <span style="color: #74af68;">#</span><span style="color: #74af68;">Zone KD Gain</span>
+        <span style="color: #23d7d7;">format</span> += <span style="color: #e67128;">" 2H "</span> <span style="color: #74af68;">#</span><span style="color: #74af68;">Zone temperature</span>
+        <span style="color: #23d7d7;">format</span> += <span style="color: #e67128;">"H"</span> <span style="color: #74af68;">#</span><span style="color: #74af68;">strobe pulse width</span>
+        <span style="color: #23d7d7;">format</span> += <span style="color: #e67128;">"39x"</span> <span style="color: #74af68;">#</span><span style="color: #74af68;">unused</span>
+        <span style="color: #23d7d7;">format</span> += <span style="color: #e67128;">"H"</span> <span style="color: #74af68;">#</span><span style="color: #74af68;">Year</span>
+        <span style="color: #23d7d7;">format</span> += <span style="color: #e67128;">"H"</span> <span style="color: #74af68;">#</span><span style="color: #74af68;">Month</span>
+        <span style="color: #23d7d7;">format</span> += <span style="color: #e67128;">"H"</span> <span style="color: #74af68;">#</span><span style="color: #74af68;">Day</span>
+        <span style="color: #23d7d7;">format</span> += <span style="color: #e67128;">"H"</span> <span style="color: #74af68;">#</span><span style="color: #74af68;">Hour</span>
+        <span style="color: #23d7d7;">format</span> += <span style="color: #e67128;">"H"</span> <span style="color: #74af68;">#</span><span style="color: #74af68;">Minute</span>
+        <span style="color: #23d7d7;">format</span> += <span style="color: #e67128;">"H"</span> <span style="color: #74af68;">#</span><span style="color: #74af68;">Second</span>
+        <span style="color: #dbdb95;">header</span> = Header._make(struct.unpack(<span style="color: #23d7d7;">format</span>,<span style="color: #23d7d7;">bytes</span>))
+        <span style="color: #ffad29; font-weight: bold;">return</span> header
+</pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div id="postamble" class="status">
+<p class="author">Author: Adam Washington</p>
+<p class="date">Created: 2014-04-07 Mon 14:33</p>
+<p class="creator"><a href="http://www.gnu.org/software/emacs/">Emacs</a> 24.3.1 (<a href="http://orgmode.org">Org</a> mode 8.2)</p>
+<p class="validation"><a href="http://validator.w3.org/check?uri=referer">Validate</a></p>
+</div>
+</body>
+</html>
