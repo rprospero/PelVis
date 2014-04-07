@@ -1548,6 +1548,12 @@ Finally, we need to do the standard GUI layout code.
   of the system.  These are usually the modules which read and write
   data files, as they are needed by both the GUI and command line applications.
 ** Reader
+
+   The =reader= module handles reading and interpreting neutron event
+   files.  It's main purpose is to take a data file, which is a binary
+   record of events, and turn it into a histogram of events in space
+   and time.
+
 *** Reader Skeleton
 
 #+begin_src python :tangle reader.py :noweb tangle :padline no
@@ -1570,39 +1576,7 @@ from collections import namedtuple
 
 RESOLUTION = 400
 
-def mapim(imarray):
-    XDIM=8
-    YDIM=256
-    XDIMIM=16
-    YDIMIM=128
-    ZPAD=0
-#    maparray=[2, 15, 1, 16, 4, 13, 3, 14, 6, 11, 5, 12, 8, 9, 7, 10]
-#    maparray =[2, 1, 4, 3, 6, 5, 8, 7, 10, 9, 12, 11, 14, 13, 16, 15]#Old July 2013
-#    maparray =[2, 1, 4, 3, 6, 5, 8, 7, 14, 10, 13, 12, 9, 11, 16, 15]# SESANS October 2013
-#    maparray =[2, 1, 4, 3, 6, 5, 8, 7, 14, 10, 13, 12, 9, 11, 16, 15]# SESANS July 2013
-    maparray =[4, 3, 1, 2, 6, 5, 15, 16, 8, 13, 7, 14, 10, 11, 9, 12] # From tube mapping October 2013
-    #    maparray = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]
-#    maparray = [12, 9, 11, 14, 10, 7, 1, 2, 3, 4, 5, 6, 8, 13, 15, 16]
-#    maparray =[2, 1, 4, 3, 6, 15, 5, 16, 8, 7, 13, 14, 11, 12, 9, 10]
-#    maparray =[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]
-    newimarray=np.zeros((YDIMIM+ZPAD,XDIMIM))
-    for i in range(len(maparray)):
-        ti=maparray[i]
-        if 0.5*ti!=int(0.5*ti):
-           for j in range(YDIMIM):
-                tj=j
-                if ti<9:
-                    newimarray[j+ZPAD,i]=imarray[YDIMIM-1-tj,(ti-1)/2]
-                else:
-                    newimarray[j,i]=imarray[YDIMIM-1-tj,(ti-1)/2]
-        else:
-            for j in range(YDIMIM):
-                tj=j+YDIMIM
-                if ti<9:
-                    newimarray[j+ZPAD,i]=imarray[tj,ti/2-1]
-                else:
-                    newimarray[j,i]=imarray[tj,ti/2-1]
-    return newimarray
+<<reader_mapim>>
 
 class PelFile:
         """Handles the data stored in PEL files"""
@@ -1881,4 +1855,70 @@ if __name__=="__main__":
         #        print "%03o" % i
         #print(len(temp))
 
+#+end_src
+
+
+**** Image Mapping
+
+     The SNS software for the Helium-3 detector returns a set of
+     events.  Each even has a channel number, the distance along the
+     channel, and a time of flight.  However, each channel on our
+     detector has two tubes in series.  Thus, we need to convert the
+     position on the channel to the position on the tube and assign
+     the data to the right tube.
+
+     Paul wrote this code and it has some idiosyncratic behavior.  For
+     example, the test of 
+: 0.5*ti!=int(0.5*ti)
+     is really just a test to see if ti is odd or even.  It should
+     probably be replaced with a simple
+: ti%2==1
+     which returns the same result for all values.  In fact, I have a
+     sneaking suspicion that the entire thing can be done through
+     numpy, eliminating the need for slow python loops, but I haven't
+     proved it yet.
+
+     The function takes a single input value, which is a 2D array of
+     neutron counts with dimensions =XDIM= x =YDIM=.  It returns an array
+     with dimensions =XDIMM= and =YDIMM=.  The =ZPAD= variable is used
+     to account for dead pixels at the top or bottom of the tubes.
+     The =maparray= variable gives the order of the tubes on the
+     detector.  This has been found by calibration, but it should be
+     checked periodically (e.g. biennially) to ensure that it's still accurate.
+
+#+name:reader_mapim
+#+begin_src python
+def mapim(imarray):
+    XDIM=8
+    YDIM=256
+    XDIMIM=16
+    YDIMIM=128
+    ZPAD=0
+#    maparray=[2, 15, 1, 16, 4, 13, 3, 14, 6, 11, 5, 12, 8, 9, 7, 10]
+#    maparray =[2, 1, 4, 3, 6, 5, 8, 7, 10, 9, 12, 11, 14, 13, 16, 15]#Old July 2013
+#    maparray =[2, 1, 4, 3, 6, 5, 8, 7, 14, 10, 13, 12, 9, 11, 16, 15]# SESANS October 2013
+#    maparray =[2, 1, 4, 3, 6, 5, 8, 7, 14, 10, 13, 12, 9, 11, 16, 15]# SESANS July 2013
+    maparray =[4, 3, 1, 2, 6, 5, 15, 16, 8, 13, 7, 14, 10, 11, 9, 12] # From tube mapping October 2013
+    #    maparray = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]
+#    maparray = [12, 9, 11, 14, 10, 7, 1, 2, 3, 4, 5, 6, 8, 13, 15, 16]
+#    maparray =[2, 1, 4, 3, 6, 15, 5, 16, 8, 7, 13, 14, 11, 12, 9, 10]
+#    maparray =[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]
+    newimarray=np.zeros((YDIMIM+ZPAD,XDIMIM))
+    for i in range(len(maparray)):
+        ti=maparray[i]
+        if 0.5*ti!=int(0.5*ti):
+           for j in range(YDIMIM):
+                tj=j
+                if ti<9:
+                    newimarray[j+ZPAD,i]=imarray[YDIMIM-1-tj,(ti-1)/2]
+                else:
+                    newimarray[j,i]=imarray[YDIMIM-1-tj,(ti-1)/2]
+        else:
+            for j in range(YDIMIM):
+                tj=j+YDIMIM
+                if ti<9:
+                    newimarray[j+ZPAD,i]=imarray[tj,ti/2-1]
+                else:
+                    newimarray[j,i]=imarray[tj,ti/2-1]
+    return newimarray
 #+end_src
