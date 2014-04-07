@@ -4,7 +4,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
 <title>PELVis: The PEL Visualizer</title>
-<!-- 2014-04-07 Mon 15:08 -->
+<!-- 2014-04-07 Mon 17:34 -->
 <meta  http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta  name="generator" content="Org-mode" />
 <meta  name="author" content="Adam Washington" />
@@ -150,7 +150,8 @@ for the JavaScript code in this tag.
 <li><a href="#sec-2-3-1">2.3.1. Pelvis Frame</a></li>
 <li><a href="#sec-2-3-2">2.3.2. Position Panel</a></li>
 <li><a href="#sec-2-3-3">2.3.3. Option Panel</a></li>
-<li><a href="#sec-2-3-4">2.3.4. GraphPanel</a></li>
+<li><a href="#sec-2-3-4">2.3.4. Graph Panel</a></li>
+<li><a href="#sec-2-3-5">2.3.5. Image Panel</a></li>
 </ul>
 </li>
 </ul>
@@ -270,7 +271,7 @@ event files.
 </div>
 
 <p>
-<i>ImagePanel</i> is a custom widget for displaying 2D graph data in a
+<a href="#sec-2-3-5">ImagePanel</a> is a custom widget for displaying 2D graph data in a
 wxPython frame.
 </p>
 
@@ -281,7 +282,7 @@ wxPython frame.
 </div>
 
 <p>
-<a href="#sec-2-3-4">GraphPanel</a> is a custom widget for displayed 1D graphs in a wxPython
+<i>GraphPanel</i> is a custom widget for displayed 1D graphs in a wxPython
 Frame.
 </p>
 
@@ -545,7 +546,7 @@ wx.Frame.__init__(<span style="color: #ffad29; font-weight: bold;">self</span>,<
 
 <p>
 Now we can create the actual components of the GUI.  The <code>xPanel</code>
-and <code>yPanel</code> are <a href="#sec-2-3-4">graphs</a> which display the integrated intensity
+and <code>yPanel</code> are <i>graphs</i> which display the integrated intensity
 along an axis.  <code>imPanel</code> displays the actual, 2D detector <i>image</i>.
 <code>colorbar</code> gives the current scale of the color scheme on the
 imPanel.  <code>opPanel</code> is a generic <a href="#sec-2-3-3">panel</a> for the user to input data
@@ -1468,7 +1469,7 @@ which selects the spin state.
 
 <p>
 The <code>updateSingle</code> function takes the current 2D data, performs
-the appropriate masking, and updates the data in the <a href="#sec-2-3-4">GraphPanels</a>.
+the appropriate masking, and updates the data in the <i>GraphPanels</i>.
 It also updates the range on the color bar and forces the
 <i>detector image</i> to update.
 </p>
@@ -1971,7 +1972,448 @@ the region of interest with two mouse clicks.
 </div>
 
 <div id="outline-container-sec-2-3-4" class="outline-4">
-<h4 id="sec-2-3-4"><span class="section-number-4">2.3.4</span> GraphPanel</h4>
+<h4 id="sec-2-3-4"><span class="section-number-4">2.3.4</span> Graph Panel</h4>
+<div class="outline-text-4" id="text-2-3-4">
+<p>
+The <code>GraphPanel</code> module creates a single filled-line plot that can
+be embedded in a wxWidgets frame.  It's used by PelVis to present
+the detector image integrated along axis.
+</p>
+</div>
+
+<ol class="org-ol"><li>Graph Panel Skeleton<br  /><div class="outline-text-5" id="text-2-3-4-1">
+<div class="org-src-container">
+
+<pre class="src src-python"><span style="color: #e67128;">"""Classes for adding sumlines to frames</span>
+
+<span style="color: #e67128;">This module contains a single class, GraphPanel, which plots two dimensional</span>
+<span style="color: #e67128;">data filled along a chosen axis.  This class was originally designed for giving</span>
+<span style="color: #e67128;">the summation of a matrix along a given axis, but there's not reason that it</span>
+<span style="color: #e67128;">couldn't be expanded for other purposes.</span>
+
+<span style="color: #e67128;">"""</span>
+
+<span style="color: #ffad29; font-weight: bold;">import</span> numpy <span style="color: #ffad29; font-weight: bold;">as</span> np
+
+<span style="color: #ffad29; font-weight: bold;">from</span> matplotlib.backends.backend_wxagg <span style="color: #ffad29; font-weight: bold;">import</span> FigureCanvasWxAgg <span style="color: #ffad29; font-weight: bold;">as</span> FigureCanvas
+<span style="color: #ffad29; font-weight: bold;">from</span> matplotlib.backends.backend_wx <span style="color: #ffad29; font-weight: bold;">import</span> NavigationToolbar2Wx
+<span style="color: #ffad29; font-weight: bold;">from</span> matplotlib.figure <span style="color: #ffad29; font-weight: bold;">import</span> Figure
+<span style="color: #74af68;">#</span><span style="color: #74af68;">import matplotlib.cm as cm</span>
+
+<span style="color: #ffad29; font-weight: bold;">import</span> wx
+
+<span style="color: #74af68;"># </span><span style="color: #74af68;">FIXME:  This function is extremely brittle</span>
+<span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">rebin</span>(a,count):
+    <span style="color: #e67128;">"""A quick function to rebin an array</span>
+
+<span style="color: #e67128;">    This function takes an array and rebins it into a smaller array.</span>
+<span style="color: #e67128;">    Note that, if the length of the array isn't divisible by the binning</span>
+<span style="color: #e67128;">    factor, the end of the array will be truncated.  This is probably</span>
+<span style="color: #e67128;">    not a sane default, but I don't have any better ideas.</span>
+
+<span style="color: #e67128;">    Keyword arguments:</span>
+<span style="color: #e67128;">    a -- The numpy array to be rebinned.</span>
+<span style="color: #e67128;">    count -- The number of bins to be combined.  For instance, if the array</span>
+<span style="color: #e67128;">             has a length of 100 and the count is 4, the return value</span>
+<span style="color: #e67128;">             will have a length of 25</span>
+
+<span style="color: #e67128;">    """</span>
+
+    <span style="color: #ffad29; font-weight: bold;">return</span> np.array([a[i:i+count].mean() <span style="color: #ffad29; font-weight: bold;">for</span> i <span style="color: #ffad29; font-weight: bold;">in</span> <span style="color: #23d7d7;">range</span>(0,<span style="color: #23d7d7;">len</span>(a),count)])
+
+<span style="color: #ffad29; font-weight: bold;">class</span> <span style="color: #34cae2;">GraphPanel</span>(wx.Panel):
+    <span style="color: #e67128;">"""This class creates a panel that displays a filled plot. """</span>
+
+
+    <span style="color: #dbdb95;">HORIZONTAL</span> = 0 
+    <span style="color: #dbdb95;">INVERTED</span> = 1
+    <span style="color: #dbdb95;">VERTICAL</span> = 2
+    <span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">__init__</span>(<span style="color: #ffad29; font-weight: bold;">self</span>,parent,fig,res,orientation):
+        <span style="color: #e67128;">"""Create a new panel for plotting.</span>
+
+<span style="color: #e67128;">        Keyword Arguments:</span>
+<span style="color: #e67128;">        parent -- the panel in which the new one is to be displayed</span>
+<span style="color: #e67128;">        fig -- a tuple representing the relative dimensions of the panel</span>
+<span style="color: #e67128;">        res -- the number of pixels per part of the fig tuple.</span>
+<span style="color: #e67128;">        orientation -- the rotation of the image</span>
+
+<span style="color: #e67128;">        fig and res combine to produce the total size, in pixels, of the</span>
+<span style="color: #e67128;">        panel.  For instance, if fig=(2,8) and res=64, the final panel</span>
+<span style="color: #e67128;">        has a size of (128,512)</span>
+
+<span style="color: #e67128;">        The orientation can be one of HORIZONTAL, VERTICAL, or INVERTED,</span>
+<span style="color: #e67128;">        as defined as constants in the class definition. Horitzontal uses</span>
+<span style="color: #e67128;">        the standard x and y axes, and is best for putting above a 2d image.</span>
+<span style="color: #e67128;">        VERTICAL swaps the x and y axes and is best for going to the right</span>
+<span style="color: #e67128;">        of an image.  INVERTED plots with x and -y, and is best below the image.</span>
+
+<span style="color: #e67128;">        """</span>
+        wx.Panel.__init__(<span style="color: #ffad29; font-weight: bold;">self</span>,parent)
+        <span style="color: #ffad29; font-weight: bold;">self</span>.Bind(wx.EVT_PAINT,<span style="color: #ffad29; font-weight: bold;">self</span>.__OnPaint)
+        <span style="color: #74af68;">#</span><span style="color: #74af68;">The actual figure for plotting</span>
+        <span style="color: #ffad29; font-weight: bold;">self</span>.figure = Figure(figsize=fig,dpi=res)
+        <span style="color: #74af68;">#</span><span style="color: #74af68;">The space where th figure is drawn</span>
+        <span style="color: #ffad29; font-weight: bold;">self</span>.canvas = FigureCanvas(<span style="color: #ffad29; font-weight: bold;">self</span>,-1,<span style="color: #ffad29; font-weight: bold;">self</span>.figure)
+        <span style="color: #74af68;">#</span><span style="color: #74af68;">The rotation of the figure.</span>
+        <span style="color: #ffad29; font-weight: bold;">self</span>.orientation=orientation
+
+    <span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">SetPlot</span>(<span style="color: #ffad29; font-weight: bold;">self</span>,x,y):
+        <span style="color: #e67128;">"""Set the x and y coordinates of the data to be plotted."""</span>
+        <span style="color: #ffad29; font-weight: bold;">self</span>.figure.clear()
+        <span style="color: #ffad29; font-weight: bold;">self</span>.axes = <span style="color: #ffad29; font-weight: bold;">self</span>.figure.add_subplot(111)
+        <span style="color: #74af68;">#</span><span style="color: #74af68;">We rebin the data in steps of four to smooth out the dead PMTs</span>
+        <span style="color: #74af68;">#</span><span style="color: #74af68;">If all of the PMTs have been fixed, this step could be taken out.</span>
+        <span style="color: #ffad29; font-weight: bold;">if</span> <span style="color: #ffad29; font-weight: bold;">self</span>.orientation==<span style="color: #ffad29; font-weight: bold;">self</span>.INVERTED:
+            <span style="color: #ffad29; font-weight: bold;">self</span>.axes.fill_between(x,y)
+            <span style="color: #ffad29; font-weight: bold;">self</span>.SetPos([0,0.1,1,0.9])
+            <span style="color: #ffad29; font-weight: bold;">self</span>.axes.set_xlim((0,np.<span style="color: #23d7d7;">max</span>(x)))
+            <span style="color: #74af68;">#</span><span style="color: #74af68;">Reverse the order of the limits to get an inverted graph</span>
+            <span style="color: #ffad29; font-weight: bold;">self</span>.axes.set_ylim((np.<span style="color: #23d7d7;">max</span>(y),0))
+        <span style="color: #ffad29; font-weight: bold;">elif</span> <span style="color: #ffad29; font-weight: bold;">self</span>.orientation==<span style="color: #ffad29; font-weight: bold;">self</span>.HORIZONTAL:
+            <span style="color: #ffad29; font-weight: bold;">self</span>.axes.fill_between(x,y)
+            <span style="color: #ffad29; font-weight: bold;">self</span>.SetPos([0.1,0.1,0.9,0.9])
+            <span style="color: #ffad29; font-weight: bold;">self</span>.axes.set_xlim((0,np.<span style="color: #23d7d7;">max</span>(x)))
+            <span style="color: #ffad29; font-weight: bold;">self</span>.axes.set_ylim((0,np.<span style="color: #23d7d7;">max</span>(y)))
+        <span style="color: #ffad29; font-weight: bold;">else</span>:
+            <span style="color: #74af68;">#</span><span style="color: #74af68;">Notice that we now fill along the x axis</span>
+            <span style="color: #ffad29; font-weight: bold;">self</span>.axes.fill_betweenx(x,-y)
+            <span style="color: #ffad29; font-weight: bold;">self</span>.SetPos([0.2,0,0.8,1])
+            <span style="color: #ffad29; font-weight: bold;">self</span>.axes.set_ylim((0,128))
+
+        <span style="color: #ffad29; font-weight: bold;">self</span>.axes.autoscale_view(<span style="color: #008b8b;">True</span>,<span style="color: #008b8b;">True</span>,<span style="color: #008b8b;">True</span>)
+        <span style="color: #ffad29; font-weight: bold;">self</span>.Refresh()
+
+<span style="color: #74af68;">#     </span><span style="color: #74af68;">def SetYLim(self,range):</span>
+<span style="color: #74af68;">#         </span><span style="color: #74af68;">self.axes.set_ylim(range)</span>
+
+<span style="color: #74af68;">#     </span><span style="color: #74af68;">def SetXLim(self,range):</span>
+<span style="color: #74af68;">#         </span><span style="color: #74af68;">self.axes.set_xlim(range)</span>
+
+
+    <span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">SetPos</span>(<span style="color: #ffad29; font-weight: bold;">self</span>,pos):
+        <span style="color: #e67128;">"""Set the position of the graph within the panel.</span>
+
+<span style="color: #e67128;">        This function take a four element array which marks the far</span>
+<span style="color: #e67128;">        corners of the graph.  The coordinates are given as a fraction</span>
+<span style="color: #e67128;">        of the size of the panel.  For instance, pos=[0,0.3333,1,0.6666]</span>
+<span style="color: #e67128;">        would produce a graph that stretches across the panel in the x</span>
+<span style="color: #e67128;">        direction, but only uses the middle third in the y direction.</span>
+<span style="color: #e67128;">        You will probably need to play with these values in order to be </span>
+<span style="color: #e67128;">        able to view the values of the axes on the plot.</span>
+
+<span style="color: #e67128;">        """</span>
+        <span style="color: #ffad29; font-weight: bold;">self</span>.axes.set_position(pos)
+
+    <span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">__OnPaint</span>(<span style="color: #ffad29; font-weight: bold;">self</span>,event):
+        <span style="color: #e67128;">"""An event handler to tell the canvas to draw</span>
+<span style="color: #e67128;">        when the panel is redrawn."""</span>
+        <span style="color: #ffad29; font-weight: bold;">self</span>.canvas.draw()
+        event.Skip()
+</pre>
+</div>
+</div>
+</li></ol>
+</div>
+
+<div id="outline-container-sec-2-3-5" class="outline-4">
+<h4 id="sec-2-3-5"><span class="section-number-4">2.3.5</span> Image Panel</h4>
+<div class="outline-text-4" id="text-2-3-5">
+<p>
+The Image Panel is a custom widget for displaying a 2D array of
+data.  It forms the largest part of the graphical representation
+of the data in PELVis.
+</p>
+</div>
+
+<ol class="org-ol"><li>Image Panel Skeleton<br  /><div class="outline-text-5" id="text-2-3-5-1">
+<div class="org-src-container">
+
+<pre class="src src-python"><span style="color: #e67128;">"""This module contains classes which help in displaying 2D data</span>
+
+<span style="color: #e67128;">This module currently contains one class: ImagePanel.  The imagePanel</span>
+<span style="color: #e67128;">takes a 2D array and displays it as a color plot.</span>
+
+<span style="color: #e67128;">"""</span>
+
+<span style="color: #ffad29; font-weight: bold;">import</span> numpy <span style="color: #ffad29; font-weight: bold;">as</span> np
+
+<span style="color: #ffad29; font-weight: bold;">from</span> matplotlib.backends.backend_wxagg <span style="color: #ffad29; font-weight: bold;">import</span> FigureCanvasWxAgg <span style="color: #ffad29; font-weight: bold;">as</span> FigureCanvas
+<span style="color: #ffad29; font-weight: bold;">from</span> matplotlib.backends.backend_wx <span style="color: #ffad29; font-weight: bold;">import</span> NavigationToolbar2Wx
+<span style="color: #ffad29; font-weight: bold;">from</span> matplotlib.figure <span style="color: #ffad29; font-weight: bold;">import</span> Figure
+<span style="color: #ffad29; font-weight: bold;">import</span> matplotlib.cm <span style="color: #ffad29; font-weight: bold;">as</span> cm
+
+<span style="color: #ffad29; font-weight: bold;">import</span> wx
+
+
+<span style="color: #ffad29; font-weight: bold;">if</span> <span style="color: #23d7d7;">__name__</span> == <span style="color: #e67128;">"__main__"</span>:
+    <span style="color: #ffad29; font-weight: bold;">print</span> <span style="color: #e67128;">"Hello World"</span>;
+
+<span style="color: #ffad29; font-weight: bold;">class</span> <span style="color: #34cae2;">ImagePanel</span>(wx.Panel):
+    <span style="color: #e67128;">"""This class displays 2D data as a color plot"""</span>
+    &lt;&lt;imagepanel_init&gt;&gt;
+
+    &lt;&lt;imagepanel_events&gt;&gt;
+
+    &lt;&lt;imagepanel_update&gt;&gt;
+
+
+    &lt;&lt;imagepanel_saveImage&gt;&gt;
+
+    &lt;&lt;imagepanel_copytoclipboard&gt;&gt;
+</pre>
+</div>
+</div>
+</li>
+
+<li>Initialization<br  /><div class="outline-text-5" id="text-2-3-5-2">
+<p>
+The panel is constructed with a couple of arguments.  The first
+is simply the parent frame where the image is to be displayed.
+It then takes three callback functions.  The <code>posFunction</code>
+callback is called every time the mouse is moved within the
+panel.  The <code>setMin</code> function is called every time the user
+performs a left click, which will set the upper left hand corner
+of the region of interest.  Finally, the setMax function is
+called every time the user performs a right click, which should
+set the lower right corner of the region of interest.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-python" id="imagepanel_init"><span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">__init__</span>(<span style="color: #ffad29; font-weight: bold;">self</span>,parent,posFunction=<span style="color: #008b8b;">None</span>,setMin=<span style="color: #008b8b;">None</span>,setMax=<span style="color: #008b8b;">None</span>):
+    <span style="color: #e67128;">"""This creates an ImagePanel</span>
+
+<span style="color: #e67128;">    Keyword arguments:</span>
+<span style="color: #e67128;">    parent -- The container which will hold the panel</span>
+<span style="color: #e67128;">    posFunction -- function to be updated with mouse position</span>
+<span style="color: #e67128;">    setMin -- function to be called on left click</span>
+<span style="color: #e67128;">    setMax -- function to be called on right click</span>
+
+<span style="color: #e67128;">    """</span>
+    wx.Panel.__init__(<span style="color: #ffad29; font-weight: bold;">self</span>,parent)
+    <span style="color: #ffad29; font-weight: bold;">self</span>.Bind(wx.EVT_PAINT,<span style="color: #ffad29; font-weight: bold;">self</span>.__OnPaint)
+    <span style="color: #ffad29; font-weight: bold;">self</span>.posFunction = posFunction<span style="color: #74af68;">#</span><span style="color: #74af68;">Function to call on mouse movement</span>
+    <span style="color: #ffad29; font-weight: bold;">self</span>.setMin = setMin<span style="color: #74af68;">#</span><span style="color: #74af68;">Function to call on right click</span>
+    <span style="color: #ffad29; font-weight: bold;">self</span>.setMax = setMax<span style="color: #74af68;">#</span><span style="color: #74af68;">Function to call on left click</span>
+</pre>
+</div>
+
+<p>
+The <code>figure</code> member is the actual matplotlib graph that displays
+the detector image.  We set it to 512 pixels by 512 pixels, as
+its easier to read than a true 128 pixel by 16 pixel plot. The
+<code>FigureCanvas</code> is then the wxWidget which lets us embed the graph
+into the window.  It's provided by the backend<sub>wxagg</sub> module from
+matplotlib.
+</p>
+
+<p>
+We bind the mouse events to three private member functions and
+set the default spectrum to <code>spectral</code>.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-python" id="imagepanel_init"><span style="color: #74af68;">#</span><span style="color: #74af68;">The figure which holds the graph</span>
+    <span style="color: #ffad29; font-weight: bold;">self</span>.figure = Figure(figsize=(1,1),dpi=512)
+    <span style="color: #74af68;">#</span><span style="color: #74af68;">The object where the graph is drawn</span>
+    <span style="color: #ffad29; font-weight: bold;">self</span>.canvas = FigureCanvas(<span style="color: #ffad29; font-weight: bold;">self</span>,-1,<span style="color: #ffad29; font-weight: bold;">self</span>.figure)
+    <span style="color: #ffad29; font-weight: bold;">self</span>.canvas.Bind(wx.EVT_MOTION,<span style="color: #ffad29; font-weight: bold;">self</span>.__OnMouseMove)
+    <span style="color: #ffad29; font-weight: bold;">self</span>.canvas.Bind(wx.EVT_LEFT_UP,<span style="color: #ffad29; font-weight: bold;">self</span>.__OnMouseLeft)
+    <span style="color: #ffad29; font-weight: bold;">self</span>.canvas.Bind(wx.EVT_RIGHT_UP,<span style="color: #ffad29; font-weight: bold;">self</span>.__OnMouseRight)
+
+    <span style="color: #ffad29; font-weight: bold;">self</span>.cmap = cm.spectral<span style="color: #74af68;">#</span><span style="color: #74af68;">The color map for the graph</span>
+</pre>
+</div>
+
+<p>
+Finally, the <code>handlers</code> member is a dictionary of all of the
+image file formats that wxWidgets knows for file encoding.  If
+wxWidgets adds a new image file format, this dict will need to be
+updated manually, but it's unlikely that they'll add any news
+formats any time soon.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-python" id="imagepanel_init"><span style="color: #74af68;">#</span><span style="color: #74af68;">Known file formats for saving images</span>
+    <span style="color: #ffad29; font-weight: bold;">self</span>.handlers={u<span style="color: #e67128;">"BMP"</span>:wx.BITMAP_TYPE_BMP,
+                    u<span style="color: #e67128;">"JPG"</span>:wx.BITMAP_TYPE_JPEG,
+                    u<span style="color: #e67128;">"PNG"</span>:wx.BITMAP_TYPE_PNG,
+                    u<span style="color: #e67128;">"PCX"</span>:wx.BITMAP_TYPE_PCX,
+                    u<span style="color: #e67128;">"PNM"</span>:wx.BITMAP_TYPE_PNM,
+                    u<span style="color: #e67128;">"TIF"</span>:wx.BITMAP_TYPE_TIF}
+</pre>
+</div>
+</div>
+</li>
+
+<li>Event Handling<br  /><div class="outline-text-5" id="text-2-3-5-3">
+<p>
+When an event occurs, it calls the bound callback function with a
+single <code>Event</code> object.  This event contains the information that
+the callback needs to perform its duties (e.g. a mouse click
+event will have the mouse position).  We can either eat the
+event, which is the default, or pass the event on by calling
+<code>event.Skip</code>.  This allows the event to trigger multiple
+callbacks.
+</p>
+
+<p>
+There are four events that we need to be able to handle.  The
+simplest one is when the graphics need to be updated.  We force
+the FigureCanvas to draw itself, then pass the event on to any
+other handlers.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-python" id="imagepanel_events"><span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">__OnPaint</span>(<span style="color: #ffad29; font-weight: bold;">self</span>,event):
+    <span style="color: #e67128;">"""Event handler to redraw graph when panel is redrawn."""</span>
+    <span style="color: #ffad29; font-weight: bold;">self</span>.canvas.draw()
+    event.Skip()
+</pre>
+</div>
+
+<p>
+The <code>OnMouseMove</code> function is bound to events triggered by the
+mouse moving through the Image Panel.  The current position on
+the 512 by 512 panel is converted back into the actual pixels in
+the neutron data.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-python" id="imagepanel_events"><span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">__OnMouseMove</span>(<span style="color: #ffad29; font-weight: bold;">self</span>,event):
+    <span style="color: #e67128;">"""Event handler when the mouse moves over the graph"""</span>
+    (x,y) = event.GetPosition()
+    <span style="color: #ffad29; font-weight: bold;">if</span> <span style="color: #ffad29; font-weight: bold;">self</span>.posFunction <span style="color: #ffad29; font-weight: bold;">is</span> <span style="color: #008b8b;">None</span>: <span style="color: #ffad29; font-weight: bold;">return</span>
+    <span style="color: #ffad29; font-weight: bold;">self</span>.posFunction(x/32,y/4)
+</pre>
+</div>
+
+<p>
+<code>OnMouseLeft</code> is triggered by the user left clicking on the image
+panel.  The position is then converted back to the raw detector
+pixel and passed to the <code>setMin</code> function.  <code>OnMouseRight is
+     identical, except the raw position is passed to =setMax</code>.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-python" id="imagepanel_events"><span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">__OnMouseLeft</span>(<span style="color: #ffad29; font-weight: bold;">self</span>,event):
+    <span style="color: #e67128;">"""Event handler for left clicking on the graph."""</span>
+    (x,y) = event.GetPosition()
+    <span style="color: #ffad29; font-weight: bold;">if</span> <span style="color: #ffad29; font-weight: bold;">self</span>.setMin <span style="color: #ffad29; font-weight: bold;">is</span> <span style="color: #008b8b;">None</span>: 
+        <span style="color: #008b8b;">None</span>
+    <span style="color: #ffad29; font-weight: bold;">else</span>:
+        <span style="color: #ffad29; font-weight: bold;">self</span>.setMin(x/32,y/4)
+    event.Skip()
+
+<span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">__OnMouseRight</span>(<span style="color: #ffad29; font-weight: bold;">self</span>,event):
+    <span style="color: #e67128;">"""Event handler for right clicking on the graph."""</span>
+    (x,y) = event.GetPosition()
+    <span style="color: #ffad29; font-weight: bold;">if</span> <span style="color: #ffad29; font-weight: bold;">self</span>.setMax <span style="color: #ffad29; font-weight: bold;">is</span> <span style="color: #008b8b;">None</span>: 
+        <span style="color: #008b8b;">None</span>
+    <span style="color: #ffad29; font-weight: bold;">else</span>:
+        <span style="color: #ffad29; font-weight: bold;">self</span>.setMax(x/32,y/4)
+    event.Skip()
+</pre>
+</div>
+
+<p>
+While not strictly an event, the outer PELVis frame has a menu
+event that will call <code>saveImage</code> to put the 
+</p>
+</div>
+</li>
+
+<li>Data Handling<br  /><div class="outline-text-5" id="text-2-3-5-4">
+<p>
+The single most important part of the Image Panel is the <code>update</code>
+function, which gives the Image Panel the data to display.  It
+expects a 2d array of numbers, as well as a minimum and maximum
+value (i.e. <code>vmin</code> and <code>vmax</code>) for the range on the numbers.  The
+display is clamped to those values.
+</p>
+
+<p>
+Currently, each pixel is drawn as a solid block of constant
+color.  Changing the <code>interpolation</code> parameter of <code>imshow</code> from
+='none'= to ='bicubic'= will create a much smoother transition,
+but it will also be harder to identify the pixel boundaries.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-python" id="imagepanel_update"><span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">update</span>(<span style="color: #ffad29; font-weight: bold;">self</span>,data,vmin=10,vmax=20):
+    <span style="color: #e67128;">"""Change the dataset for the graph</span>
+
+<span style="color: #e67128;">    Keyword arguments:</span>
+<span style="color: #e67128;">    data -- 2D numpy array</span>
+<span style="color: #e67128;">    vmin -- floor value for graphing</span>
+<span style="color: #e67128;">    vmax -- ceiling value for graphing</span>
+
+<span style="color: #e67128;">    """</span>
+    <span style="color: #ffad29; font-weight: bold;">self</span>.data=data
+    <span style="color: #ffad29; font-weight: bold;">self</span>.figure.clear()
+    <span style="color: #ffad29; font-weight: bold;">self</span>.figure.add_axes((0,0,1,1),autoscale_on=<span style="color: #008b8b;">True</span>,frameon=<span style="color: #008b8b;">False</span>,yticks=[0,1],xticks=[0,1])
+    <span style="color: #ffad29; font-weight: bold;">self</span>.figure.get_axes()[-1].get_xaxis().set_visible(<span style="color: #008b8b;">False</span>)
+    <span style="color: #ffad29; font-weight: bold;">self</span>.figure.get_axes()[-1].get_yaxis().set_visible(<span style="color: #008b8b;">False</span>)
+    <span style="color: #ffad29; font-weight: bold;">self</span>.figure.get_axes()[-1].imshow(data,cmap=<span style="color: #ffad29; font-weight: bold;">self</span>.cmap,vmin=vmin,vmax=vmax,aspect=<span style="color: #e67128;">"auto"</span>,interpolation=<span style="color: #e67128;">'none'</span>)
+    <span style="color: #ffad29; font-weight: bold;">self</span>.figure.canvas.draw()
+    <span style="color: #ffad29; font-weight: bold;">self</span>.Refresh()
+</pre>
+</div>
+
+
+<p>
+The <code>saveImage</code> function takes the current display of the panel
+and saves it to a file.  As a quick walk through, we begin by
+creating an empty bitmap.  We then create a drawing context on
+top of this bitmap, which allows wxWidgets to treat the bitmap as
+though it were just more pixels on the screen.  We then tell the
+canvas to draw into this context, as opposed to on the screen.
+This buts the actual pixel information into the bitmap.  We then
+take this bitmap, which is hardware dependent on the computer,
+and turn it into a device independent Image.  This image is then
+saved to a file.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-python" id="imagepanel_saveImage"><span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">saveImage</span>(<span style="color: #ffad29; font-weight: bold;">self</span>,path):
+    <span style="color: #e67128;">"""Saves the graph to an image file"""</span>
+    <span style="color: #dbdb95;">bitmap</span> = wx.EmptyBitmap(512,512,24)
+    <span style="color: #dbdb95;">memdc</span> = wx.MemoryDC(bitmap)
+    <span style="color: #ffad29; font-weight: bold;">self</span>.figure.canvas.draw(memdc)
+    <span style="color: #dbdb95;">image</span> = wx.Bitmap.ConvertToImage(bitmap)
+    image.SaveFile(path,<span style="color: #ffad29; font-weight: bold;">self</span>.handlers[path[-3:].encode(<span style="color: #e67128;">'ascii'</span>)])
+</pre>
+</div>
+
+<p>
+As similar procedure is used to copy the image into the
+clipboard.  The only difference is that we create a
+<code>BitmapDataObject</code> instead of an <code>Image</code>, since that's that the
+clipboard expects.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-python" id="imagepanel_copytoclipboard"><span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">copyToClipboard</span>(<span style="color: #ffad29; font-weight: bold;">self</span>):
+    <span style="color: #e67128;">"""Copies the image of the graph to the system Clipboard."""</span>
+    <span style="color: #ffad29; font-weight: bold;">if</span> wx.TheClipboard.Open():
+        <span style="color: #dbdb95;">bitmap</span> = wx.EmptyBitmap(512,512,24)
+        <span style="color: #dbdb95;">memdc</span> = wx.MemoryDC(bitmap)
+        <span style="color: #ffad29; font-weight: bold;">self</span>.figure.canvas.draw(memdc)
+        wx.TheClipboard.Clear()
+        wx.TheClipboard.SetData(wx.BitmapDataObject(bitmap))
+        wx.TheClipboard.Close()
+</pre>
+</div>
+</div>
+</li></ol>
 </div>
 </div>
 </div>
@@ -2041,9 +2483,17 @@ and time.
         &lt;&lt;reader_pelfile_readfileimage&gt;&gt;
 
         &lt;&lt;reader_pelfile_make1d&gt;&gt;
+</pre>
+</div>
 
+<p>
+There's some old test code for running the reader by itself.  This
+code is old, out of date, and should be  removed.
+</p>
 
-<span style="color: #ffad29; font-weight: bold;">if</span> <span style="color: #23d7d7;">__name__</span>==<span style="color: #e67128;">"__main__"</span>:
+<div class="org-src-container">
+
+<pre class="src src-python"><span style="color: #ffad29; font-weight: bold;">if</span> <span style="color: #23d7d7;">__name__</span>==<span style="color: #e67128;">"__main__"</span>:
         data = PelFile()
 
         data.readfileimage(<span style="color: #e67128;">"C:/Documents and Settings/adlwashi/Desktop/20091102101415-AM12.pel"</span>)
@@ -2611,7 +3061,7 @@ straight into memory.
 </div>
 <div id="postamble" class="status">
 <p class="author">Author: Adam Washington</p>
-<p class="date">Created: 2014-04-07 Mon 15:08</p>
+<p class="date">Created: 2014-04-07 Mon 17:34</p>
 <p class="creator"><a href="http://www.gnu.org/software/emacs/">Emacs</a> 24.3.1 (<a href="http://orgmode.org">Org</a> mode 8.2)</p>
 <p class="validation"><a href="http://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>
