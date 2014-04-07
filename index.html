@@ -4,7 +4,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
 <title>PELVis: The PEL Visualizer</title>
-<!-- 2014-04-07 Mon 14:33 -->
+<!-- 2014-04-07 Mon 15:08 -->
 <meta  http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta  name="generator" content="Org-mode" />
 <meta  name="author" content="Adam Washington" />
@@ -2030,65 +2030,17 @@ and time.
 
         &lt;&lt;reader_pelfile_parseHeader&gt;&gt;
         &lt;&lt;reader_pelfile_convertTime&gt;&gt;
-        &lt;&lt;reader_pelvis_make3d&gt;&gt;
-
-        <span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">spectrum</span>(<span style="color: #ffad29; font-weight: bold;">self</span>,output):
-                <span style="color: #e67128;">"""Save the neutron spectrum to a text file"""</span>
-                <span style="color: #ffad29; font-weight: bold;">with</span> <span style="color: #23d7d7;">open</span>(output,<span style="color: #e67128;">'w'</span>) <span style="color: #ffad29; font-weight: bold;">as</span> of:
-                        <span style="color: #dbdb95;">timearr</span> = (<span style="color: #ffad29; font-weight: bold;">self</span>.data &gt;&gt; 32) &amp; 0x7FFFFFFF
-                        <span style="color: #dbdb95;">timearr</span> = <span style="color: #ffad29; font-weight: bold;">self</span>.convertTime(timearr)
-                        <span style="color: #dbdb95;">timearr</span> /= 10
-
-                        <span style="color: #74af68;">#</span><span style="color: #74af68;">Get the spectrum and wavelengths</span>
-                        (spec,lmbda) = np.histogram(timearr,bins = \
-                                                    np.arange(2.0,50.0,0.1))
-                        <span style="color: #dbdb95;">hist</span> = np.column_stack((lmbda[1:],spec))
-                        <span style="color: #ffad29; font-weight: bold;">for</span> point <span style="color: #ffad29; font-weight: bold;">in</span> hist:
-                                of.write(<span style="color: #e67128;">"%f %i\n"</span> % (point[0],point[1]))
-                        of.close()
-                        <span style="color: #ffad29; font-weight: bold;">return</span> (spec,lmbda)
+        &lt;&lt;reader_pelfile_make3d&gt;&gt;
+        &lt;&lt;reader_pelfile_spectrum&gt;&gt;
 
 
-        <span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">statusfunc</span>(<span style="color: #ffad29; font-weight: bold;">self</span>,x):
-                <span style="color: #e67128;">"""Status update function</span>
+        &lt;&lt;reader_pelfile_statusfunc&gt;&gt;
+        &lt;&lt;reader_pelfile_getgains&gt;&gt;
 
-<span style="color: #e67128;">                This function is called to tell other program components</span>
-<span style="color: #e67128;">                the progress in loading the PelFile.  The progress is given</span>
-<span style="color: #e67128;">                on a scale of 0 to 1000.  This function should be overwritten</span>
-<span style="color: #e67128;">                by whatever function is loading the pel file to do what it</span>
-<span style="color: #e67128;">                needs with the load time information.</span>
 
-<span style="color: #e67128;">                """</span>
-                <span style="color: #ffad29; font-weight: bold;">return</span>
+        &lt;&lt;reader_pelfile_readfileimage&gt;&gt;
 
-        <span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">getgains</span>(<span style="color: #ffad29; font-weight: bold;">self</span>,h):
-                <span style="color: #e67128;">"""Pulls the PMT gains information into a numpy array"""</span>
-                <span style="color: #ffad29; font-weight: bold;">return</span> np.array([h.x1Gain,h.x2Gain,h.x3Gain,h.x4Gain,h.x5Gain,h.x6Gain,h.x7Gain,h.x8Gain,h.x9Gain,h.x10Gain,
-                        h.y1Gain,h.y2Gain,h.y3Gain,h.y4Gain,h.y5Gain,h.y6Gain,h.y7Gain,h.y8Gain,h.y9Gain,h.y10Gain],np.double)
-
-        <span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">readfileimage</span>(<span style="color: #ffad29; font-weight: bold;">self</span>,path):
-                <span style="color: #e67128;">"""Reads a raw Pel File into memory."""</span>
-                <span style="color: #dbdb95;">start</span>=clock()
-                <span style="color: #dbdb95;">statusfunc</span> = <span style="color: #ffad29; font-weight: bold;">self</span>.statusfunc
-                <span style="color: #ffad29; font-weight: bold;">with</span> <span style="color: #23d7d7;">open</span>(path,<span style="color: #e67128;">"rb"</span>) <span style="color: #ffad29; font-weight: bold;">as</span> infile:
-                    <span style="color: #74af68;">#</span><span style="color: #74af68;">self.header = self.parseHeader(infile.read(256))</span>
-                    <span style="color: #74af68;">#</span><span style="color: #74af68;">Raw File has no header</span>
-                    <span style="color: #74af68;">#</span><span style="color: #74af68;">point = infile.read(8)</span>
-                    <span style="color: #ffad29; font-weight: bold;">self</span>.data = np.fromfile(infile,np.int32,-1)
-                infile.close()
-                <span style="color: #dbdb95;">stop</span>=clock()
-
-        <span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">make1d</span>(<span style="color: #ffad29; font-weight: bold;">self</span>,mins,maxs,mask=<span style="color: #008b8b;">None</span>):
-                <span style="color: #e67128;">"""Make a 1D histogram from the spectrum data."""</span>
-
-                <span style="color: #dbdb95;">c</span> = <span style="color: #ffad29; font-weight: bold;">self</span>.make3d()
-                <span style="color: #ffad29; font-weight: bold;">if</span> mask <span style="color: #ffad29; font-weight: bold;">is</span> <span style="color: #008b8b;">None</span>:
-                    <span style="color: #dbdb95;">xmin</span>,<span style="color: #dbdb95;">ymin</span> = mins
-                    <span style="color: #dbdb95;">xmax</span>,<span style="color: #dbdb95;">ymax</span> = maxs
-                    <span style="color: #dbdb95;">c</span> = c[ymin:ymax,xmin:xmax]
-                <span style="color: #ffad29; font-weight: bold;">else</span>:
-                    <span style="color: #dbdb95;">c</span>[np.logical_not(mask)] = 0
-                <span style="color: #ffad29; font-weight: bold;">return</span> np.<span style="color: #23d7d7;">sum</span>(np.<span style="color: #23d7d7;">sum</span>(c,axis=0,dtype=np.float64()),axis=0)
+        &lt;&lt;reader_pelfile_make1d&gt;&gt;
 
 
 <span style="color: #ffad29; font-weight: bold;">if</span> <span style="color: #23d7d7;">__name__</span>==<span style="color: #e67128;">"__main__"</span>:
@@ -2271,7 +2223,7 @@ return an empty array.
 
 <div class="org-src-container">
 
-<pre class="src src-python" id="reader_pelvis_make3d"><span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">make3d</span>(<span style="color: #ffad29; font-weight: bold;">self</span>):
+<pre class="src src-python" id="reader_pelfile_make3d"><span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">make3d</span>(<span style="color: #ffad29; font-weight: bold;">self</span>):
         <span style="color: #e67128;">"""Make a 3D histogram from the raw data."""</span>
         <span style="color: #dbdb95;">start</span>=clock()                
         <span style="color: #dbdb95;">statusfunc</span> = <span style="color: #ffad29; font-weight: bold;">self</span>.statusfunc
@@ -2296,7 +2248,7 @@ into a wavelength bin.
 
 <div class="org-src-container">
 
-<pre class="src src-python" id="reader_pelvis_make3d"><span style="color: #74af68;">#</span>
+<pre class="src src-python" id="reader_pelfile_make3d"><span style="color: #74af68;">#</span>
         <span style="color: #dbdb95;">Z</span> = <span style="color: #ffad29; font-weight: bold;">self</span>.data[1::2] &amp; 0xFFFF<span style="color: #74af68;">#</span><span style="color: #74af68;">position data</span>
 
         <span style="color: #dbdb95;">timearr</span> = <span style="color: #ffad29; font-weight: bold;">self</span>.convertTime(np.asarray(<span style="color: #ffad29; font-weight: bold;">self</span>.data[0::2], \
@@ -2313,7 +2265,7 @@ largely unnecessary now and could probably be removed.
 
 <div class="org-src-container">
 
-<pre class="src src-python" id="reader_pelvis_make3d"><span style="color: #74af68;">#</span>
+<pre class="src src-python" id="reader_pelfile_make3d"><span style="color: #74af68;">#</span>
         <span style="color: #74af68;">#</span><span style="color: #74af68;">Loop over 20 angstroms in steps of 0.1 angstroms</span>
         np.seterr(over=<span style="color: #e67128;">'raise'</span>)
 </pre>
@@ -2343,7 +2295,7 @@ into the appropriate wavelength bin in the <code>cube</code> array.
 
 <div class="org-src-container">
 
-<pre class="src src-python" id="reader_pelvis_make3d"><span style="color: #74af68;">#</span>
+<pre class="src src-python" id="reader_pelfile_make3d"><span style="color: #74af68;">#</span>
         <span style="color: #ffad29; font-weight: bold;">for</span> i <span style="color: #ffad29; font-weight: bold;">in</span> <span style="color: #23d7d7;">range</span>(RESOLUTION):
                 <span style="color: #dbdb95;">place</span> = np.where(timearr==i)
                 <span style="color: #ffad29; font-weight: bold;">if</span> <span style="color: #23d7d7;">len</span>(place[0]) &gt; 0:
@@ -2360,8 +2312,70 @@ into the appropriate wavelength bin in the <code>cube</code> array.
         <span style="color: #ffad29; font-weight: bold;">return</span> cube
 </pre>
 </div>
+
+<p>
+The <code>spectrum</code> member of the <code>PelFile</code> class allows the
+wavelength spectrum of the entire file to be export to a text
+file.  This code is old, unused, unmaintened, and poorly
+written.  It should be deleted soon.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-python" id="reader_pelfile_spectrum"><span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">spectrum</span>(<span style="color: #ffad29; font-weight: bold;">self</span>,output):
+        <span style="color: #e67128;">"""Save the neutron spectrum to a text file"""</span>
+        <span style="color: #ffad29; font-weight: bold;">with</span> <span style="color: #23d7d7;">open</span>(output,<span style="color: #e67128;">'w'</span>) <span style="color: #ffad29; font-weight: bold;">as</span> of:
+                <span style="color: #dbdb95;">timearr</span> = (<span style="color: #ffad29; font-weight: bold;">self</span>.data &gt;&gt; 32) &amp; 0x7FFFFFFF
+                <span style="color: #dbdb95;">timearr</span> = <span style="color: #ffad29; font-weight: bold;">self</span>.convertTime(timearr)
+                <span style="color: #dbdb95;">timearr</span> /= 10
+
+                <span style="color: #74af68;">#</span><span style="color: #74af68;">Get the spectrum and wavelengths</span>
+                (spec,lmbda) = np.histogram(timearr,bins = \
+                                            np.arange(2.0,50.0,0.1))
+                <span style="color: #dbdb95;">hist</span> = np.column_stack((lmbda[1:],spec))
+                <span style="color: #ffad29; font-weight: bold;">for</span> point <span style="color: #ffad29; font-weight: bold;">in</span> hist:
+                        of.write(<span style="color: #e67128;">"%f %i\n"</span> % (point[0],point[1]))
+                of.close()
+                <span style="color: #ffad29; font-weight: bold;">return</span> (spec,lmbda)
+</pre>
+</div>
+
+<p>
+Many of the command line applications want to have the wavelength
+spectrum without worrying about the position information.
+<code>make1d</code> is the obvious analog of <code>make3d</code>.  It takes as
+parameters two tuples of the minimum x and y values as well as
+the maximum x and y values.  It will also take an optional 2D
+array of booleans to indicate which pixels should be ignored.
+The function then returns an array of the total neutron counts
+per wavelength bin over the requested area of the detector.
+</p>
+
+<p>
+Note that this code creates the full 3D histogram, then flattens
+it down to a 1D array.  It'd be far more efficient to just create
+the single array.  If you're looking to speed up make3d, it might
+be a good idea to start with make1D and continue from there.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-python" id="reader_pelfile_make1d"><span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">make1d</span>(<span style="color: #ffad29; font-weight: bold;">self</span>,mins,maxs,mask=<span style="color: #008b8b;">None</span>):
+        <span style="color: #e67128;">"""Make a 1D histogram from the spectrum data."""</span>
+
+        <span style="color: #dbdb95;">c</span> = <span style="color: #ffad29; font-weight: bold;">self</span>.make3d()
+        <span style="color: #ffad29; font-weight: bold;">if</span> mask <span style="color: #ffad29; font-weight: bold;">is</span> <span style="color: #008b8b;">None</span>:
+            <span style="color: #dbdb95;">xmin</span>,<span style="color: #dbdb95;">ymin</span> = mins
+            <span style="color: #dbdb95;">xmax</span>,<span style="color: #dbdb95;">ymax</span> = maxs
+            <span style="color: #dbdb95;">c</span> = c[ymin:ymax,xmin:xmax]
+        <span style="color: #ffad29; font-weight: bold;">else</span>:
+            <span style="color: #dbdb95;">c</span>[np.logical_not(mask)] = 0
+        <span style="color: #ffad29; font-weight: bold;">return</span> np.<span style="color: #23d7d7;">sum</span>(np.<span style="color: #23d7d7;">sum</span>(c,axis=0,dtype=np.float64()),axis=0)
+</pre>
 </div>
 </div>
+</div>
+
 
 <div id="outline-container-sec-3-1-3" class="outline-4">
 <h4 id="sec-3-1-3"><span class="section-number-4">3.1.3</span> Initialization</h4>
@@ -2380,8 +2394,32 @@ want to do anything.
                 <span style="color: #ffad29; font-weight: bold;">self</span>.readfileimage(<span style="color: #23d7d7;">file</span>)
 </pre>
 </div>
+
+<p>
+The PelFile comes with a defautl status function that doesn't do
+anything.  This allows for PelFile to be manipulated without
+needing to hook them into a framework to process the update
+callbacks.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-python" id="reader_pelfile_statusfunc"><span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">statusfunc</span>(<span style="color: #ffad29; font-weight: bold;">self</span>,x):
+        <span style="color: #e67128;">"""Status update function</span>
+
+<span style="color: #e67128;">        This function is called to tell other program components</span>
+<span style="color: #e67128;">        the progress in loading the PelFile.  The progress is given</span>
+<span style="color: #e67128;">        on a scale of 0 to 1000.  This function should be overwritten</span>
+<span style="color: #e67128;">        by whatever function is loading the pel file to do what it</span>
+<span style="color: #e67128;">        needs with the load time information.</span>
+
+<span style="color: #e67128;">        """</span>
+        <span style="color: #ffad29; font-weight: bold;">return</span>
+</pre>
 </div>
 </div>
+</div>
+
 <div id="outline-container-sec-3-1-4" class="outline-4">
 <h4 id="sec-3-1-4"><span class="section-number-4">3.1.4</span> File Reading</h4>
 <div class="outline-text-4" id="text-3-1-4">
@@ -2528,6 +2566,44 @@ useful.  It should not be called and could probably be deleted.
         <span style="color: #ffad29; font-weight: bold;">return</span> header
 </pre>
 </div>
+
+<p>
+The <code>getgains</code> function returns the signal amplification on the
+photomultiplier tubes used to position detection on the PAPA
+detector.  This is useful for trying to set the gains on the PMTs
+automatically. If the data is coming from the Helium-3 detector, then
+this function is worthless.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-python" id="reader_pelfile_getgains"><span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">getgains</span>(<span style="color: #ffad29; font-weight: bold;">self</span>,h):
+        <span style="color: #e67128;">"""Pulls the PMT gains information into a numpy array"""</span>
+        <span style="color: #ffad29; font-weight: bold;">return</span> np.array([h.x1Gain,h.x2Gain,h.x3Gain,h.x4Gain,h.x5Gain,h.x6Gain,h.x7Gain,h.x8Gain,h.x9Gain,h.x10Gain,
+                h.y1Gain,h.y2Gain,h.y3Gain,h.y4Gain,h.y5Gain,h.y6Gain,h.y7Gain,h.y8Gain,h.y9Gain,h.y10Gain],np.double)
+</pre>
+</div>
+
+<p>
+The <code>readfileimage</code> member loads the raw events from the data file
+straight into memory.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-python" id="reader_pelfile_readfileimage"><span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">readfileimage</span>(<span style="color: #ffad29; font-weight: bold;">self</span>,path):
+        <span style="color: #e67128;">"""Reads a raw Pel File into memory."""</span>
+        <span style="color: #dbdb95;">start</span>=clock()
+        <span style="color: #dbdb95;">statusfunc</span> = <span style="color: #ffad29; font-weight: bold;">self</span>.statusfunc
+        <span style="color: #ffad29; font-weight: bold;">with</span> <span style="color: #23d7d7;">open</span>(path,<span style="color: #e67128;">"rb"</span>) <span style="color: #ffad29; font-weight: bold;">as</span> infile:
+            <span style="color: #74af68;">#</span><span style="color: #74af68;">self.header = self.parseHeader(infile.read(256))</span>
+            <span style="color: #74af68;">#</span><span style="color: #74af68;">Raw File has no header</span>
+            <span style="color: #74af68;">#</span><span style="color: #74af68;">point = infile.read(8)</span>
+            <span style="color: #ffad29; font-weight: bold;">self</span>.data = np.fromfile(infile,np.int32,-1)
+        infile.close()
+        <span style="color: #dbdb95;">stop</span>=clock()
+</pre>
+</div>
 </div>
 </div>
 </div>
@@ -2535,7 +2611,7 @@ useful.  It should not be called and could probably be deleted.
 </div>
 <div id="postamble" class="status">
 <p class="author">Author: Adam Washington</p>
-<p class="date">Created: 2014-04-07 Mon 14:33</p>
+<p class="date">Created: 2014-04-07 Mon 15:08</p>
 <p class="creator"><a href="http://www.gnu.org/software/emacs/">Emacs</a> 24.3.1 (<a href="http://orgmode.org">Org</a> mode 8.2)</p>
 <p class="validation"><a href="http://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>
