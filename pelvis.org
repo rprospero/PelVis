@@ -75,7 +75,7 @@
   from reader import PelFile
 #+end_src
 
-   [[ImagePanel]] is a custom widget for displaying 2D graph data in a
+   [[Image Panel][ImagePanel]] is a custom widget for displaying 2D graph data in a
    wxPython frame.
 
 #+name:pelvis_imports
@@ -1541,7 +1541,408 @@ Finally, we need to do the standard GUI layout code.
 #  LocalWords:  wxWidget
 
 
-*** GraphPanel
+*** Graph Panel
+
+    The =GraphPanel= module creates a single filled-line plot that can
+    be embedded in a wxWidgets frame.  It's used by PelVis to present
+    the detector image integrated along axis.
+
+**** Graph Panel Skeleton
+
+#+begin_src python :tangle GraphPanel.py :noweb tangle :padline no
+"""Classes for adding sumlines to frames
+
+This module contains a single class, GraphPanel, which plots two dimensional
+data filled along a chosen axis.  This class was originally designed for giving
+the summation of a matrix along a given axis, but there's not reason that it
+couldn't be expanded for other purposes.
+
+"""
+
+import numpy as np
+
+from matplotlib.backends.backend_wxagg import FigureCanvasWxAgg as FigureCanvas
+from matplotlib.backends.backend_wx import NavigationToolbar2Wx
+from matplotlib.figure import Figure
+#import matplotlib.cm as cm
+
+import wx
+
+# FIXME:  This function is extremely brittle
+def rebin(a,count):
+    """A quick function to rebin an array
+
+    This function takes an array and rebins it into a smaller array.
+    Note that, if the length of the array isn't divisible by the binning
+    factor, the end of the array will be truncated.  This is probably
+    not a sane default, but I don't have any better ideas.
+
+    Keyword arguments:
+    a -- The numpy array to be rebinned.
+    count -- The number of bins to be combined.  For instance, if the array
+             has a length of 100 and the count is 4, the return value
+             will have a length of 25
+
+    """
+
+    return np.array([a[i:i+count].mean() for i in range(0,len(a),count)])
+
+class GraphPanel(wx.Panel):
+    """This class creates a panel that displays a filled plot. """
+
+    
+    HORIZONTAL = 0 
+    INVERTED = 1
+    VERTICAL = 2
+    def __init__(self,parent,fig,res,orientation):
+        """Create a new panel for plotting.
+
+        Keyword Arguments:
+        parent -- the panel in which the new one is to be displayed
+        fig -- a tuple representing the relative dimensions of the panel
+        res -- the number of pixels per part of the fig tuple.
+        orientation -- the rotation of the image
+
+        fig and res combine to produce the total size, in pixels, of the
+        panel.  For instance, if fig=(2,8) and res=64, the final panel
+        has a size of (128,512)
+
+        The orientation can be one of HORIZONTAL, VERTICAL, or INVERTED,
+        as defined as constants in the class definition. Horitzontal uses
+        the standard x and y axes, and is best for putting above a 2d image.
+        VERTICAL swaps the x and y axes and is best for going to the right
+        of an image.  INVERTED plots with x and -y, and is best below the image.
+
+        """
+        wx.Panel.__init__(self,parent)
+        self.Bind(wx.EVT_PAINT,self.__OnPaint)
+        #The actual figure for plotting
+        self.figure = Figure(figsize=fig,dpi=res)
+        #The space where th figure is drawn
+        self.canvas = FigureCanvas(self,-1,self.figure)
+        #The rotation of the figure.
+        self.orientation=orientation
+
+    def SetPlot(self,x,y):
+        """Set the x and y coordinates of the data to be plotted."""
+        self.figure.clear()
+        self.axes = self.figure.add_subplot(111)
+        #We rebin the data in steps of four to smooth out the dead PMTs
+        #If all of the PMTs have been fixed, this step could be taken out.
+        if self.orientation==self.INVERTED:
+            self.axes.fill_between(x,y)
+            self.SetPos([0,0.1,1,0.9])
+            self.axes.set_xlim((0,np.max(x)))
+            #Reverse the order of the limits to get an inverted graph
+            self.axes.set_ylim((np.max(y),0))
+        elif self.orientation==self.HORIZONTAL:
+            self.axes.fill_between(x,y)
+            self.SetPos([0.1,0.1,0.9,0.9])
+            self.axes.set_xlim((0,np.max(x)))
+            self.axes.set_ylim((0,np.max(y)))
+        else:
+            #Notice that we now fill along the x axis
+            self.axes.fill_betweenx(x,-y)
+            self.SetPos([0.2,0,0.8,1])
+            self.axes.set_ylim((0,128))
+
+        self.axes.autoscale_view(True,True,True)
+        self.Refresh()
+
+#     def SetYLim(self,range):
+#         self.axes.set_ylim(range)
+
+#     def SetXLim(self,range):
+#         self.axes.set_xlim(range)
+
+
+    def SetPos(self,pos):
+        """Set the position of the graph within the panel.
+
+        This function take a four element array which marks the far
+        corners of the graph.  The coordinates are given as a fraction
+        of the size of the panel.  For instance, pos=[0,0.3333,1,0.6666]
+        would produce a graph that stretches across the panel in the x
+        direction, but only uses the middle third in the y direction.
+        You will probably need to play with these values in order to be 
+        able to view the values of the axes on the plot.
+
+        """
+        self.axes.set_position(pos)
+
+    def __OnPaint(self,event):
+        """An event handler to tell the canvas to draw
+        when the panel is redrawn."""
+        self.canvas.draw()
+        event.Skip()
+
+#+end_src
+
+
+*** Image Panel
+
+    The Image Panel is a custom widget for displaying a 2D array of
+    data.  It forms the largest part of the graphical representation
+    of the data in PELVis.
+
+**** Image Panel Skeleton
+
+#+begin_src python :tangle ImagePanel.py :noweb tangle :padline no
+"""This module contains classes which help in displaying 2D data
+
+This module currently contains one class: ImagePanel.  The imagePanel
+takes a 2D array and displays it as a color plot.
+
+"""
+
+import numpy as np
+
+from matplotlib.backends.backend_wxagg import FigureCanvasWxAgg as FigureCanvas
+from matplotlib.backends.backend_wx import NavigationToolbar2Wx
+from matplotlib.figure import Figure
+import matplotlib.cm as cm
+
+import wx
+
+
+if __name__ == "__main__":
+    print "Hello World";
+
+class ImagePanel(wx.Panel):
+    """This class displays 2D data as a color plot"""
+    <<imagepanel_init>>
+
+    <<imagepanel_events>>
+
+    <<imagepanel_update>>
+
+
+    <<imagepanel_saveImage>>
+
+    <<imagepanel_copytoclipboard>>
+
+#+end_src
+
+
+**** Initialization
+
+     The panel is constructed with a couple of arguments.  The first
+     is simply the parent frame where the image is to be displayed.
+     It then takes three callback functions.  The =posFunction=
+     callback is called every time the mouse is moved within the
+     panel.  The =setMin= function is called every time the user
+     performs a left click, which will set the upper left hand corner
+     of the region of interest.  Finally, the setMax function is
+     called every time the user performs a right click, which should
+     set the lower right corner of the region of interest.
+
+#+name:imagepanel_init
+#+begin_src python
+    def __init__(self,parent,posFunction=None,setMin=None,setMax=None):
+        """This creates an ImagePanel
+        
+        Keyword arguments:
+        parent -- The container which will hold the panel
+        posFunction -- function to be updated with mouse position
+        setMin -- function to be called on left click
+        setMax -- function to be called on right click
+
+        """
+        wx.Panel.__init__(self,parent)
+        self.Bind(wx.EVT_PAINT,self.__OnPaint)
+        self.posFunction = posFunction#Function to call on mouse movement
+        self.setMin = setMin#Function to call on right click
+        self.setMax = setMax#Function to call on left click
+#+end_src
+     
+     The =figure= member is the actual matplotlib graph that displays
+     the detector image.  We set it to 512 pixels by 512 pixels, as
+     its easier to read than a true 128 pixel by 16 pixel plot. The
+     =FigureCanvas= is then the wxWidget which lets us embed the graph
+     into the window.  It's provided by the backend_wxagg module from
+     matplotlib.
+
+     We bind the mouse events to three private member functions and
+     set the default spectrum to =spectral=.
+
+#+name:imagepanel_init
+#+begin_src python
+    #The figure which holds the graph
+        self.figure = Figure(figsize=(1,1),dpi=512)
+        #The object where the graph is drawn
+        self.canvas = FigureCanvas(self,-1,self.figure)
+        self.canvas.Bind(wx.EVT_MOTION,self.__OnMouseMove)
+        self.canvas.Bind(wx.EVT_LEFT_UP,self.__OnMouseLeft)
+        self.canvas.Bind(wx.EVT_RIGHT_UP,self.__OnMouseRight)
+        
+        self.cmap = cm.spectral#The color map for the graph
+#+end_src
+
+     Finally, the =handlers= member is a dictionary of all of the
+     image file formats that wxWidgets knows for file encoding.  If
+     wxWidgets adds a new image file format, this dict will need to be
+     updated manually, but it's unlikely that they'll add any news
+     formats any time soon.
+
+#+name:imagepanel_init
+#+begin_src python
+    #Known file formats for saving images
+        self.handlers={u"BMP":wx.BITMAP_TYPE_BMP,
+                        u"JPG":wx.BITMAP_TYPE_JPEG,
+                        u"PNG":wx.BITMAP_TYPE_PNG,
+                        u"PCX":wx.BITMAP_TYPE_PCX,
+                        u"PNM":wx.BITMAP_TYPE_PNM,
+                        u"TIF":wx.BITMAP_TYPE_TIF}
+#+end_src
+
+
+**** Event Handling
+
+     When an event occurs, it calls the bound callback function with a
+     single =Event= object.  This event contains the information that
+     the callback needs to perform its duties (e.g. a mouse click
+     event will have the mouse position).  We can either eat the
+     event, which is the default, or pass the event on by calling
+     =event.Skip=.  This allows the event to trigger multiple
+     callbacks.
+
+     There are four events that we need to be able to handle.  The
+     simplest one is when the graphics need to be updated.  We force
+     the FigureCanvas to draw itself, then pass the event on to any
+     other handlers.
+
+#+name:imagepanel_events
+#+begin_src python
+    def __OnPaint(self,event):
+        """Event handler to redraw graph when panel is redrawn."""
+        self.canvas.draw()
+        event.Skip()
+#+end_src
+
+     The =OnMouseMove= function is bound to events triggered by the
+     mouse moving through the Image Panel.  The current position on
+     the 512 by 512 panel is converted back into the actual pixels in
+     the neutron data.
+
+#+name:imagepanel_events
+#+begin_src python
+
+    def __OnMouseMove(self,event):
+        """Event handler when the mouse moves over the graph"""
+        (x,y) = event.GetPosition()
+        if self.posFunction is None: return
+        self.posFunction(x/32,y/4)
+#+end_src
+
+     =OnMouseLeft= is triggered by the user left clicking on the image
+     panel.  The position is then converted back to the raw detector
+     pixel and passed to the =setMin= function.  =OnMouseRight is
+     identical, except the raw position is passed to =setMax=.
+
+#+name:imagepanel_events
+#+begin_src python
+
+    def __OnMouseLeft(self,event):
+        """Event handler for left clicking on the graph."""
+        (x,y) = event.GetPosition()
+        if self.setMin is None: 
+            None
+        else:
+            self.setMin(x/32,y/4)
+        event.Skip()
+
+    def __OnMouseRight(self,event):
+        """Event handler for right clicking on the graph."""
+        (x,y) = event.GetPosition()
+        if self.setMax is None: 
+            None
+        else:
+            self.setMax(x/32,y/4)
+        event.Skip()
+#+end_src
+
+     While not strictly an event, the outer PELVis frame has a menu
+     event that will call =saveImage= to put the 
+
+
+**** Data Handling
+
+     The single most important part of the Image Panel is the =update=
+     function, which gives the Image Panel the data to display.  It
+     expects a 2d array of numbers, as well as a minimum and maximum
+     value (i.e. =vmin= and =vmax=) for the range on the numbers.  The
+     display is clamped to those values.
+
+     Currently, each pixel is drawn as a solid block of constant
+     color.  Changing the =interpolation= parameter of =imshow= from
+     ='none'= to ='bicubic'= will create a much smoother transition,
+     but it will also be harder to identify the pixel boundaries.
+
+#+name:imagepanel_update
+#+begin_src python
+    def update(self,data,vmin=10,vmax=20):
+        """Change the dataset for the graph
+
+        Keyword arguments:
+        data -- 2D numpy array
+        vmin -- floor value for graphing
+        vmax -- ceiling value for graphing
+
+        """
+        self.data=data
+        self.figure.clear()
+        self.figure.add_axes((0,0,1,1),autoscale_on=True,frameon=False,yticks=[0,1],xticks=[0,1])
+        self.figure.get_axes()[-1].get_xaxis().set_visible(False)
+        self.figure.get_axes()[-1].get_yaxis().set_visible(False)
+        self.figure.get_axes()[-1].imshow(data,cmap=self.cmap,vmin=vmin,vmax=vmax,aspect="auto",interpolation='none')
+        self.figure.canvas.draw()
+        self.Refresh()
+#+end_src
+
+
+     The =saveImage= function takes the current display of the panel
+     and saves it to a file.  As a quick walk through, we begin by
+     creating an empty bitmap.  We then create a drawing context on
+     top of this bitmap, which allows wxWidgets to treat the bitmap as
+     though it were just more pixels on the screen.  We then tell the
+     canvas to draw into this context, as opposed to on the screen.
+     This buts the actual pixel information into the bitmap.  We then
+     take this bitmap, which is hardware dependent on the computer,
+     and turn it into a device independent Image.  This image is then
+     saved to a file.
+
+#+name:imagepanel_saveImage
+#+begin_src python
+
+    def saveImage(self,path):
+        """Saves the graph to an image file"""
+        bitmap = wx.EmptyBitmap(512,512,24)
+        memdc = wx.MemoryDC(bitmap)
+        self.figure.canvas.draw(memdc)
+        image = wx.Bitmap.ConvertToImage(bitmap)
+        image.SaveFile(path,self.handlers[path[-3:].encode('ascii')])
+#+end_src
+
+     As similar procedure is used to copy the image into the
+     clipboard.  The only difference is that we create a
+     =BitmapDataObject= instead of an =Image=, since that's that the
+     clipboard expects.
+
+#+name:imagepanel_copytoclipboard
+#+begin_src python
+
+    def copyToClipboard(self):
+        """Copies the image of the graph to the system Clipboard."""
+        if wx.TheClipboard.Open():
+            bitmap = wx.EmptyBitmap(512,512,24)
+            memdc = wx.MemoryDC(bitmap)
+            self.figure.canvas.draw(memdc)
+            wx.TheClipboard.Clear()
+            wx.TheClipboard.SetData(wx.BitmapDataObject(bitmap))
+            wx.TheClipboard.Close()
+#+end_src
+
+
 * Utility Classes
 
   This section is for libraries which are used by more than one part
@@ -1597,7 +1998,12 @@ class PelFile:
         <<reader_pelfile_readfileimage>>
 
         <<reader_pelfile_make1d>>
-                
+#+end_src
+    
+    There's some old test code for running the reader by itself.  This
+    code is old, out of date, and should be  removed.
+    
+#+begin_src python :tangle reader.py :noweb tangle :padline no                
 
 if __name__=="__main__":
         data = PelFile()
