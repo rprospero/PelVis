@@ -56,11 +56,11 @@ class PelFile:
         data = np.ndarray(shape=(0),dtype=np.int64)#Raw detector data
 
         def __init__(self,file=""):
-		"""Create a PelFile"""
+                """Create a PelFile"""
                 if(file!=""):
                         self.readfileimage(file)
-#		self.time=None
-#		self.monitor=None
+#               self.time=None
+#               self.monitor=None
 
 #         def loadmon(self,file):
 #                 with open(file,"r") as infile:
@@ -75,7 +75,7 @@ class PelFile:
                 
 
         def parseHeader(self,bytes):
-		"""Turn the Pel file header into structured data"""
+                """Turn the Pel file header into structured data"""
                 Header = namedtuple(
                         'Header',
                         "pel endian FileMajVer FileMinVer BytesPerSample " +
@@ -207,7 +207,7 @@ class PelFile:
 
         #Remember to use in-place operations to save on memory overhead
         def convertTime(self,timearr):
-		"""Convert an array of TOF data into neutron wavelengths."""
+                """Convert an array of TOF data into neutron wavelengths."""
                 #convert timearr into microseconds
                 timearr *= 0.1 #Convert to microseconds
                 #convert timearr into wavelength
@@ -218,7 +218,7 @@ class PelFile:
                 return timearr
 
         def make3d(self):
-		"""Make a 3D histogram from the raw data."""
+                """Make a 3D histogram from the raw data."""
                 start=clock()                
                 statusfunc = self.statusfunc
                 l = len(self.data)
@@ -227,7 +227,7 @@ class PelFile:
 
                 cube = np.zeros([128,16,RESOLUTION],dtype=np.float32)
 
-		#If there's no data, return an empty array
+                #If there's no data, return an empty array
                 if l==0:
                         return cube
 
@@ -237,18 +237,18 @@ class PelFile:
                                                       dtype=np.float64))#time data
                 timearr = np.asarray(np.floor(timearr),np.uint16)
                 
-		#Loop over 20 angstroms in steps of 0.1 angstroms
-		np.seterr(over='raise')
+                #Loop over 20 angstroms in steps of 0.1 angstroms
+                np.seterr(over='raise')
 
-		for i in range(RESOLUTION):
-			place = np.where(timearr==i)
-			if len(place[0]) > 0:
-				temp,_ = np.histogram(Z[place],bins = \
+                for i in range(RESOLUTION):
+                        place = np.where(timearr==i)
+                        if len(place[0]) > 0:
+                                temp,_ = np.histogram(Z[place],bins = \
                                                       np.arange(8*256+1))
-				temp = temp.reshape(256,8,order="F")
-				cube[:,:,i] = mapim(temp)[::-1,:]
-			statusfunc(i*1000.0/RESOLUTION)
-				
+                                temp = temp.reshape(256,8,order="F")
+                                cube[:,:,i] = mapim(temp)[::-1,:]
+                        statusfunc(i*1000.0/RESOLUTION)
+                                
 
                 stop=clock()
                 del timearr
@@ -257,13 +257,13 @@ class PelFile:
 
         
         def spectrum(self,output):
-		"""Save the neutron spectrum to a text file"""
+                """Save the neutron spectrum to a text file"""
                 with open(output,'w') as of:
                         timearr = (self.data >> 32) & 0x7FFFFFFF
                         timearr = self.convertTime(timearr)
                         timearr /= 10
 
-			#Get the spectrum and wavelengths
+                        #Get the spectrum and wavelengths
                         (spec,lmbda) = np.histogram(timearr,bins = \
                                                     np.arange(2.0,50.0,0.1))
                         hist = np.column_stack((lmbda[1:],spec))
@@ -274,35 +274,35 @@ class PelFile:
                 
 
         def statusfunc(self,x):
-		"""Status update function
+                """Status update function
 
-		This function is called to tell other program components
-		the progress in loading the PelFile.  The progress is given
-		on a scale of 0 to 1000.  This function should be overwritten
-		by whatever function is loading the pel file to do what it
-		needs with the load time information.
+                This function is called to tell other program components
+                the progress in loading the PelFile.  The progress is given
+                on a scale of 0 to 1000.  This function should be overwritten
+                by whatever function is loading the pel file to do what it
+                needs with the load time information.
 
-		"""
+                """
                 return
 
         def getgains(self,h):
-		"""Pulls the PMT gains information into a numpy array"""
+                """Pulls the PMT gains information into a numpy array"""
                 return np.array([h.x1Gain,h.x2Gain,h.x3Gain,h.x4Gain,h.x5Gain,h.x6Gain,h.x7Gain,h.x8Gain,h.x9Gain,h.x10Gain,
                         h.y1Gain,h.y2Gain,h.y3Gain,h.y4Gain,h.y5Gain,h.y6Gain,h.y7Gain,h.y8Gain,h.y9Gain,h.y10Gain],np.double)
 
         def readfileimage(self,path):
-		"""Reads a raw Pel File into memory."""
+                """Reads a raw Pel File into memory."""
                 start=clock()
                 statusfunc = self.statusfunc
                 with open(path,"rb") as infile:
                     #self.header = self.parseHeader(infile.read(256))
-		    #Raw File has no header
+                    #Raw File has no header
                     #point = infile.read(8)
                     self.data = np.fromfile(infile,np.int32,-1)
                 infile.close()
                 stop=clock()
 
-	def make1d(self,mins,maxs,mask=None):
+        def make1d(self,mins,maxs,mask=None):
                 """Make a 1D histogram from the spectrum data."""
 
                 c = self.make3d()
@@ -312,8 +312,8 @@ class PelFile:
                     c = c[ymin:ymax,xmin:xmax]
                 else:
                     c[np.logical_not(mask)] = 0
-		return np.sum(np.sum(c,axis=0,dtype=np.float64()),axis=0)
-		
+                return np.sum(np.sum(c,axis=0,dtype=np.float64()),axis=0)
+                
 
 if __name__=="__main__":
         data = PelFile()
