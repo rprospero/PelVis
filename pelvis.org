@@ -1582,206 +1582,11 @@ class PelFile:
         """Handles the data stored in PEL files"""
         data = np.ndarray(shape=(0),dtype=np.int64)#Raw detector data
 
-        def __init__(self,file=""):
-                """Create a PelFile"""
-                if(file!=""):
-                        self.readfileimage(file)
-#               self.time=None
-#               self.monitor=None
+        <<reader_pelfile_init>>                
 
-#         def loadmon(self,file):
-#                 with open(file,"r") as infile:
-#                         infile.readline() #drop first line
-#                         line = infile.readline()
-#                         m = re.search("lasted (\d+) milliseconds",line)
-#                         if m:
-#                                 self.time = m.group(1)
-#                                 print(self.time)
-#                 self.mon = np.loadtxt(file,dtype=np.int32,skiprows=3)
-#                 print(self.mon)
-                
-
-        def parseHeader(self,bytes):
-                """Turn the Pel file header into structured data"""
-                Header = namedtuple(
-                        'Header',
-                        "pel endian FileMajVer FileMinVer BytesPerSample " +
-                        "SysHealth AppMajVer AppMinVer AppBetaVer LensPos " +
-                        "DetectorName ProductNumber BitsPerCoord CanEnergy " +
-                        "CanTime ADclockFrequ FirmMajVer FirmMinVer FirmBeta Serial " +
-                        "AcquisitionMode CanAcqMode Shutter " +
-                        "PAPAPowerSupplyVoltageCommand " +
-                        "PAPAPowerSupplyVoltageCommandGain " +
-                        "PAPAPowerSupplyVoltageCommandOffset " +
-                        "PAPAPowerSupplyControlVoltageCommandGain " +
-                        "PAPAPowerSupplyControlVoltageCommandOffset " +
-                        "PAPAPowerSupplyVoltageEnable " +
-                        "EnergyPowerSupplyVoltageCommand " +
-                        "EnergyPowerSupplyVoltageCommandGain " +
-                        "EnergyPowerSupplyVoltageCommandOffset " +
-                        "EnergyPowerSupplyControlVoltageCommandGain " +
-                        "EnergyPowerSupplyControlVoltageCommandOffset " +
-                        "EnergyPowerSupplyVoltageEnable " +
-                        "MCPPowerSupplyVoltageCommand " +
-                        "MCPPowerSupplyVoltageCommandGain " +
-                        "MCPPowerSupplyVoltageCommandOffset " +
-                        "MCPPowerSupplyControlVoltageCommandGain " +
-                        "MCPPowerSupplyControlVoltageCommandOffset " +
-                        "MCPPowerSupplyVoltageEnable " +
-                        "x1Gain x2Gain x3Gain x4Gain x5Gain x6Gain x7Gain x8Gain x9Gain x10Gain " +
-                        "y1Gain y2Gain y3Gain y4Gain y5Gain y6Gain y7Gain y8Gain y9Gain y10Gain " +
-                        "strobeGain EnergyGain ThresholdGain "+
-                        "ADVoltageOffset ADAOffset ADBOffset ADCOffset ADDOffset "+
-                        "StrobeTriggerMin StrobeTriggerMax StrobeEndEventFrac " +
-                        "EnergyTriggerMin EnergyTriggerMax EnergyEndEventFrac " +
-                        "ADAFillSampleIntervalLength ADDFillSampleIntervalLength " +
-                        "GateCapturePolarity TimerResetEdgePolarity " +
-                        "LeadTimer LagTimer Gray BitShift " +
-                        "TemperatureSetPoint1 TemperatureSetPoint2 " +
-                        "KP1 KP2 KI1 KI2 KD1 KD2 Temperature1 Temperature2 " +
-                        "StrobePulseWidth " +
-                        "Year Month Day Hour Minute Second")
-
-
-                format = "4s" #header
-                format += " ?" #endian  Note that this is currently ignored
-                (pelstring,endian) = struct.unpack(format,bytes[0:5])
-#                if pelstring != ".pel": raise Exception("Not a pel file")
-                if endian:
-                        format = ">" #big endian
-                else:
-                        format = "<" #little endian
-                format += "4s ?" #header and endian
-                format += "B" #Major version
-                format += "B" #Minor Version
-                format += "B" #Bytes per sample
-                format += "B" #System Health
-                format += "B" #Application Software Major Version
-                format += "B" #Application Software Minor Version
-                format += "B" #Application Software Beta Version
-                format += "H" #Lens focus position
-                format += " 40s " # Detector Name
-                format += "H" # Product Number
-                format += "B" # Bits per coordinate
-                format += "B" #Detector Energy Capability
-                format += "B" #Detector Timing Capability
-                format += "H" #AD Clock Frequency
-                format += "B" #Firmware Major Version
-                format += "B" #Firmware Minor Version
-                format += "B" #Firmware Beta Version
-                format += "H" #Serial Number
-                format += "B" #Acquisition Mode
-                format += "I" #Acquisition Mode Capability
-                format += "B" #Shutter State
-                format += "H" #PAPA PMT power supply voltage command
-                format += "H" #PAPA PMT power supply voltage gain
-                format += "H" #PAPA PMT power supply voltage command offset
-                format += "H" #PAPA PMT power supply control voltage command gain
-                format += "H" #PAPA PMT power supply control voltage command offsert
-                format += "B" #PAPA PMT power supply voltage enable
-
-                format += "H" #Energy PMT power supply voltage command
-                format += "H" #Energy PMT power supply voltage gain
-                format += "H" #Energy PMT power supply voltage command offset
-                format += "H" #Energy PMT power supply control voltage command gain
-                format += "H" #Energy PMT power supply control voltage command offsert
-                format += "B" #Energy PMT power supply voltage enable
-                format += "H" #Intensifier MCP power supply voltage command
-                format += "H" #Intensifier MCP power supply voltage gain
-                format += "H" #Intensifier MCP power supply voltage command offset
-                format += "H" #Intensifier MCP power supply control voltage command gain
-                format += "H" #Intensifier MCP power supply control voltage command offsert
-                format += "B" #Intensifier MCP power supply voltage enable
-                format += " 10H " #X Channel gains
-                format += " 10H " #Y Channel gains
-                format += "H" #Strobe PMT Channel Gain
-                format += "H" #Energy PMT Channel Gain
-                format += "H" #Threshold Channel Gain
-                format += "H" #AD Voltage Offset
-                format += "H" #AD Channel A Offset
-                format += "H" #AD Channel B Offset
-                format += "H" #AD Channel C Offset
-                format += "H" #AD Channel D Offset
-                format += "H" #PAPA Strobe Trigger min
-                format += "H" #PAPA Strobe Trigger max
-                format += "H" #PAPA Strobe end event fraction
-                format += "H" #Energy Trigger min
-                format += "H" #Energy Trigger max
-                format += "H" #Energy end event fraction
-                format += "B" #AD A filter sample interval length
-                format += "B" #AD D filter sample interval length
-                format += "B" #Gate Capture Polarity
-                format += "B" #Timer reset edge Polarity
-                format += "H" #Coincidence lead timer
-                format += "H" #Coincidence lag timer
-                format += "B" #Gray to binary conversion adder
-                format += "B" #Binary big shift
-                format += " 2H " #Zone temperature set point
-                format += " 2H " #Zone KP Gain
-                format += " 2H " #Zone KI Gain
-                format += " 2H " #Zone KD Gain
-                format += " 2H " #Zone temperature
-                format += "H" #strobe pulse width
-                format += "39x" #unused
-                format += "H" #Year
-                format += "H" #Month
-                format += "H" #Day
-                format += "H" #Hour
-                format += "H" #Minute
-                format += "H" #Second
-                header = Header._make(struct.unpack(format,bytes))
-                return header
-
-        #Remember to use in-place operations to save on memory overhead
-        def convertTime(self,timearr):
-                """Convert an array of TOF data into neutron wavelengths."""
-                #convert timearr into microseconds
-                timearr *= 0.1 #Convert to microseconds
-                #convert timearr into wavelength
-                distanceToG4 = 3.7338+2.5297
-                distanceToDetector = 3.835 #FIXME
-                timearr -= 860
-                timearr *= 3.956034e-7/(distanceToDetector+distanceToG4)/1e-10*1e-6*(RESOLUTION/20) #The last term is to handle fractional angstroms
-                return timearr
-
-        def make3d(self):
-                """Make a 3D histogram from the raw data."""
-                start=clock()                
-                statusfunc = self.statusfunc
-                l = len(self.data)
-                sd =self.data
-                i=0;
-
-                cube = np.zeros([128,16,RESOLUTION],dtype=np.float32)
-
-                #If there's no data, return an empty array
-                if l==0:
-                        return cube
-
-                Z = self.data[1::2] & 0xFFFF#position data
-
-                timearr = self.convertTime(np.asarray(self.data[0::2], \
-                                                      dtype=np.float64))#time data
-                timearr = np.asarray(np.floor(timearr),np.uint16)
-                
-                #Loop over 20 angstroms in steps of 0.1 angstroms
-                np.seterr(over='raise')
-
-                for i in range(RESOLUTION):
-                        place = np.where(timearr==i)
-                        if len(place[0]) > 0:
-                                temp,_ = np.histogram(Z[place],bins = \
-                                                      np.arange(8*256+1))
-                                temp = temp.reshape(256,8,order="F")
-                                cube[:,:,i] = mapim(temp)[::-1,:]
-                        statusfunc(i*1000.0/RESOLUTION)
-                                
-
-                stop=clock()
-                del timearr
-
-                return cube
-
+        <<reader_pelfile_parseHeader>>
+        <<reader_pelfile_convertTime>>
+        <<reader_pelvis_make3d>>
         
         def spectrum(self,output):
                 """Save the neutron spectrum to a text file"""
@@ -1858,7 +1663,51 @@ if __name__=="__main__":
 #+end_src
 
 
-**** Image Mapping
+*** Image Mapping
+
+    The TOF for each event is given as a count since the T_0 pulse,
+    where the each count is 100ns.  The convertTime function takes a
+    numpy array of counts and turns it into a wavelength into a
+    wavelength bin, where the bins are spaced by =20/RESOLUTION=.  For
+    instance, if RESOLUTION is 200 and the neutron has a 2 Angstrom
+    wavelength, then the bin is 20.
+
+    The relationship between TOF and wavelength is controlled almost
+    completely by the variables =distanceToG4= and
+    =distanceToDetector=.  This sum should be the distance, in meters,
+    from the neutron moderator to the Helium-3 detector.  The
+    =distanceToG4= variable is based on Jak doskow's drawings on how
+    far it should be from the neutron moderator to the exit of G4.
+    The actual distance to the detector can then be measured with a
+    tape measure.
+
+    According to Dave Baxter's measurements, there is an 860us delay
+    between the T0 signal and when the neutrons first start coming out
+    of the moderator.  This value is subtracted off of the times to
+    compensate.  This value should be checked occasionally to make
+    sure that it has not changed.  If you are seeing neutrons with
+    negative wavelengths, or if the proton pulse is not occuring at
+    zero angstroms, then this value needs to be changed.  The best way
+    of checking it is via the neutron monitor, as the proton flash is
+    quite visible in the output and the results are given in 50
+    microsecond bins.
+
+<<convertTime>>
+#+name:reader_pelfile_convertTime
+#+begin_src python
+        #Remember to use in-place operations to save on memory overhead
+        def convertTime(self,timearr):
+                """Convert an array of TOF data into neutron wavelengths."""
+                #convert timearr into microseconds
+                timearr *= 0.1 #Convert to microseconds
+                #convert timearr into wavelength
+                distanceToG4 = 3.7338+2.5297
+                distanceToDetector = 3.835 #FIXME
+                timearr -= 860
+                timearr *= 3.956034e-7/(distanceToDetector+distanceToG4)/1e-10*1e-6*(RESOLUTION/20) #The last term is to handle fractional angstroms
+                return timearr
+#+end_src
+
 
      The SNS software for the Helium-3 detector returns a set of
      events.  Each even has a channel number, the distance along the
@@ -1886,6 +1735,7 @@ if __name__=="__main__":
      detector.  This has been found by calibration, but it should be
      checked periodically (e.g. biennially) to ensure that it's still accurate.
 
+<<mapim>>
 #+name:reader_mapim
 #+begin_src python
 def mapim(imarray):
@@ -1922,3 +1772,268 @@ def mapim(imarray):
                     newimarray[j,i]=imarray[tj,ti/2-1]
     return newimarray
 #+end_src
+
+
+     The make3D function is the primary function for turning an array
+     of neutron events into a histogram of events versus position and
+     wavelength.
+
+     The data type is 64 bits per event.  The first 32 bits are the
+     TOF information, which can be turned into a wavelength by the
+     [[convertTime]] function.  The next 32 bits are the position
+     information.
+
+     We begin by setting some default variables.  The =statusfunc= is
+     a function that can be called with the current progress on
+     loading the file.  It expects a value between 0 and 1000, where 0
+     is having just started and 1000 means that the process is
+     complete.  The =cube= variable is the actual 3D array of neutron
+     events.  If there is no data in the file, we can immediately
+     return an empty array.
+     
+#+name:reader_pelvis_make3d
+#+begin_src python
+  def make3d(self):
+          """Make a 3D histogram from the raw data."""
+          start=clock()                
+          statusfunc = self.statusfunc
+          l = len(self.data)
+          sd =self.data
+          i=0;
+  
+          cube = np.zeros([128,16,RESOLUTION],dtype=np.float32)
+  
+          #If there's no data, return an empty array
+          if l==0:
+                  return cube
+#+end_src
+
+     The 64-bit events are broken down into the 32-bit array of
+     position information, =Z=, and the 32-bit array of the time
+     information, =timearr=.  The time information is then converted
+     into a wavelength bin.
+
+#+name:reader_pelvis_make3d
+#+begin_src python
+  #
+          Z = self.data[1::2] & 0xFFFF#position data
+  
+          timearr = self.convertTime(np.asarray(self.data[0::2], \
+                                                dtype=np.float64))#time data
+          timearr = np.asarray(np.floor(timearr),np.uint16)
+#+end_src
+
+     a lot of this code used to purely work with integers.  As such,
+     numpy was set to [[http://docs.scipy.org/doc/numpy/reference/generated/numpy.seterr.html][raise an exception on integer overflow]].  This is
+     largely unnecessary now and could probably be removed.
+
+#+name:reader_pelvis_make3d
+#+begin_src python          
+  #
+          #Loop over 20 angstroms in steps of 0.1 angstroms
+          np.seterr(over='raise')
+  #+end_src
+
+     It's possible to run the entire histogram calculation in a single
+     numpy call, which would actually be faster than the code below.
+     The problem is that the entire application would hang while the
+     calculation was performed, which leaves you wondering if
+     everything just crashed.  This slower version was implemented,
+     since it was easier to put in feedback as to how much time would
+     be left.
+
+     The function cycles through each time of flight bin.  The =place=
+     variable stores the indexes of events which fall into this time
+     of flight bin.  If there are any such events, then their position
+     information is histogrammed into a 1D array.  This array can then
+     be converted into a 2D array, since we know the number of
+     channels and the number of points per channel.  Finally, the
+     [[mapim]] function takes the point and channel numbers and returns a
+     2D array of position information.  Finally, this array is copied
+     into the appropriate wavelength bin in the =cube= array.
+
+#+name:reader_pelvis_make3d
+#+begin_src python
+  #
+          for i in range(RESOLUTION):
+                  place = np.where(timearr==i)
+                  if len(place[0]) > 0:
+                          temp,_ = np.histogram(Z[place],bins = \
+                                                np.arange(8*256+1))
+                          temp = temp.reshape(256,8,order="F")
+                          cube[:,:,i] = mapim(temp)[::-1,:]
+                  statusfunc(i*1000.0/RESOLUTION)
+                          
+  
+          stop=clock()
+          del timearr
+  
+          return cube
+  
+#+end_src
+
+
+*** Initialization
+
+    The constructor for the PelFile doesn't need to do much other than
+    load a file passed as a parameter.  If there is no file, we don't
+    want to do anything.
+    
+#+name: reader_pelfile_init
+#+begin_src python
+
+        def __init__(self,file=""):
+                """Create a PelFile"""
+                if(file!=""):
+                        self.readfileimage(file)
+
+#+end_src
+
+*** File Reading
+
+    The original PEL file format used by the PAPA detector included a
+    256 byte header with metadate about the detector status during the
+    run.  This function would parse that information into a Python
+    [[https://docs.python.org/2/library/collections.html][namedTuple]], which is fairly similar to a standard struct.  With
+    the new Helium-3 detector, this code is no longer necessary or
+    useful.  It should not be called and could probably be deleted.
+
+#+name:reader_pelfile_parseHeader
+#+begin_src python
+  
+  def parseHeader(self,bytes):
+          """Turn the Pel file header into structured data"""
+          Header = namedtuple(
+                  'Header',
+                  "pel endian FileMajVer FileMinVer BytesPerSample " +
+                  "SysHealth AppMajVer AppMinVer AppBetaVer LensPos " +
+                  "DetectorName ProductNumber BitsPerCoord CanEnergy " +
+                  "CanTime ADclockFrequ FirmMajVer FirmMinVer FirmBeta Serial " +
+                  "AcquisitionMode CanAcqMode Shutter " +
+                  "PAPAPowerSupplyVoltageCommand " +
+                  "PAPAPowerSupplyVoltageCommandGain " +
+                  "PAPAPowerSupplyVoltageCommandOffset " +
+                  "PAPAPowerSupplyControlVoltageCommandGain " +
+                  "PAPAPowerSupplyControlVoltageCommandOffset " +
+                  "PAPAPowerSupplyVoltageEnable " +
+                  "EnergyPowerSupplyVoltageCommand " +
+                  "EnergyPowerSupplyVoltageCommandGain " +
+                  "EnergyPowerSupplyVoltageCommandOffset " +
+                  "EnergyPowerSupplyControlVoltageCommandGain " +
+                  "EnergyPowerSupplyControlVoltageCommandOffset " +
+                  "EnergyPowerSupplyVoltageEnable " +
+                  "MCPPowerSupplyVoltageCommand " +
+                  "MCPPowerSupplyVoltageCommandGain " +
+                  "MCPPowerSupplyVoltageCommandOffset " +
+                  "MCPPowerSupplyControlVoltageCommandGain " +
+                  "MCPPowerSupplyControlVoltageCommandOffset " +
+                  "MCPPowerSupplyVoltageEnable " +
+                  "x1Gain x2Gain x3Gain x4Gain x5Gain x6Gain x7Gain x8Gain x9Gain x10Gain " +
+                  "y1Gain y2Gain y3Gain y4Gain y5Gain y6Gain y7Gain y8Gain y9Gain y10Gain " +
+                  "strobeGain EnergyGain ThresholdGain "+
+                  "ADVoltageOffset ADAOffset ADBOffset ADCOffset ADDOffset "+
+                  "StrobeTriggerMin StrobeTriggerMax StrobeEndEventFrac " +
+                  "EnergyTriggerMin EnergyTriggerMax EnergyEndEventFrac " +
+                  "ADAFillSampleIntervalLength ADDFillSampleIntervalLength " +
+                  "GateCapturePolarity TimerResetEdgePolarity " +
+                  "LeadTimer LagTimer Gray BitShift " +
+                  "TemperatureSetPoint1 TemperatureSetPoint2 " +
+                  "KP1 KP2 KI1 KI2 KD1 KD2 Temperature1 Temperature2 " +
+                  "StrobePulseWidth " +
+                  "Year Month Day Hour Minute Second")
+  
+  
+          format = "4s" #header
+          format += " ?" #endian  Note that this is currently ignored
+          (pelstring,endian) = struct.unpack(format,bytes[0:5])
+  
+          if endian:
+                  format = ">" #big endian
+          else:
+                  format = "<" #little endian
+          format += "4s ?" #header and endian
+          format += "B" #Major version
+          format += "B" #Minor Version
+          format += "B" #Bytes per sample
+          format += "B" #System Health
+          format += "B" #Application Software Major Version
+          format += "B" #Application Software Minor Version
+          format += "B" #Application Software Beta Version
+          format += "H" #Lens focus position
+          format += " 40s " # Detector Name
+          format += "H" # Product Number
+          format += "B" # Bits per coordinate
+          format += "B" #Detector Energy Capability
+          format += "B" #Detector Timing Capability
+          format += "H" #AD Clock Frequency
+          format += "B" #Firmware Major Version
+          format += "B" #Firmware Minor Version
+          format += "B" #Firmware Beta Version
+          format += "H" #Serial Number
+          format += "B" #Acquisition Mode
+          format += "I" #Acquisition Mode Capability
+          format += "B" #Shutter State
+          format += "H" #PAPA PMT power supply voltage command
+          format += "H" #PAPA PMT power supply voltage gain
+          format += "H" #PAPA PMT power supply voltage command offset
+          format += "H" #PAPA PMT power supply control voltage command gain
+          format += "H" #PAPA PMT power supply control voltage command offsert
+          format += "B" #PAPA PMT power supply voltage enable
+  
+          format += "H" #Energy PMT power supply voltage command
+          format += "H" #Energy PMT power supply voltage gain
+          format += "H" #Energy PMT power supply voltage command offset
+          format += "H" #Energy PMT power supply control voltage command gain
+          format += "H" #Energy PMT power supply control voltage command offsert
+          format += "B" #Energy PMT power supply voltage enable
+          format += "H" #Intensifier MCP power supply voltage command
+          format += "H" #Intensifier MCP power supply voltage gain
+          format += "H" #Intensifier MCP power supply voltage command offset
+          format += "H" #Intensifier MCP power supply control voltage command gain
+          format += "H" #Intensifier MCP power supply control voltage command offsert
+          format += "B" #Intensifier MCP power supply voltage enable
+          format += " 10H " #X Channel gains
+          format += " 10H " #Y Channel gains
+          format += "H" #Strobe PMT Channel Gain
+          format += "H" #Energy PMT Channel Gain
+          format += "H" #Threshold Channel Gain
+          format += "H" #AD Voltage Offset
+          format += "H" #AD Channel A Offset
+          format += "H" #AD Channel B Offset
+          format += "H" #AD Channel C Offset
+          format += "H" #AD Channel D Offset
+          format += "H" #PAPA Strobe Trigger min
+          format += "H" #PAPA Strobe Trigger max
+          format += "H" #PAPA Strobe end event fraction
+          format += "H" #Energy Trigger min
+          format += "H" #Energy Trigger max
+          format += "H" #Energy end event fraction
+          format += "B" #AD A filter sample interval length
+          format += "B" #AD D filter sample interval length
+          format += "B" #Gate Capture Polarity
+          format += "B" #Timer reset edge Polarity
+          format += "H" #Coincidence lead timer
+          format += "H" #Coincidence lag timer
+          format += "B" #Gray to binary conversion adder
+          format += "B" #Binary big shift
+          format += " 2H " #Zone temperature set point
+          format += " 2H " #Zone KP Gain
+          format += " 2H " #Zone KI Gain
+          format += " 2H " #Zone KD Gain
+          format += " 2H " #Zone temperature
+          format += "H" #strobe pulse width
+          format += "39x" #unused
+          format += "H" #Year
+          format += "H" #Month
+          format += "H" #Day
+          format += "H" #Hour
+          format += "H" #Minute
+          format += "H" #Second
+          header = Header._make(struct.unpack(format,bytes))
+          return header
+  
+#+end_src
+
+#+RESULTS: reader_pelfile_parseHeader
+: None
+
