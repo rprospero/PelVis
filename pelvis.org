@@ -1597,7 +1597,12 @@ class PelFile:
         <<reader_pelfile_readfileimage>>
 
         <<reader_pelfile_make1d>>
-                
+#+end_src
+    
+    There's some old test code for running the reader by itself.  This
+    code is old, out of date, and should be  removed.
+    
+#+begin_src python :tangle reader.py :noweb tangle :padline no                
 
 if __name__=="__main__":
         data = PelFile()
