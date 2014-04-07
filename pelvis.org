@@ -12,10 +12,10 @@
   If your primary goal is to simply use PELVis, then the
   [[file:readme.org][user documentation]] would be the best place to start.
 
-* Main application
+* PELVis application
 
-  The main application is the pelvis.py script that the user runs to
-  view neutron data.
+  The main user application is the pelvis.py script that the user runs
+  to view neutron data.
 
 ** Application skeleton
 
