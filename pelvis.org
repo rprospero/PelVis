@@ -1538,7 +1538,7 @@ Finally, we need to do the standard GUI layout code.
           self.options["yMax"].SetValue(str(y))
 #+end_src
 
-#  LocalWords:  wxWidget
+#  LocalWords:  wxWidget SNS
 
 
 ** Graph Panel
@@ -2897,3 +2897,215 @@ def mapim(imarray):
                 stop=clock()
 #+end_src
 
+** MonFile
+
+   The =MonFile= class is used to read the files produced by the SNS
+   beam monitor software.
+
+*** MonFile Skeleton
+
+    The monfile package mostly consists of the MonFile class.  There
+    are, however, a couple of notes which are non-intuitive.  First,
+    monfile imports graphframe, so it's not suited for use on a
+    headless system.  In practice, that's not a big deal, but you
+    should be aware of it.  Also, monfile is one of the oldest parts
+    of PELVis and has quite a bit of cruft.  For instance, it imports
+    pylab, but it never uses it.  (That's probably a good thing, as you
+    shouldn't use pylab.)  I'll try to comment on the cruft as I pass
+    through, but you should pay attention.
+
+#+begin_src python :tangle monfile.py :noweb tangle :padline no
+"""Classes for dealing with neutron monitor data
+
+This module contains a single class: MonFile.  This class is used to read
+the time, intensity, and spectrum information out of a file produced
+by the SNS's BMM_server
+
+"""
+
+import numpy as np
+import re
+import scipy.interpolate as ip
+import scipy.optimize as op
+import matplotlib.pyplot as pyplot
+from graphframe import GraphFrame
+import pylab as pl
+import math
+
+class MonFile:
+    """Manages a file which holds neutron monitor data."""
+    KbT = 2.0e-3
+    
+    <<monfile_init>>
+
+    <<monfile_converttime>>
+
+    def func(self, x, A, b, k, c):
+        return A*x**2 * np.exp(-(x-k)**2*b) + c
+
+    <<monfile_load>>
+#+end_src
+
+*** Initialization
+
+    The constructor has two, optional parameters.  The first is a file
+    name, which can cause that file to be loaded into memory.  The
+    second is a boolean which declares whether we want a graph of the
+    monitor spectrum to be displayed on the screen.
+
+    The constructor declares two members.  The first is =time=, which
+    is no longer used.  Under the old PAPA data collection system, the
+    monitor files were stored in ASCII format and included the run
+    time in microseconds.  This information could then be used for certain kinds
+    of background subtraction and normalization.  However, the monitor
+    files produces by the SNS software are binary arrays of floating
+    points and do not have the time information, so it is no longer
+    included.
+
+    The other member, =spec=, stores an array of the monitor counts
+    per TOF bin.  This array is the primary purpose of the class.
+
+#+name:monfile_init
+#+begin_src python
+    def __init__(self,file=None,plot=True):
+        """Creates a MonFile object"""
+        self.time = None #The amount of time that the monitor ran.
+        self.spec = None #The neutron spectrum detected on the monitor.
+        if file is not None:
+            self.load(file,plot)
+#+end_src
+
+
+*** File Loading
+
+    The SNS software saves an array of 50,000 32 bit integers
+    representing the counts in each time of flight bin.  Each bin
+    represents 1μs, so the 50,000 bins give 50ms, which corresponds to
+    our 20Hz pulse rate.
+
+    The main parts of the code are at the beginning of the class.
+    numpy loads the neutron spectrum from the SNS data file with the
+    =fromfile= function.  With the exception of the last line, every
+    other part of the function is dedicated to displaying the graph
+    and has no result on the actual data analysis.
+
+    The =x= variable is used to store the wavelenghts for the neutron
+    counts in =y=.
+#+name:monfile_load
+#+begin_src python
+    def load(self,file,plot=True):
+        """Load data from the file given in the path string."""
+        self.time = -1
+        base = 0.1
+        count = 0
+        uplim = 31
+        
+        y = np.fromfile(file,np.int32,-1)
+        x = np.arange(0,50001,1,dtype=np.float32)
+        x = self.convertTime(x)
+#+end_src
+
+    The =xs= and =ys= arrays are made to rebin the data from x and y.
+    The code cycles through each data point and adds the data from =y=
+    into the corresponding bin in =ys=.  The =base= variable is used
+    to keep track of the current position in ys.
+
+    Note that this binning algorithm is incredibly slow and should
+    probably be replaced.
+
+#+name:monfile_load
+#+begin_src python
+    #
+        #f = ip.interp1d(x,y)
+        #p0 = [10., 0.0001, 10000., 2.]
+        #p1, cov = op.curve_fit(self.func, x, y, p0)
+        #print(p1)
+        #p1f = self.func(x, *p1) #Fit of neutron monitor
+        #xs = range(200)
+        #xs = np.arange(0,35,0.1)
+        #ys = np.zeros(350,dtype=np.uint32)
+
+        xs = np.arange(0,uplim,base)
+        ys = np.zeros(uplim/base,dtype=np.uint32)
+
+        for (i,j) in zip(x,y):
+            if i > base:
+                ys[int(10*base-1)]=count
+                base += 0.1
+                count = 0
+            count += j
+        base = 0.1
+        count = 0
+        uplim = 31
+#+end_src
+
+    ymean is supposed to find the background level by looking at the
+    count rate of the neutron between 25 Å and 30 Å, but it only seems
+    to be used in =ynew=, which is never used again.  In practice, the
+    noise on the neutron monitor is low enough that this really
+    shouldn't be necessary.
+
+#+name:monfile_load
+#+begin_src python            
+    #
+        ymean = np.mean(ys[250:300])
+        ynew = np.array([float(yo)-ymean*(uplim/base)/50001 for yo in y])
+#+end_src
+
+    The results are rebinned again for reasons that I honestly cannot
+    fathom at this point.
+
+#+name:monfile_load
+#+begin_src python        
+    #
+        ysnew = np.zeros(uplim/base,dtype=np.float32)
+        for (i,j) in zip(x,ynew):
+            if i > base:
+                ysnew[int(10*base-1)]=count
+                base += 0.1
+                count = 0
+            count += j
+#+end_src
+
+    Finally, the results are plotted.
+
+#+name:monfile_load
+#+begin_src python
+    #
+        if plot:
+            graph = GraphFrame(None,"Monitor")
+            graph2 = GraphFrame(None,"Monitor Adjusted")
+        #        graph.plot(np.arange(0.0,20.0,0.1),f(xs))
+        #    graph.plot(xs,ys)
+            graph2.plot(xs,ysnew)          
+#+end_src
+
+    The final, but most important step, is to store the monitor
+    spectrum in the class.  The =expand_dims= function is used to turn
+    a 1D array with fifty thousand elements into a 3d arry with
+    dimensions (1,1,50000).  The reasoning is that the time
+    information is now stored on the same array axis by both the
+    monitor file and the detector reader.
+
+#+name:monfile_load
+#+begin_src python
+    #
+        self.spec = np.expand_dims(np.expand_dims(y,axis=0),axis=0)
+
+#+end_src
+
+    The convert time function takes an array of μs and returns their
+    corresponding wavelengths in Angstroms.  Most of this has already
+    been covered in the [[convertTime][similar function]] for the neutron data
+
+#+name:monfile_converttime
+#+begin_src python
+    def convertTime(self,t):
+        """Converts a numpy array of time bins into neutron wavelengths"""
+        distanceToG4 = 3.7338+2.5297
+        #The distance between the end of G4 and the Helium 3 monitor.
+        distanceToMonitor = 0.02 #FIXME
+        t -= 860
+        t *= 3.956034e-7/(distanceToMonitor+distanceToG4)/1e-10*1e-6
+        return t
+#+end_src
