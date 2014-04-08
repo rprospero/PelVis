@@ -179,15 +179,15 @@
 #+end_src
 
 
-** GUI Controls
+* GUI Controls
 
-   We're using [[https://www.wxwidgets.org/][wxWidgets]] as our GUI toolkit through the [[http://www.wxpython.org][wxPython]]
-   binding library.  wxWidgets was chosen as it is cross platform and
-   provided a more complete toolkit than the default Tk toolkit that
-   comes with Python.  The largest disadvantage to this decision is
-   that wxPython has not yet been officially ported to Python 3.
+  We're using [[https://www.wxwidgets.org/][wxWidgets]] as our GUI toolkit through the [[http://www.wxpython.org][wxPython]]
+  binding library.  wxWidgets was chosen as it is cross platform and
+  provided a more complete toolkit than the default Tk toolkit that
+  comes with Python.  The largest disadvantage to this decision is
+  that wxPython has not yet been officially ported to Python 3.
 
-*** Pelvis Frame
+** Pelvis Frame
 
     The Pelvis Frame is the main UI for the application.
     Unfortunately, it also contains a large amount of application
@@ -278,7 +278,7 @@
   
 #+end_src
 
-**** Initialization
+*** Initialization
 
      The frame is created with a single parameter: =Yield=.  This points
      to a function which allows Pelvis to temporarily return control
@@ -496,7 +496,7 @@
      
 
 
-**** Handling Pel Files
+*** Handling Pel Files
 
      There's a large amount of references to Pel files in this
      section, which might be confusing, since you will almost never
@@ -623,7 +623,7 @@
 
 
 
-**** Menu Commands
+*** Menu Commands
 
      The Image Array command causes Pelvis to export the detector
      image, one wavelength bin at a time.  It can be useful to find
@@ -1062,7 +1062,7 @@
 
      
 
-**** Updaters
+*** Updaters
 
      There are two updates which need to be performed.  The first is
      updating the data, which involves taking the 3D arrays of neutron
@@ -1175,14 +1175,14 @@
 #+end_src
 
 
-*** Position Panel
+** Position Panel
 
-    This is a class to provide a small panel which provides
-    information about single pixels of detector data via the cursor
-    position.  It also provides aggregate information over the region
-    of interest.
+   This is a class to provide a small panel which provides
+   information about single pixels of detector data via the cursor
+   position.  It also provides aggregate information over the region
+   of interest.
 
-**** Position Panel Class Skeleton
+*** Position Panel Class Skeleton
 
 #+Name:position_panel
 #+begin_src python :noweb tangle
@@ -1202,7 +1202,7 @@
       <<position_panel_updating>>
 #+end_src
 
-**** Initialization of the PositionPanel
+*** Initialization of the PositionPanel
 
      Creating a new PositionPanel requires only a single parameter:
      the parent frame which will hold the panel.  The constructor
@@ -1270,7 +1270,7 @@ Finally, we need to do the standard GUI layout code.
           self.Layout()
 #+end_src
 
-**** Update position data
+*** Update position data
 
      As implied by the name, the primary function of the position
      panel is to provide the direct numbers for the value under the
@@ -1321,7 +1321,7 @@ Finally, we need to do the standard GUI layout code.
 #+end_src
 
 
-*** Option Panel
+** Option Panel
 
     The class PelvisOptionPanel creates a panel of labeled text boxes
     for user entry.  This is used to control values such as the
@@ -1388,7 +1388,7 @@ Finally, we need to do the standard GUI layout code.
   
 #+end_src
 
-**** Initialization
+*** Initialization
 
      We begin by initializing the superclass and creating a sizer for
      the panel
@@ -1424,7 +1424,7 @@ Finally, we need to do the standard GUI layout code.
           self.Layout()
 #+end_src
 
-**** Wavelength Range
+*** Wavelength Range
 
      When a set of parameters is added, it's useful to put in a
      standard getter and setter.  The setters are fairly standard, but
@@ -1458,7 +1458,7 @@ Finally, we need to do the standard GUI layout code.
           self.options["lambdaMax"].SetValue(str(max))
 #+end_src
 
-**** Intensity Range
+*** Intensity Range
 
      We create similar getters and setters for the minimum and maximum
      intensity.  The values create bounds for both the 2D color plot
@@ -1491,7 +1491,7 @@ Finally, we need to do the standard GUI layout code.
 
 #+end_src
 
-**** Region of Interest
+*** Region of Interest
 
      Finally, we need getters and setters for our region of interest.
      The getter works pretty much the same as the others, but the
@@ -1541,13 +1541,13 @@ Finally, we need to do the standard GUI layout code.
 #  LocalWords:  wxWidget
 
 
-*** Graph Panel
+** Graph Panel
 
-    The =GraphPanel= module creates a single filled-line plot that can
-    be embedded in a wxWidgets frame.  It's used by PelVis to present
-    the detector image integrated along axis.
+   The =GraphPanel= module creates a single filled-line plot that can
+   be embedded in a wxWidgets frame.  It's used by PelVis to present
+   the detector image integrated along axis.
 
-**** Graph Panel Skeleton
+*** Graph Panel Skeleton
 
 #+begin_src python :tangle GraphPanel.py :noweb tangle :padline no
 """Classes for adding sumlines to frames
@@ -1593,7 +1593,7 @@ class GraphPanel(wx.Panel):
 #+end_src
 
 
-**** rebin function
+*** rebin function
 
 The rebin function takes an numpy array and an integer of how many
 bins to combine.  The result is a new numpy array where each group of
@@ -1626,7 +1626,7 @@ def rebin(a,count):
     return np.array([a[i:i+count].mean() for i in range(0,len(a),count)])
 #+end_src
 
-**** Initialization
+*** Initialization
 
      A =GraphPanel= object needs four parameters.  The first is the
      =parent=, which holds the container in which the panel will be
@@ -1679,7 +1679,7 @@ def rebin(a,count):
 
 
 
-**** Plotting
+*** Plotting
 
      The =SetPlot= function gives the panel its data for plotting.
      The first variable is an array of the x-coordinate and the second
@@ -1753,13 +1753,13 @@ def rebin(a,count):
 
 
 
-*** Image Panel
+** Image Panel
 
-    The Image Panel is a custom widget for displaying a 2D array of
-    data.  It forms the largest part of the graphical representation
-    of the data in PELVis.
+   The Image Panel is a custom widget for displaying a 2D array of
+   data.  It forms the largest part of the graphical representation
+   of the data in PELVis.
 
-**** Image Panel Skeleton
+*** Image Panel Skeleton
 
 #+begin_src python :tangle ImagePanel.py :noweb tangle :padline no
 """This module contains classes which help in displaying 2D data
@@ -1798,7 +1798,7 @@ class ImagePanel(wx.Panel):
 #+end_src
 
 
-**** Initialization
+*** Initialization
 
      The panel is constructed with a couple of arguments.  The first
      is simply the parent frame where the image is to be displayed.
@@ -1870,7 +1870,7 @@ class ImagePanel(wx.Panel):
 #+end_src
 
 
-**** Event Handling
+*** Event Handling
 
      When an event occurs, it calls the bound callback function with a
      single =Event= object.  This event contains the information that
@@ -1939,7 +1939,7 @@ class ImagePanel(wx.Panel):
      event that will call =saveImage= to put the 
 
 
-**** Data Handling
+*** Data Handling
 
      The single most important part of the Image Panel is the =update=
      function, which gives the Image Panel the data to display.  It
@@ -2014,6 +2014,330 @@ class ImagePanel(wx.Panel):
             wx.TheClipboard.Clear()
             wx.TheClipboard.SetData(wx.BitmapDataObject(bitmap))
             wx.TheClipboard.Close()
+#+end_src
+
+
+** Color Bar Panel
+
+   
+*** Color Bar Skeleton
+
+    The skeleton for the color bar panel also handles the [[Action Color
+    Bar]] and the [[Color Bar Picker]].  All three are used for displaying
+    and chosing a maping between an intensity and a color for display
+    of the 2D detector data.
+
+#+begin_src python :tangle colorbarpanel.py :noweb tangle :padline no
+"""Classes for handling color spectra
+
+This module implements a series of classes for handling the different color
+spectra produced by matplot lib.  The basic class is ColorBarPanel, which
+simply displays a given color map.  ActionColorbar subclasses ColorBarPanel
+to add simple click response abilities.  Finally, ColorBarPicker gives the
+user the ability to select any of the color maps that matplotlib is aware of.
+Note that ColorBarPicker takes time to render when it first loads, so care
+should be taken not to create one unless it's necessary and then to keep
+that same on for as long as possible.
+
+"""
+
+from matplotlib.backends.backend_wxagg import FigureCanvasWxAgg as FigureCanvas
+from matplotlib.backends.backend_wx import NavigationToolbar2Wx
+from matplotlib.figure import Figure
+from matplotlib.colorbar import ColorbarBase
+from matplotlib.colors import Normalize
+import matplotlib.cm as cm
+
+import wx
+
+class ColorBarPanel(wx.Panel):
+    """Panel to display a ColorBar in a wxWidgets container."""
+    <<colorbarpanel_init>>    
+    <<colorbarpanel_setrange>>
+    <<colorbarpanel_setcmap>>
+    <<colorbarpanel_update>>
+        
+    <<colorbarpanel_onpaint>>
+
+<<actioncolorbar>>
+
+<<colormappicker>>
+
+
+
+if __name__ == '__main__':
+    def printcmap(cmap):
+        print(cmap)
+
+    app=wx.PySimpleApp()
+    frame = ColorMapPicker(None,printcmap)
+    frame.Show()
+    app.MainLoop()
+
+#+end_src
+
+*** Initialization
+
+    The color bar panel takes several parameters
+
+    - parent :: The container for the panel
+    - cmap :: A starting color bar for the panel
+    - fig :: A tuple containing the dimensions of the panel in
+             arbitrary units.  For example, the value of (2,3) would
+             make the panel two units tall by three units wide.  The
+             default value is (1,10), which fits in with the layout of
+             the PELVis frame.
+    - res :: The number of pixels per unit in fig.
+    - orientation :: The direction along which the color bar's
+                     spectrum is encoded.  If the value is the string
+                     'vertical', the rainbow will progress from top
+                     to bottom.  To have the rainbow move from left to
+                     right, set the value to 'horizontal'.
+    - size :: By default, matplotlib includes a scale on the color bar
+              panel.  This is useful along the axis of the rainbow,
+              but rather obviously useless in the other direction.
+              The size command picks a subset of the colorbar to
+              eliminate the extra axis.
+
+    As with other panels, the general framework is a matplotlib
+    =Figure= and a wxAgg =FigureCanvas= to provide the actual graphing
+    components. 
+
+#+name:colorbarpanel_init
+#+begin_src python
+    def __init__(self,parent,cmap,fig=(1,10),
+                 res=64,orientation='vertical',
+                 size=[0.05,0.025,.25,0.95]):
+        """Creates a ColorBarPanel.
+
+        Keyword arguments:
+        parent -- container which holds the panel.
+        cmap -- the color map to display in the color bar.
+                This should be a matplotlib cmap object
+        fig -- the relative width to height of the color bar
+        res -- the number of pixels per unit in fig
+        orientation -- the rotation of the color bar
+        size -- the position of the color bar in the panel
+
+        res and size combine to produce the actual size of the
+        panel in pixels.  For instance, with fig=(1,10) and res=64,
+        the panel will be 64 pixels wide and 640 pixels tall.
+
+        size is a four element array which marks the far
+        corners of the graph.  The coordinates are given as a fraction
+        of the size of the panel.  For instance, pos=[0,0.3333,1,0.6666]
+        would produce a graph that stretches across the panel in the x
+        direction, but only uses the middle third in the y direction.
+        The default value should allow the axes to be seen.
+
+        """
+
+        wx.Panel.__init__(self,parent)
+        self.Bind(wx.EVT_PAINT,self.__OnPaint)
+
+        self.figure = Figure(figsize=fig,dpi=res)#the actual plot
+        #the object to display the plot
+        self.canvas = FigureCanvas(self,-1,self.figure)
+        #the direction of the color bar
+        self.orientation=orientation
+        #the color map to use
+        self.cmap=cmap
+        self.vmin=0 #The minimum value on the color bar
+        self.vmax=18 #The maximum value on the color bar
+        self.size=size #The position of the color bar in the frame
+        self.update()
+
+#+end_src
+
+*** Display
+
+    The =update= function replots thecolor bar.  This is necessary
+    after any of the parameters have changed.
+
+#+name:colorbarpanel_update
+#+begin_src python
+    def update(self):
+        """Reacts to any changes in the objects members."""
+        axes = self.figure.add_axes(self.size)
+        norm = Normalize(vmin=self.vmin,vmax=self.vmax)
+        colorbar = ColorbarBase(axes,cmap=self.cmap,norm=norm,
+                                orientation=self.orientation)
+        self.Refresh()
+#+end_src
+
+    As with any graphical widget, we need to intercept the OnPaint
+    event to ensure that the graph is drawn onto the panel.
+
+#+name:colorbarpanel_onpaint
+#+begin_src python
+    def __OnPaint(self,event):
+        """An event handler to update the graph when the panel is redrawn."""
+        self.canvas.draw()
+        event.Skip()
+#+end_src
+
+
+*** Configuration
+
+    The =setRange= function choses the domain over which the colarbar
+    will map values into colors.
+
+#+name:colorbarpanel_setrange
+#+begin_src python
+    def setRange(self,vmin,vmax):
+        """Set the range for the axes on the colorbar."""
+        self.vmin=vmin
+        self.vmax=vmax
+
+#+end_src
+
+    The =setCmap= function sets the color map for the panel.
+
+#+name:colorbarpanel_setcmap
+#+begin_src python
+    def setCmap(self,cmap):
+        """Pick the colormap to display."""
+        self.cmap = cmap
+#+end_src
+
+
+
+** Action Color Bar
+
+   The Action Color Bar is a color bar that also functions as a
+   button.  The class itself lives in the [[Color Bar Skeleton][colorbar]] module.  It's
+   primary purpose is to provide a clickable colorbar for the [[Color Bar Picker][picker]].
+
+#+name:actioncolorbar
+#+begin_src python
+class ActionColorbar(ColorBarPanel):
+    """A simplistic colorbar button
+
+    This class displays a colormap and returns the name of its colormap
+    to a given function when clicked on by the user.
+
+    """
+#+end_src
+
+   The initialization is much simpler than for the [[Color Bar Panel][Color Bar Panel]].
+   - parent :: The container to hold the action color bar
+   - cmap :: The actual color map for the color bar
+   - command :: The function to be called when the color bar is clicked
+
+#+name:actioncolorbar
+#+begin_src python
+#
+    def __init__(self,parent,cmap,command):
+        """Creates an ActionColorbar
+
+        Keyword arguments:
+        parent -- the container to hold the panel.
+        cmap -- a string naming a colormap.
+        command -- the function to run when the colormap is clicked.
+
+        """
+        #title attribute is needed by update, which is called by init
+        self.title=cmap#The title of the colormap
+        ColorBarPanel.__init__(self,parent,cm.get_cmap(cmap),fig=(5,1),orientation='horizontal',size=[0,0,1,0.6])
+        self.comm = command#The command to run on clicks
+        self.canvas.Bind(wx.EVT_LEFT_UP,self.__OnClick)
+#+end_src
+
+   The =update= function is identical to that of the regular Color Bar
+   Panel, except that a title has been added to the figure so that
+   it's possible to know the name of the color map being clicked.
+
+#+name:actioncolorbar
+#+begin_src python
+#
+    def update(self):
+        """Reacts to any changes in the objects members."""
+        axes = self.figure.add_axes(self.size,title=self.title)
+        norm = Normalize(vmin=self.vmin,vmax=self.vmax)
+        colorbar = ColorbarBase(axes,cmap=self.cmap,norm=norm,
+                                orientation=self.orientation)
+        self.Refresh()
+#+end_src
+
+   =__OnClick= is the event handler for when the user left clicks on
+   the action bar.  It calls the command using the current color map
+   as its only argument.
+
+#+name:actioncolorbar
+#+begin_src python
+#
+    def __OnClick(self,event):
+        """Event handler to call self.comm when the panel is clicked."""
+        self.comm(self.cmap)
+        event.Skip()
+#+end_src
+
+
+** Color Map Picker
+
+   The color map picker is a dialog box which presents all of the
+   color maps know to matplotlib and allows the user to chose one by
+   clicking on it.
+
+   Since it generates so many graphs (one for each color map), it can
+   take quite a while to load.  It's usually only generated the first
+   time that the user calls for it and is not regenerated as long as
+   the program runs.
+
+#+name:colormappicker
+#+begin_src python
+class ColorMapPicker(wx.Frame):
+    """A window for selecting a color map"""
+#+end_src 
+
+   The initialization takes only two parameters.  The first is a
+   parent window that the dialog will be attached to.  If the parent
+   is =None=, the picker will be the main application window.  The
+   second parameter expects a function that takes one string
+   argument.  Whenever the user clicks on a color map, this function
+   is called on the name of the color map.
+
+   The =cm.datad.keys= function returns a list of all of the color
+   maps known to matplotlib.
+
+#+name:colormappicker
+#+begin_src python
+#
+    def __init__(self,parent,command):
+        """Creates a ColorMapPicker
+
+        Keyword arguments:
+        parent -- parent of this frame or None
+        command -- function to be called on the chosen colormap name
+
+        """
+        wx.Frame.__init__(self,parent,wx.ID_ANY,"Maps",size=(345,355))
+        scroll = wx.ScrolledWindow(self,-1)
+        sizer = wx.BoxSizer(wx.VERTICAL)
+        keys = cm.datad.keys()
+        #Iterate through all of the colormap names
+        for key in keys[:]:
+            sizer.Add(ActionColorbar(scroll,key,command))
+            scroll.SetScrollbars(0,64,0,64)
+        sizer.SetSizeHints(scroll)
+        scroll.SetSizer(sizer)
+        self.Bind(wx.EVT_CLOSE,self.__OnClose)
+#+end_src 
+
+   Since the window takes so long to create, we don't want to recreate
+   it each time it is called for.  To this end, we're overriding the
+   Close event and ignoring it, simply hiding the window instead.
+
+#+name:colormappicker
+#+begin_src python
+#
+    def __OnClose(self,event):
+        """Event handler for closing the window
+
+        Since the window takes so long to build and render, we
+        don't want to be forces to make a new one each time it's
+        closed, so we merely hide it when the user closes it."""
+        self.Hide()
 #+end_src
 
 
