@@ -306,7 +306,7 @@
 
 
      Now we can create the actual components of the GUI.  The =xPanel=
-     and =yPanel= are [[GraphPanel][graphs]] which display the integrated intensity
+     and =yPanel= are [[Graph Panel][graphs]] which display the integrated intensity
      along an axis.  =imPanel= displays the actual, 2D detector [[ImagePanel][image]].
      =colorbar= gives the current scale of the color scheme on the
      imPanel.  =opPanel= is a generic [[Option Panel][panel]] for the user to input data
@@ -1568,6 +1568,44 @@ from matplotlib.figure import Figure
 
 import wx
 
+<<graphpanel_rebin>>
+
+class GraphPanel(wx.Panel):
+    """This class creates a panel that displays a filled plot. """
+
+    
+    HORIZONTAL = 0 
+    INVERTED = 1
+    VERTICAL = 2
+    <<graphpanel_init>>
+    <<graphpanel_setplot>>
+
+#     def SetYLim(self,range):
+#         self.axes.set_ylim(range)
+
+#     def SetXLim(self,range):
+#         self.axes.set_xlim(range)
+
+    <<graphpanel_setpos>>
+
+    <<graphpanel_onpaint>>
+
+#+end_src
+
+
+**** rebin function
+
+The rebin function takes an numpy array and an integer of how many
+bins to combine.  The result is a new numpy array where each group of
+=count= bins have been averaged together.
+
+This is non-intuitive and the =mean= function should be replaced with
+a =sum= to make the results more obvious.
+
+This function is no longer in use and should probably be removed.
+
+#+name:graphpanel_rebin
+#+begin_src python
 # FIXME:  This function is extremely brittle
 def rebin(a,count):
     """A quick function to rebin an array
@@ -1586,14 +1624,29 @@ def rebin(a,count):
     """
 
     return np.array([a[i:i+count].mean() for i in range(0,len(a),count)])
+#+end_src
 
-class GraphPanel(wx.Panel):
-    """This class creates a panel that displays a filled plot. """
+**** Initialization
 
-    
-    HORIZONTAL = 0 
-    INVERTED = 1
-    VERTICAL = 2
+     A =GraphPanel= object needs four parameters.  The first is the
+     =parent=, which holds the container in which the panel will be
+     displayed.  The second, =fig=, is a tuple with the relative
+     dimensions of the panel.  For instance, if =fig= is =(2,3)=, then
+     the panel will be two units wide and three units tall.  The =res=
+     parameter gives the number of pixels per unit for the dimensions
+     in =fig=.  Finally, the orientation is either
+     =GraphPanel.HORIZONTAL=, =GraphPanel.INVERTED=, or
+     =GraphPanel.VERTICAL=.  A =HORIZONTAL= gives a graph with the
+     x-axis along the bottom and the y-axis pointing up.  =VERTICAL=
+     has it's x-axis along the right edge and the y-axis pointing
+     left.  Finally, =INVERTED= has it's x-axis along the top and the
+     y-axis pointing downward.
+
+     Just as with the =[[Image Panel]]=, the object contains a matplotlib
+     =Figure= and a wxAgg =FigureCanvas= to do the actual plotting.
+
+#+name:graphpanel_init
+#+begin_src python
     def __init__(self,parent,fig,res,orientation):
         """Create a new panel for plotting.
 
@@ -1622,7 +1675,18 @@ class GraphPanel(wx.Panel):
         self.canvas = FigureCanvas(self,-1,self.figure)
         #The rotation of the figure.
         self.orientation=orientation
+#+end_src
 
+
+
+**** Plotting
+
+     The =SetPlot= function gives the panel its data for plotting.
+     The first variable is an array of the x-coordinate and the second
+     is the y-coordinates.
+
+#+name:graphpanel_setplot
+#+begin_src python
     def SetPlot(self,x,y):
         """Set the x and y coordinates of the data to be plotted."""
         self.figure.clear()
@@ -1648,14 +1712,16 @@ class GraphPanel(wx.Panel):
 
         self.axes.autoscale_view(True,True,True)
         self.Refresh()
+#+end_src
 
-#     def SetYLim(self,range):
-#         self.axes.set_ylim(range)
+     The =SetPlot= function uses =SetPos= to move the graph around
+     within the panel.  We want the graph to extend across the whole
+     panel, but, by default, matplotlib takes some space for the
+     axes.  We use =SetPos= to tell matplotlib to only use the part of
+     the plot that contains the actual graph.
 
-#     def SetXLim(self,range):
-#         self.axes.set_xlim(range)
-
-
+#+name:graphpanel_setpos
+#+begin_src python
     def SetPos(self,pos):
         """Set the position of the graph within the panel.
 
@@ -1669,14 +1735,22 @@ class GraphPanel(wx.Panel):
 
         """
         self.axes.set_position(pos)
+#+end_src
 
+     We need to override the =OnPaint= event handler to tell the
+     =FigureCanvas= to redraw the graph every time the panel is
+     redrawn.
+
+#+name: graphpanel_onpaint
+#+begin_src python
     def __OnPaint(self,event):
         """An event handler to tell the canvas to draw
         when the panel is redrawn."""
         self.canvas.draw()
         event.Skip()
-
 #+end_src
+
+
 
 
 *** Image Panel
