@@ -2428,7 +2428,7 @@ class GraphFrame(wx.Frame):
 
 #+name:graphframe_init
 #+begin_src python
-
+    #
         menubar = wx.MenuBar()
         editmenu = wx.Menu()
         editmenu.Append(self.ID_COPY,"&Copy\tCtrl-C"," Copy image to the clipboard")
@@ -2446,7 +2446,7 @@ class GraphFrame(wx.Frame):
 
 #+name:graphframe_init
 #+begin_src python
-        
+    #   
 
         #First, make the plotting figure.
         self.figure = Figure()
@@ -2461,7 +2461,7 @@ class GraphFrame(wx.Frame):
 
 #+name:graphframe_init
 #+begin_src python
-
+    #
         sizer = wx.GridBagSizer()
         sizer.Add(self.canvas,pos=wx.GBPosition(1,0))
         sizer.Add(self.toolbar,pos=wx.GBPosition(0,0))
@@ -2582,57 +2582,7 @@ class SpectrumDialog(wx.Dialog):
 
     <<spectrumdialog_setmode>>
 
-    def autobinset(self):
-        """Rebins both up and down data based on the user's chosen error."""
-        x=[]
-        u=[]
-        d=[]
-        count=0 #number of channels combined since last binning
-        utot=0 #counts in the up state
-        dtot=0 #counts in the down state
-        #If there's no chosen error bounds, just return the original data.
-        if self.nobinrad.GetValue():
-            return (np.arange(0.0,RESOLUTION)*20.0/RESOLUTION
-                    ,self.up,self.down)
-        #If we're going any sort of binning, we'll need raw values
-        up=self.up*self.uscale
-        down=self.down*self.dscale
-        #Check for autobinning
-        if self.autobinrad.GetValue():
-            #The maximum percentage error in the spin up or spin down state
-            emax = float(self.minerr.GetValue())/100.0
-            for i in range(len(self.up)):
-                utot += up[i]
-                dtot += down[i]
-                uerr = 1.0/np.sqrt(utot)#error in the up state
-                derr = 1.0/np.sqrt(dtot)#error in the down state
-                #if the error is below the threshold, add the new data point
-                if uerr <= emax and derr <= emax:
-                    u.append(utot/self.uscale)
-                    d.append(dtot/self.dscale)
-                #choose x as the center of the binned data
-                    x.append((i-0.5*count)*20.0/RESOLUTION)
-                    i = 0
-                    utot=0
-                    dtot=0
-                    count=0
-                else:
-                    count += 1
-            return (np.array(x),
-                    np.array(u),
-                    np.array(d))
-        elif self.setbinrad.GetValue():
-            count = int(self.minerr.GetValue())
-            x = [np.mean(y) for y in 
-                 np.array_split(np.arange(0.0,RESOLUTION)*20.0/RESOLUTION,count)]
-            u = [np.sum(y)/self.uscale for y in np.array_split(up,count)]
-            d = [np.sum(y)/self.dscale for y in np.array_split(down,count)]
-            #print((x,u,d))
-            return (np.array(x),
-                    np.array(u),
-                    np.array(d))
-        else:
-            raise RuntimeException("Need to Implement bullet choice!")
+    <<spectrumdialog_autobinset>>
 
     <<spectrumdialog_autobin>>
     <<spectrumdialog_modefunctions>>
@@ -3012,6 +2962,112 @@ class SpectrumDialog(wx.Dialog):
             return (x,u)
 
 
+#+end_src
+
+
+**** Autobinset
+
+     =autobinset= is similar to =autobin=, except that it handles
+     having two spin states.  For the raw and fixed binning, this
+     doesn't have any effect, but it requires special handling for the
+     automated binning, since both data sets need to hxave the same
+     bins.
+
+
+     Again, the function begins by simply returning the values if the
+     raw binning has been request, since there is no actual
+     calculations to perform.
+#+end_src
+
+#+name: spectrumdialog_autobinset
+#+begin_src python
+    def autobinset(self):
+        """Rebins both up and down data based on the user's chosen error."""
+        x=[]
+        u=[]
+        d=[]
+        count=0 #number of channels combined since last binning
+        utot=0 #counts in the up state
+        dtot=0 #counts in the down state
+        #If there's no chosen error bounds, just return the original data.
+        if self.nobinrad.GetValue():
+            return (np.arange(0.0,RESOLUTION)*20.0/RESOLUTION
+                    ,self.up,self.down)
+#+end_src
+
+    If actual calculations are to be involved, then the raw =up= and
+    =down= spin state counts are needed to find the uncertainties.
+
+#+name: spectrumdialog_autobinset
+#+begin_src python
+    #
+        #If we're going any sort of binning, we'll need raw values
+        up=self.up*self.uscale
+        down=self.down*self.dscale
+#+end_src
+
+    The handling of the automatic binning is similar to how it was in
+    =autobin=.  The only difference is that the uncertainties of both
+    the up and down states must be beneath the request relative value
+    before the bin gets added to the main list.
+
+#+name: spectrumdialog_autobinset
+#+begin_src python
+    #
+        #Check for autobinning
+        if self.autobinrad.GetValue():
+            #The maximum percentage error in the spin up or spin down state
+            emax = float(self.minerr.GetValue())/100.0
+            for i in range(len(self.up)):
+                utot += up[i]
+                dtot += down[i]
+                uerr = 1.0/np.sqrt(utot)#error in the up state
+                derr = 1.0/np.sqrt(dtot)#error in the down state
+                #if the error is below the threshold, add the new data point
+                if uerr <= emax and derr <= emax:
+                    u.append(utot/self.uscale)
+                    d.append(dtot/self.dscale)
+                #choose x as the center of the binned data
+                    x.append((i-0.5*count)*20.0/RESOLUTION)
+                    i = 0
+                    utot=0
+                    dtot=0
+                    count=0
+                else:
+                    count += 1
+            return (np.array(x),
+                    np.array(u),
+                    np.array(d))
+#+end_src
+
+    The handling of raw values is exactly identical to how it was
+    performed in =autobin=.
+
+#+name: spectrumdialog_autobinset
+#+begin_src python
+    #
+        elif self.setbinrad.GetValue():
+            count = int(self.minerr.GetValue())
+            x = [np.mean(y) for y in 
+                 np.array_split(np.arange(0.0,RESOLUTION)*20.0/RESOLUTION,count)]
+            u = [np.sum(y)/self.uscale for y in np.array_split(up,count)]
+            d = [np.sum(y)/self.dscale for y in np.array_split(down,count)]
+            #print((x,u,d))
+            return (np.array(x),
+                    np.array(u),
+                    np.array(d))
+#+end_src
+
+    Finally, there is an exception in case some future programmer has
+    added a radio button to the Spectrum Dialog without implementing
+    the binning option here.  It's not likely that this code will ever
+    be called, but it should exist for completeness.
+
+#+name: spectrumdialog_autobinset
+#+begin_src python
+    #
+        else:
+            raise RuntimeException("Need to Implement bullet choice!")
 #+end_src
 
 
