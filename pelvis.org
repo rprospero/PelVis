@@ -845,6 +845,7 @@
      compactness.  Not that =OnExportROI= does *not* change the
      current mask for the application. 
 
+<<OnExportROI>>
 #+name:pelvis_menu_commands
 #+begin_src python 
   
@@ -3855,4 +3856,824 @@ class MonFile:
         t -= 860
         t *= 3.956034e-7/(distanceToMonitor+distanceToG4)/1e-10*1e-6
         return t
+#+end_src
+
+
+* Reduction
+
+** Reduction Skeleton
+
+#+begin_src python :tangle Reduction.py :noweb tangle :padline no
+from reader import PelFile
+from monfile import MonFile
+import matplotlib.pyplot as plt
+import Combiner
+import numpy as np
+from optparse import OptionParser
+import os
+
+basedir = "C:/userfiles/EXP011/"
+RESOLUTION = 400
+
+<<reduction_load>>
+
+<<reduction_export>>
+def plot_2d_range(data,rnge=None,steps=100,mask=None):
+    """Takes a 2d data set and plots a plateau plot"""
+    if type(rnge) is tuple:
+        vmin,vmax=rnge
+    else:
+        vmin = np.min(data)
+        vmax = np.max(data)
+    if mask is None:
+        mask = data >= vmin
+    print(vmax,vmin,steps)
+    print((vmax-vmin))
+    print((vmax-vmin)/steps)
+    xs = np.arange(vmin,vmax,(vmax-vmin)/steps)
+    ys = [len(np.where(np.logical_and(data<x,mask))[0]) for x in xs]
+    ys = np.array(ys)
+    plt.plot(xs,ys,"r*")
+    plt.show()
+
+def get_2d_int(run,name):
+    p = PelFile(basedir+"SESAME_%i/" % run + name+"_neutron_event.dat")
+    mon = MonFile(basedir+"SESAME_%i/" % run + name+"_bmon_histo.dat",False)
+    return np.sum(p.make3d(),axis=2) / np.sum(mon.spec)    
+
+def plot_int_range(run):
+    up = get_2d_int(run,"up")
+    down = get_2d_int(run,"down")
+    plot_2d_range(up+down,steps=1000)
+
+def plot_pol_range(run,mask=None):
+    up = get_2d_int(run,"down")
+    down = get_2d_int(run,"up")
+    plot_2d_range((up-down)/(up+down),(-1.0,1.0),mask=mask)
+    
+    
+
+def getIntegratedSpectra(run,name,mins,maxs,mask):
+    name = normalize_name(name)
+    p = PelFile(basedir+"SESAME_%i/" % run + name+"up_neutron_event.dat")
+    mon = MonFile(basedir+"SESAME_%i/" % run + name+"up_bmon_histo.dat",False)
+    up = np.sum(p.make1d(mins,maxs,mask)[40:90])
+    uperr = np.sqrt(up)/np.sum(mon.spec)
+    up /= np.sum(mon.spec)
+    p = PelFile(basedir+"SESAME_%i/" % run + name+"down_neutron_event.dat")
+    mon = MonFile(basedir+"SESAME_%i/" % run + name+"down_bmon_histo.dat",False)
+    down = np.sum(p.make1d(mins,maxs,mask)[40:90])
+    downerr = np.sqrt(down)/np.sum(mon.spec)
+    down /= np.sum(mon.spec)
+
+    return (up,uperr,down,downerr)
+
+def normalize_name(name):
+    if name != '':
+        return "%0.3f"%float(name)
+    else:
+        return name
+
+
+def spectrum(run,name,mins=(0,0),maxs=(16,128),mask=None):
+    name = normalize_name(name)
+    p = PelFile(basedir+"SESAME_%i/" % run + name+"up_neutron_event.dat")
+    mon = MonFile(basedir+"SESAME_%i/" % run + name+"up_bmon_histo.dat",False)
+    up = p.make1d(mins,maxs,mask)
+    uperr = np.sqrt(up)/np.sum(mon.spec)
+    up /= np.sum(mon.spec)
+    p = PelFile(basedir+"SESAME_%i/" % run + name+"down_neutron_event.dat")
+    mon = MonFile(basedir+"SESAME_%i/" % run + name+"down_bmon_histo.dat",False)
+    down = p.make1d(mins,maxs,mask)
+    downerr = np.sqrt(down)/np.sum(mon.spec)
+    down /= np.sum(mon.spec)
+
+    return (up-down)/(up+down)
+
+def errspectrum(run,name,mins=(0,0),maxs=(16,128),mask=None):
+    name = normalize_name(name)
+    p = PelFile(basedir+"SESAME_%i/" % run + name+"up_neutron_event.dat")
+    mon = MonFile(basedir+"SESAME_%i/" % run + name+"up_bmon_histo.dat",False)
+    up = p.make1d(mins,maxs,mask)
+    uperr = np.sqrt(up)/np.sum(mon.spec)
+    up /= np.sum(mon.spec)
+    p = PelFile(basedir+"SESAME_%i/" % run + name+"down_neutron_event.dat")
+    mon = MonFile(basedir+"SESAME_%i/" % run + name+"down_bmon_histo.dat",False)
+    down = p.make1d(mins,maxs,mask)
+    downerr = np.sqrt(down)/np.sum(mon.spec)
+    down /= np.sum(mon.spec)
+
+    p = (up-down)/(up+down)
+    err = p*np.sqrt((up-down)**-2+(up+down)**-2)*np.sqrt(uperr**2+downerr**2)
+    return p,err
+
+def simple_spectrum(run,mins=(0,0),maxs=(16,128),mask=None):
+    p = PelFile(basedir+"SESAME_%i/SESAME_%i_neutron_event.dat"%(run,run))    
+    mon = MonFile(basedir+"SESAME_%i/SESAME_%i_bmon_histo.dat"%(run,run),False)    
+    data = p.make1d(mins,maxs,mask)
+    err = np.sqrt(data)/np.sum(mon.spec)
+    data /= np.sum(mon.spec)
+
+    return (data,err)
+
+def fr(run,name,mins=(0,0),maxs=(16,128),mask=None):
+    up,uperr,down,downerr = getIntegratedSpectra(run,name,mins,maxs,mask)
+
+    ratio = up/down
+    rerr = ratio * np.sqrt((uperr/up)**2+(downerr/down)**2)
+
+    return (ratio,rerr)
+
+def run_int(run,name,mins=(0,0),maxs=(16,128),mask=None):
+    up,uperr,down,downerr = getIntegratedSpectra(run,name,mins,maxs,mask)
+
+    total = up+down
+    total_err = np.sqrt(uperr**2+downerr**2)
+
+    return (total,total_err)
+
+
+def singleplot(run,name,mins=(0,0),maxs=(16,128)):
+    data = spectrum(run,name,mins,maxs)
+    data[np.isnan(data)]=0
+    plt.plot(np.arange(RESOLUTION)*20.0/RESOLUTION,data,"r-")
+    plt.show()
+
+def echoplot(run,names,mins=(0,0),maxs=(16,128),mask=None,outfile=None):
+    data = [errspectrum(run,name,mins,maxs,mask) for name in names]
+    errs = np.vstack(tuple([d[1] for d in data]))
+    data = np.vstack(tuple([d[0] for d in data]))
+    data[np.isnan(data)]=0
+    xs = np.arange(101)*0.1
+    ys = sorted([float(x) for x in names])
+    ys += [ys[-1]+ys[1]-ys[0]] #Add last element
+    ys = np.array(ys)
+    plt.pcolor(xs,ys,data,vmin=-1,vmax=1)
+    if outfile is None:
+        plt.show()
+    else:
+        print name
+        if outfile[-4:] == ".png":
+            plt.savefig(outfile)
+            plt.clf()
+        else:
+            with open(outfile,"w") as of:
+                y,x = data.shape
+                of.write("wavelength\tcurrent\tpolarization\terror\n")
+                for i in range(x):
+                    for j in range(y):
+                        print((xs[i],ys[j]))
+                        print(data[j,i])
+                        of.write("%f\t%f\t%f\t%f\n"
+                                 %(xs[i],ys[j],data[j,i],errs[j,i]))
+
+
+def intensity(run,names,mins=(0,0),maxs=(16,128),mask=None,outfile=None):
+    names = [name for name in names if float(name) != 5.475]
+    data = [run_int(run,name,mins,maxs,mask) for name in names]
+    errs = np.array([x[1] for x in data])
+    data = np.array([x[0] for x in data])
+    data[np.isnan(data)]=0
+    errs[np.isnan(data)]=1
+    xs = np.array([float(x) for x in names])
+    plt.errorbar(xs,data,yerr=errs)
+#    if outfile is None:
+    plt.show()
+    if outfile is not None:
+        np.savetxt(outfile,np.transpose(np.vstack((xs,data,errs))))
+
+    
+
+def echofr(run,names,mins=(0,0),maxs=(16,128),mask=None,outfile=None):
+#    names = [name for name in names if float(name) != 5.475]
+    print names
+    data = [fr(run,name,mins,maxs,mask) for name in names]
+    errs = np.array([x[1] for x in data])
+    data = np.array([x[0] for x in data])
+    data[np.isnan(data)]=0
+    errs[np.isnan(data)]=1
+    xs = np.array([float(x) for x in names])
+    print xs
+    plt.errorbar(xs,data,yerr=errs)
+#    if outfile is None:
+    plt.show()
+    if outfile is not None:
+        np.savetxt(outfile,np.transpose(np.vstack((xs,data,errs))))
+    #trying the fitting
+    # data = (data-1.0)/(data+1.0)
+    # print(data)
+    # data = np.log(data)
+    # fit = np.polyfit(xs,data,2)
+    # a = fit[0]
+    # b = fit[1]
+    # c = fit[2]
+    # print(fit)
+    # plt.plot(xs,np.exp(data),"b*")
+    # plt.plot(xs,np.exp(c+b*xs+a*xs**2),"r-")
+    # plt.show()
+    # print(-1*b/(2*a))
+
+def poldrift(runs,mins,maxs,outfile=None):
+    if len(runs)%2 == 1:
+        runs = runs[:-1]
+    ups = [simple_spectrum(run,mins,maxs)
+                           for run in runs[1::2]]
+    downs = [simple_spectrum(run,mins,maxs)
+                           for run in runs[0::2]]
+    uperrs = np.array([np.sqrt(np.sum(run[1]**2)) for run in ups])
+    downerrs = np.array([np.sqrt(np.sum(run[1]**2)) for run in downs])
+    ups = np.array([np.sum(run[0]) for run in ups])
+    downs = np.array([np.sum(run[0]) for run in downs])
+    p = ups/downs
+    err = p * np.sqrt((uperrs/ups)**2+(downerrs/downs)**2)
+    xs = np.array(runs[0::2])
+    plt.errorbar(xs,p,yerr=err)
+    plt.show()
+    if outfile is not None:
+        np.savetxt(outfile,np.transpose(np.vstack((xs,p,err))))
+
+def echodiff(run,names,split,mins,maxs,outfile=None):
+    data = np.vstack(tuple([np.arccos(spectrum(run,name,mins,(split,302))) - 
+                            np.arccos(spectrum(run,name,(split,223),maxs)) for name in names]))
+
+    data[np.isnan(data)]=0
+
+    xs = np.arange(RESOLUTION)*20.0/RESOLUTION
+    ys = np.array([float(x) for x in names])
+    plt.pcolor(xs,ys,data,vmin=-np.pi,vmax=np.pi)
+    if outfile is None:
+        plt.show()
+    else:
+        print name
+        plt.savefig(outfile)
+        plt.clf()
+
+def two_flipper(runs, flipper1, flipper2, minmon, current, \
+                watch="2"):
+    
+    data = load(runs,current)
+    keys = data.keys()
+    values = [""]
+    base = basedir + "SESAME_%i/" % runs[-1]
+
+    for value in values:
+        if type(value) is not str:
+            value = normalize_name(value)
+        upup = [x for x in keys if x[flipper1] < 0 and x[flipper2] < 0 \
+                and x[choices[watch]]==current]
+        updown = [x for x in keys if x[flipper1] < 0 and x[flipper2] > 0 \
+                  and x[choices[watch]]==current]
+        downup = [x for x in keys if x[flipper1] > 0 and x[flipper2] < 0 \
+                  and x[choices[watch]]==current]
+        downdown = [x for x in keys if x[flipper1] > 0 and x[flipper2] > 0 \
+                    and x[choices[watch]]==current]
+        if filter is not None:
+            value = "" #Don't put values on files when we're only running a single export
+
+        if upup != []:
+            print "-------------- Up/Up state --------------"
+            Combiner.save(base+value+"upup_current=" + str(current),
+                          minmon,
+                          upup,
+                          data)
+        if updown != []:
+            print "-------------- Up/Down state --------------"
+            Combiner.save(base+value+"updown_current=" + str(current),
+                          minmon,
+                          updown,
+                          data)
+        if downup != []:
+            print "-------------- Down/Up state --------------"
+            Combiner.save(base+value+"downup_current=" + str(current),
+                          minmon,
+                          downup,
+                          data)
+        if downdown != []:
+            print "-------------- Down/Down state --------------"
+            Combiner.save(base+value+"downdown_current=" + str(current),
+                          minmon,
+                          downdown,
+                          data)
+            
+        if [upup,updown,downup,downdown]==[[],[],[],[]]:
+            print("No data to write")
+           
+    
+<<reduction_main>>
+#+end_src
+
+
+** Main Command
+
+   The program begins by creating an [[https://docs.python.org/2/library/optparse.html][OptionParser]] to handle the
+   numerous command line options of the application.
+
+#+name:reduction_main
+#+begin_src python
+
+if __name__=='__main__':
+
+    parser = OptionParser()
+#+end_src
+
+   The =choices= dictionary gives a simple mapping between the human
+   readable names of the power supplies and their numbering.  This
+   will be used to interpret channel selection from the user at the
+   command line.
+
+#+name:reduction_main
+#+begin_src python
+#
+
+    choices = {None:None,"flipper":0,"guides":1,"phase":2,"sample":3,"1":4,"2":5,"3":6,"4":7,"5":8,"6":9,"7":10,"8":11}
+#+end_src
+
+   The export command tells the reducer that the files need to be
+   combined before they can be plotted.  If the command has been run
+   once, then subsequent runs can plot the *same data* in different
+   way.  However, if you want to change the run number or anything
+   about the currents examined, the data needs to be exported again.
+
+   The =twoflip= option is a duplication of functionality and should
+   be removed.  It can be just as easily performed with a =sortby=
+   option without adding in duplicated code.
+
+#+name:reduction_main
+#+begin_src python
+#
+
+    parser.add_option("-e","--export", type="choice", action="store", \
+                      help="Export into pel files",
+                      choices=["flip","twoflip"])
+#+end_src
+
+   The =sortby= command is used to get flipping measurements sorted by
+   the current in another power supply.  For instance, if the unit was
+   flipping one triangle 3 and performing a tuning scan on triangle 8,
+   then =--sortby 8= would separate out all of the different tuning runs.
+
+#+name:reduction_main
+#+begin_src python
+#
+    parser.add_option("--sortby",action="store",type="choice", \
+                       help = "Which power supply is scanned",
+                       choices=choices.keys())
+#+end_src
+
+   The =filter= option is used to only examine a single state from the
+   power supply indicated by =sortby=.  For instance, if you have
+   found that the instrument was tuned at 4.5A after a tuning scan on
+   triangle 7, then =--sortby 7 --filter 4.5= would only process runs
+   where the instrument was tuned.
+
+#+name:reduction_main
+#+begin_src python
+#
+    parser.add_option("--filter",action="store",type="float", \
+                       help="Focuses the export to only a single \
+                       value in the sortby parameter")
+#+end_src
+
+   The =flip= option indicated which power supply acted as the
+   flipper.  This is necessary for splitting the spin states.
+
+#+name:reduction_main
+#+begin_src python
+#
+    parser.add_option("--flip",action="store",type="choice", \
+                       help="Which power supply runs the flipper",
+                       choices=choices.keys())
+#+end_src
+
+   The =flip2= command is used to indicate which power supply served
+   for the second flipper in a two flipper measurement.  Like the
+   =twoflip= option on =export=, this is better server by using the
+   =sortby=  command and should be removed.
+
+#+name:reduction_main
+#+begin_src python
+#
+    parser.add_option("--flip2",action="store",type="choice", \
+                       help="Which power supply runs the second flipper \
+                       in a two flipper run",
+                       choices=choices.keys())
+#+end_src
+
+   The =mon= command sets a minimum monitor value for a run.  If the
+   count rate per second on the monitor is less than this value, the
+   beam is assumed to have gone down and the run is not included.
+
+#+name:reduction_main
+#+begin_src python
+#
+    parser.add_option("--mon",action="store",default=32,type="float", \
+                       help="Minimum monitor value.  If the value \
+                       is lessthan or equal to zero, all runs are \
+                       included, regardless of monitor count.")
+#+end_src
+
+   The =(x,y)(min,max)= options give a pixel range on the detector,
+   indicating the area where the relevant signal should be expected.
+
+#+name:reduction_main
+#+begin_src python
+#
+
+    parser.add_option("--xmin",action="store",type="int",help="Minimum x value",default=0)
+    parser.add_option("--ymin",action="store",type="int",help="Minimum y value",default=0)
+    parser.add_option("--xmax",action="store",type="int",help="Maximum x value",default=16)
+    parser.add_option("--ymax",action="store",type="int",help="Maximum y value",default=128)
+#+end_src
+
+   When the =sortby= command is used, the =start=, =stop=, and =step=
+   command give the bounds of the current that should be expected, as
+   well as the step size between them.  Honestly, the program should
+   be improved so that it can find these values automatically, but
+   they need to be manually entered for now.
+
+#+name:reduction_main
+#+begin_src python
+#
+
+    parser.add_option("--start",action = "store",type="float", help="The starting current of the scan")
+    parser.add_option("--stop",action = "store", type="float", help="The ending current of the scan")
+    parser.add_option("--step",action = "store", type="float", help="The current step of the scan")
+#+end_src
+
+   The =skip= command can be used to exclude a bad run (e.g. power
+   supply failure).  Calling it multiple times allows for skipping
+   multiple runs.
+
+#+name:reduction_main
+#+begin_src python
+#
+    parser.add_option("--skip",action = "append", type="int", help="Marks that a run should NOT be included in the file export.")
+#+end_src
+
+   The =plot= option tells the program which kind of plot to make.
+
+#+name:reduction_main
+#+begin_src python
+#
+
+    parser.add_option("--plot",action="store",type="choice",
+                      help="Where to make a simple plot or perform a height diff",
+                      choices=["plot","diff","fr","echo","intensity","poldrift","int2drange","pol2drange"])
+#+end_src
+
+   The =save= option takes a file name and saves the data that would
+   be plotted into that file.
+
+#+name:reduction_main
+#+begin_src python
+#
+    parser.add_option("--save",action="store",type="string",default=None,
+                      help="A file in which to save the dataset.")
+#+end_src
+
+   The =mask= option takes the path of a binary bitmap mask, as
+   [[OnExportROI][exported by PELVis]] and uses it to examine only the signal portion of
+   the detector.
+
+#+name:reduction_main
+#+begin_src python
+#
+    parser.add_option("--mask",action="append",type="string",default=None,
+                      help="A mask file indicating which pixel to use in the analysis")
+#+end_src
+
+   This function seems to duplicate the filter command.  It should be
+   seen if both are really necessary.
+
+#+name:reduction_main
+#+begin_src python
+#
+    parser.add_option("--current",action="store",type="int",
+                      default=None,
+                      help="A triangle current to filter the results.")
+#+end_src
+
+   Again, this probably isn't necessary.
+
+#+name:reduction_main
+#+begin_src python
+#
+    parser.add_option("--watch",action="store",type="choice", \
+                      choices=choices.keys(), \
+                      help="Which coil are we watching the current of (see --current)")
+#+end_src
+
+   If there are a large number of runs which need to be removed or if
+   two measurements taken far apart in time are to be combined, then
+   the =complex= option can take the name of a text file which has the
+   list of the run numbers to be examined, with one run number per
+   line.
+#+end_src
+
+#+name:reduction_main
+#+begin_src python
+#
+    parser.add_option("--complex",action="store_true",
+                     help="Whether to load the run data from runlist.txt")
+#+end_src
+
+   Now that we've parsed the command line arguments, we can start
+   actually crunching some data.  The =runs= variable is a list of the
+   run numbers, which can either be loaded from the command line or
+   from a file.
+
+#+name:reduction_main
+#+begin_src python
+#
+
+    (options,runs) = parser.parse_args()
+
+    if options.complex:
+        runs = list(np.loadtxt("runlist.txt"))
+    else:
+        runs = range(int(runs[0]),int(runs[1])+1)
+#+end_src
+
+   We then remove any skipped runs from the list.
+
+#+name:reduction_main
+#+begin_src python
+#
+    if options.skip:
+        for item in options.skip:
+            runs.remove(item)
+#+end_src
+
+   We now combine and export the runs.  Against, the =twoflip= option
+   is unnecessary.
+
+#+name:reduction_main
+#+begin_src python
+#
+
+    if options.export=="flip":
+        export(runs, choices[options.sortby], choices[options.flip], \
+               options.mon, options.current, options.filter, options.watch)
+    if options.export=="twoflip":
+        two_flipper(runs, choices[options.flip], choices[options.flip2], \
+               options.mon, options.current, options.watch)
+#+end_src
+
+   If the user has added mask files, we now create a custom mask that
+   passes through every one of the loaded files.
+
+#+name:reduction_main
+#+begin_src python
+#
+
+    if options.mask is not None:
+        mask = np.ones((128,16),dtype=np.bool)
+        for m in options.mask:
+            if m[-3:] == "dat":
+                mask = np.logical_and(mask,np.loadtxt(m))
+            else:
+                mask = np.logical_and(mask,np.load(m))
+    else:
+        mask = None
+#+end_src
+
+   Finally, if the user hasn't chosen to plot anything, then the task
+   is complete.
+
+#+name:reduction_main
+#+begin_src python
+#
+    if options.plot is None:
+        pass
+
+#+end_src
+
+   We now need to know the names of the exported files.  If there was
+   no attempt to sort by a triangle current, then the names aren't
+   necessary.  Otherwise, we step through the currents given by
+   =start=, =stop=, and =step= and check to see if the file exists.
+   If it does, it's added to the list of files.
+
+#+name:reduction_main
+#+begin_src python
+#
+    else:
+        if options.sortby is None or options.filter is not None:
+            names = [""]
+        else:
+            count = round((options.stop-options.start)/options.step)+1
+            print(count)
+            names = [str(x) 
+                     for x in 
+                     np.linspace(
+                    options.start,
+                    options.stop,
+                    count)]
+            print(names)
+            names = [name for name in names
+                     if os.path.exists(basedir+"SESAME_%i/" % runs[-1] + 
+                                       normalize_name(name)+
+                                       "up_neutron_event.dat") 
+                     and os.path.exists(basedir+"SESAME_%i/" % runs[-1] + 
+                                        normalize_name(name)+
+                                        "down_neutron_event.dat")]
+            print(names)
+#+end_src
+
+   Finally, we pass the users options to the associated plotting function.
+
+#+name:reduction_main
+#+begin_src python
+#
+
+        if options.plot=="plot":
+            print runs
+            print names
+            singleplot(runs[-1],names[0],(options.xmin,options.ymin),(options.xmax,options.ymax))
+        elif options.plot=="fr":
+            echofr(runs[-1],names,(options.xmin,options.ymin),(options.xmax,options.ymax),outfile=options.save,mask=mask)
+        elif options.plot=="diff":
+            echodiff(runs[-1],names,187(options.xmin,options.ymin), \
+                     (options.xmax,options.ymax),options.save)
+        elif options.plot=="echo":
+            echoplot(runs[-1],names,(options.xmin,options.ymin), \
+                     (options.xmax,options.ymax),outfile=options.save)
+        elif options.plot=="intensity":
+            intensity(runs[-1],names,(options.xmin,options.ymin),(options.xmax,options.ymax),outfile=options.save)
+        elif options.plot=="poldrift":
+            poldrift(runs,(options.xmin,options.ymin),(options.xmax,options.ymax),outfile=options.save)
+        elif options.plot=="int2drange":
+            plot_int_range(runs[-1])
+        elif options.plot=="pol2drange":
+            plot_pol_range(runs[-1],mask)
+
+#+end_src
+
+
+** Export
+
+   The load function performs most of the actual file sorting.  It
+   takes a list of run numbers and an optional current for filtering.
+   It returns a dictionary.  The keys to the dictionary are the
+   various current states that were used for measurements.  The values
+   in the dictionary are the lists of runs which were performed in
+   those current states.
+
+#+name: reduction_load
+#+begin_src python
+def load(runs,current=None):
+    paths = [basedir + "SESAME_%i/SESAME_%i_runinfo.xml"
+             % (run,run) for run in runs]
+    return Combiner.load(paths,current)
+
+#+end_src
+
+   The =export= function takes several parameters to determine how to
+   properly organize the combined runs.
+
+   - runs :: A list of run numbers
+   - sortby :: An index for which element in the current tuple
+               returned by the [[Combiner]] should be used to separate the
+               measurements.
+   - flipper :: The index for the element which contains the power
+                supply used as the flipper
+   - minmon :: The minimum monitor count rate that should be used as a
+               basis for accepting or rejecting runs.
+   - watch :: A third power supply to use for filtering.  In addition
+              to setting the power supply for the flipper and for
+              tuning, we can chose a third power supply where we will
+              fix the current.  Only values with that current in the
+              power supply will be exported.  This allows us to
+              perform a polarization scan of a two dimensional space
+              with respect to the power supplies.
+   - current :: A current to be watched for in the power supply
+                selected by =watch=.
+   - filter :: A single current value to be examined at the exclusion
+               of others.  The current value is searched for in the
+               power supply specified by =sortby=.
+
+  The function begins by using [[Combiner]] to get the metadata for all of
+  the runs and place them in the data dictionary.
+
+#+name: reduction_export
+#+begin_src python
+def export(runs,sortby=None,flipper=0,minmon=8,current=None,\
+           filter=None,watch=None):
+    data = load(runs,current)
+
+    keys = data.keys()
+    print keys
+#+end_src
+
+  The =values= variable is the list of possible currents that could be
+  in the power supply that's being used for sorting.  If there's no
+  sorting, then the value isn't necessary.  If there's a filter on the
+  sorting, then only one value can occur.  Otherwise, we pull all of
+  the values from the keys.
+
+#+name: reduction_export
+#+begin_src python
+#
+
+    if sortby is None:
+        values = [""]
+    else:
+        if filter is None:
+            values = set([x[sortby] for x in keys])
+        else:
+            values = [filter]
+#+end_src
+
+  The =base= variable stores the directory where all of the data will
+  be exported.  By default, it's the data directory of the last run
+  being examined.  
+
+#+name: reduction_export
+#+begin_src python
+#
+
+    base = basedir + "SESAME_%i/" % runs[-1]
+#+end_src
+
+  We then divide up the current keys into up state runs, down state
+  runs, and "same" runs, when the flipper is turned off.  The up state
+  is defined as the flipper current being negative and the down state
+  as the flipper current being positive.  Since the bender and
+  Helium-3 analyzer require a spin flip to achieve a high count rate,
+  the negative convention was chosen.
+
+  In addition to filtering on the flipper, the list comprehensions
+  also filter on the =current= and =watch= parameters, as well as the
+  =sortby= value.
+
+#+name: reduction_export
+#+begin_src python
+#
+
+    for value in values:
+        if type(value) is not str:
+            value = normalize_name(value)
+        ups = [x for x in keys if (flipper is None or x[flipper] < 0) \
+               and (watch is None or x[choices[watch]]==current) \
+               and (sortby is None or normalize_name(x[sortby]) == value)]
+        downs = [x for x in keys if (flipper is not None and x[flipper] > 0)  \
+                and (watch is None or x[choices[watch]]==current) \
+                and (sortby is None or normalize_name(x[sortby]) == value)]
+        sames = [x for x in keys if (flipper is not None and x[flipper] == 0)  \
+                and (watch is None or x[choices[watch]]==current) \
+                and (sortby is None or normalize_name(x[sortby]) == value)]
+#+end_src
+
+  When we're only exporting a single current, we can now set the value
+  variable back to a blank, just as if there was no =sortby= parameter.
+
+#+name: reduction_export
+#+begin_src python
+#
+        if filter is not None:
+            value = "" #Don't put values on files when we're only running a single export
+#+end_src
+
+  If we used a =watch= and =current= filter, we'll want to save the
+  current in the file name so that we can run the reduction multiple
+  times with multiple currents and get multiple files.
+
+#+name: reduction_export
+#+begin_src python
+#
+        if current==None:
+            titleend=""
+        else:
+            titleend="_current="+str(current)
+#+end_src
+
+  Finally, the combined runs are saved through the [[Combiner]].  If there
+  is no spin up or spin down data, then the =sames= are saved.  Also,
+  we do not attempt to save the data if there were no measurements in
+  that particular spin state.
+
+#+name: reduction_export
+#+begin_src python
+#
+        if ups == [] and downs == []:
+            Combiner.save(base+value+"Combined"+titleend,
+                          0,
+                          sames,
+                          data)
+        if ups != []:
+            print "-------------- Up state --------------"
+            Combiner.save(base+value+"up"+titleend,
+                          minmon,
+                          ups,
+                          data)
+        if downs != []:
+            print "-------------- Down state --------------"
+            Combiner.save(base+value+"down"+titleend,
+                          minmon,
+                          downs,
+                          data)
+        
+            
+
+
 #+end_src
