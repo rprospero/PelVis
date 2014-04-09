@@ -2634,77 +2634,8 @@ class SpectrumDialog(wx.Dialog):
         else:
             raise RuntimeException("Need to Implement bullet choice!")
 
-    def autobin(self,up,scale):
-        """Rebins one data array based on the user's chosen error
-
-        Keyword arguments:
-        up -- the array to be rebinned
-        scale -- the conversion factor used to normalize against monitor
-
-        """
-        if self.nobinrad.GetValue():
-            return (np.arange(0.0,RESOLUTION)*20.0/RESOLUTION,up/scale)
-        elif self.autobinrad.GetValue():
-            x=[]
-            u=[]
-            count=0
-            utot=0
-            #The maximum percentage error in the spin up or spin down state
-            emax = float(self.minerr.GetValue())/100.0
-            for i in range(len(self.up)):
-                utot += up[i]
-                uerr = 1.0/np.sqrt(utot)
-                if uerr < emax:
-                    u.append(utot/scale/(count+1))
-                    x.append((i-0.5*count)*20.0/RESOLUTION)
-                    count = 0
-                    utot=0
-                else:
-                    count += 1
-            return (np.array(x),np.array(u))
-        elif self.setbinrad.GetValue():
-            count = int(self.minerr.GetValue())
-            x = np.arange(0.0,RESOLUTION)*20.0/RESOLUTION
-            x = np.array([np.mean(y) for y in np.array_split(x,count)])
-            u = np.array([np.sum(y)/scale for y in np.array_split(up,count)])
-            return (x,u)
-
-    def flipping(self):
-        """Calculate the flipping ratio"""
-        if self.down is not None:
-            (x,u,d)=self.autobinset()
-            y = u/(d+1e-6)
-            uerr = np.sqrt(u*self.uscale)/self.uscale
-            derr = np.sqrt(d*self.dscale)/self.dscale
-            e = y*np.sqrt((uerr/u)**2+(derr/d)**2)
-            #e = y * np.sqrt(1/(u + 1e-6)+1/(d + 1e-6))
-            return (x,y,e)
-
-    def polar(self):
-        """Calculate the polarization"""
-        if self.down is not None:
-            print "Polar Spectrum"
-            (x,u,d)=self.autobinset()
-            #print((x,u,d))
-            y = (u-d)/(u+d)
-            uerr = np.sqrt(u/self.uscale)
-            derr = np.sqrt(d/self.dscale)
-            e = 2*np.sqrt(u**2*derr**2+d**2*uerr**2)/(u+d)**2
-            #e = nerr/n*(1+abs(y))
-            return (x,y,e)
-
-    def spinUp(self):
-        """Calculate the spin up intensity"""
-        (x,y)=self.autobin(self.up*self.uscale,self.uscale)
-        return (x,y,np.sqrt(y*self.uscale)/self.uscale)
-
-    def spinDown(self):
-        """Calculate the spin down intensity"""
-        if self.down is not None:
-            (x,y)=self.autobin(self.down*self.dscale,self.dscale)
-            return (x,y,np.sqrt(y*self.dscale)/self.dscale)
-
-
+    <<spectrumdialog_autobin>>
+    <<spectrumdialog_modefunctions>>
 #+end_src
 
 *** Initialization
@@ -2923,6 +2854,164 @@ class SpectrumDialog(wx.Dialog):
                 for i in range(len(x)):
                     stream.write("%f\t%f\t%f\n"%(x[i],y[i],e[i]))
         self.Show(False)
+#+end_src
+
+
+*** Spectrum Modes
+    
+    The =flipping= function presents the two spin states as a flipping
+    ration.  It begins by getting the binned data from autobinset.
+    Note that this means that, for auto-binned graphs, it is the
+    individual spin states who error have been minimized, not the
+    final flipping ratio.
+
+    With the binned data, the flipping ratio and error are
+    calculated.  Note that a small value is added to the denominator
+    of the flipping ratio to prevent divide by zero errors.
+#+end_src
+
+#+name:    spectrumdialog_modefunctions
+#+begin_src python
+    def flipping(self):
+        """Calculate the flipping ratio"""
+        if self.down is not None:
+            (x,u,d)=self.autobinset()
+            y = u/(d+1e-6)
+            uerr = np.sqrt(u*self.uscale)/self.uscale
+            derr = np.sqrt(d*self.dscale)/self.dscale
+            e = y*np.sqrt((uerr/u)**2+(derr/d)**2)
+            #e = y * np.sqrt(1/(u + 1e-6)+1/(d + 1e-6))
+            return (x,y,e)
+#+end_src
+
+    The =polar= function is similar to =flipping=, except that the
+    polarization is calculated, instead of the flipping ratio.  In
+    this case, no value is added to the denominator.
+
+#+name:    spectrumdialog_modefunctions
+#+begin_src python
+    def polar(self):
+        """Calculate the polarization"""
+        if self.down is not None:
+            print "Polar Spectrum"
+            (x,u,d)=self.autobinset()
+            #print((x,u,d))
+            y = (u-d)/(u+d)
+            uerr = np.sqrt(u/self.uscale)
+            derr = np.sqrt(d/self.dscale)
+            e = 2*np.sqrt(u**2*derr**2+d**2*uerr**2)/(u+d)**2
+            #e = nerr/n*(1+abs(y))
+            return (x,y,e)
+#+end_src
+
+    The =spinUp= returns just the rebinned intensity of the spin up
+    state.  If there is only one spin state, then this is the mode
+    which should be used.
+
+#+name:    spectrumdialog_modefunctions
+#+begin_src python
+    def spinUp(self):
+        """Calculate the spin up intensity"""
+        (x,y)=self.autobin(self.up*self.uscale,self.uscale)
+        return (x,y,np.sqrt(y*self.uscale)/self.uscale)
+#+end_src
+
+    Finally, the =spinDown= function returns the rebinned intensity of
+    the spin down state.
+
+#+name:    spectrumdialog_modefunctions
+#+begin_src python
+    def spinDown(self):
+        """Calculate the spin down intensity"""
+        if self.down is not None:
+            (x,y)=self.autobin(self.down*self.dscale,self.dscale)
+            return (x,y,np.sqrt(y*self.dscale)/self.dscale)
+
+
+
+#+end_src
+
+
+*** Binning
+
+    There are currently two binning functions.  =autobin= handles the
+    binning of a single spin state and autobinset handles the binning
+    of two spin states.  Each function then uses conditionals to
+    handle the exact form of binning the user requested.  Honestly,
+    it's a terrible design and should be improved.
+
+**** Autobin
+
+     The function takes two parameters
+
+     - up :: The raw neutron count to be rebinned
+     - scale :: The monitor counts for normalization
+
+     The function begins by checking if any binning has even been
+     requested.  If not, then it returns the normalized counts along
+     with a wavelength spectrum.
+#+end_src
+
+#+name: spectrumdialog_autobin
+#+begin_src python
+    def autobin(self,up,scale):
+        """Rebins one data array based on the user's chosen error
+
+        Keyword arguments:
+        up -- the array to be rebinned
+        scale -- the conversion factor used to normalize against monitor
+
+        """
+        if self.nobinrad.GetValue():
+            return (np.arange(0.0,RESOLUTION)*20.0/RESOLUTION,up/scale)
+#+end_src
+
+    The next case tested for is auto-binning.  It iterates through the
+    count array, adding the neutron events into =utot= and
+    incrementing the =count= since the last data point.  Once the
+    relative uncertainty on =utot= is less that the requested value,
+    the monitor normalized value of utot and the average of the
+    positions are added appended to the y and x axes, respectively.
+
+#+name: spectrumdialog_autobin
+#+begin_src python
+    #
+        elif self.autobinrad.GetValue():
+            x=[]
+            u=[]
+            count=0
+            utot=0
+            #The maximum percentage error in the spin up or spin down state
+            emax = float(self.minerr.GetValue())/100.0
+            for i in range(len(self.up)):
+                utot += up[i]
+                uerr = 1.0/np.sqrt(utot)
+                if uerr < emax:
+                    u.append(utot/scale/(count+1))
+                    x.append((i-0.5*count)*20.0/RESOLUTION)
+                    count = 0
+                    utot=0
+                else:
+                    count += 1
+            return (np.array(x),np.array(u))
+#+end_src
+
+    Finally, if the user has selected fixed binning, then the numpy
+    [[http://docs.scipy.org/doc/numpy/reference/generated/numpy.array_split.html][array_split]] function is used to split the neutron data into the
+    desired number of bins.  These subs arrays are then summed and
+    normalized to make the final, binned array.
+
+#+name: spectrumdialog_autobin
+#+begin_src python
+    #
+        elif self.setbinrad.GetValue():
+            count = int(self.minerr.GetValue())
+            x = np.arange(0.0,RESOLUTION)*20.0/RESOLUTION
+            x = np.array([np.mean(y) for y in np.array_split(x,count)])
+            u = np.array([np.sum(y)/scale for y in np.array_split(up,count)])
+            return (x,u)
+
+
 #+end_src
 
 
