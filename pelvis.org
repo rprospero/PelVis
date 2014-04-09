@@ -2,6 +2,23 @@
 #+AUTHOR: Adam Washington
 #+OPTIONS: toc:4
 
+
+#+BEGIN_LATEX
+\lstset{
+  belowcaptionskip=1\baselineskip,
+  breaklines=true,
+  frame=L,
+  xleftmargin=\parindent,
+  language=Python,
+  showstringspaces=false,
+  basicstyle=\footnotesize\ttfamily,
+  keywordstyle=\bfseries\color{cyan},
+  commentstyle=\itshape\color{olive},
+  identifierstyle=\color{black},
+  stringstyle=\color{orange},
+}
+#+END_LATEX
+
 * Introduction
 
   This docment is a [[http://www.literateprogramming.com/index.html][literate]] program for analyzing data collected on
@@ -3710,7 +3727,7 @@ class MonFile:
 
     The SNS software saves an array of 50,000 32 bit integers
     representing the counts in each time of flight bin.  Each bin
-    represents 1μs, so the 50,000 bins give 50ms, which corresponds to
+    represents 1us, so the 50,000 bins give 50ms, which corresponds to
     our 20Hz pulse rate.
 
     The main parts of the code are at the beginning of the class.
@@ -3824,7 +3841,7 @@ class MonFile:
 
 #+end_src
 
-    The convert time function takes an array of μs and returns their
+    The convert time function takes an array of us and returns their
     corresponding wavelengths in Angstroms.  Most of this has already
     been covered in the [[convertTime][similar function]] for the neutron data
 
