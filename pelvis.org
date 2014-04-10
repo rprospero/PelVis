@@ -3935,20 +3935,7 @@ def normalize_name(name):
         return name
 
 
-def spectrum(run,name,mins=(0,0),maxs=(16,128),mask=None):
-    name = normalize_name(name)
-    p = PelFile(basedir+"SESAME_%i/" % run + name+"up_neutron_event.dat")
-    mon = MonFile(basedir+"SESAME_%i/" % run + name+"up_bmon_histo.dat",False)
-    up = p.make1d(mins,maxs,mask)
-    uperr = np.sqrt(up)/np.sum(mon.spec)
-    up /= np.sum(mon.spec)
-    p = PelFile(basedir+"SESAME_%i/" % run + name+"down_neutron_event.dat")
-    mon = MonFile(basedir+"SESAME_%i/" % run + name+"down_bmon_histo.dat",False)
-    down = p.make1d(mins,maxs,mask)
-    downerr = np.sqrt(down)/np.sum(mon.spec)
-    down /= np.sum(mon.spec)
-
-    return (up-down)/(up+down)
+<<reduction_spectrum>>
 
 def errspectrum(run,name,mins=(0,0),maxs=(16,128),mask=None):
     name = normalize_name(name)
@@ -3993,41 +3980,9 @@ def run_int(run,name,mins=(0,0),maxs=(16,128),mask=None):
     return (total,total_err)
 
 
-def singleplot(run,name,mins=(0,0),maxs=(16,128)):
-    data = spectrum(run,name,mins,maxs)
-    data[np.isnan(data)]=0
-    plt.plot(np.arange(RESOLUTION)*20.0/RESOLUTION,data,"r-")
-    plt.show()
+<<reduction_singleplot>>
 
-def echoplot(run,names,mins=(0,0),maxs=(16,128),mask=None,outfile=None):
-    data = [errspectrum(run,name,mins,maxs,mask) for name in names]
-    errs = np.vstack(tuple([d[1] for d in data]))
-    data = np.vstack(tuple([d[0] for d in data]))
-    data[np.isnan(data)]=0
-    xs = np.arange(101)*0.1
-    ys = sorted([float(x) for x in names])
-    ys += [ys[-1]+ys[1]-ys[0]] #Add last element
-    ys = np.array(ys)
-    plt.pcolor(xs,ys,data,vmin=-1,vmax=1)
-    if outfile is None:
-        plt.show()
-    else:
-        print name
-        if outfile[-4:] == ".png":
-            plt.savefig(outfile)
-            plt.clf()
-        else:
-            with open(outfile,"w") as of:
-                y,x = data.shape
-                of.write("wavelength\tcurrent\tpolarization\terror\n")
-                for i in range(x):
-                    for j in range(y):
-                        print((xs[i],ys[j]))
-                        print(data[j,i])
-                        of.write("%f\t%f\t%f\t%f\n"
-                                 %(xs[i],ys[j],data[j,i],errs[j,i]))
-
-
+<<reduction_echoplot>>
 def intensity(run,names,mins=(0,0),maxs=(16,128),mask=None,outfile=None):
     names = [name for name in names if float(name) != 5.475]
     data = [run_int(run,name,mins,maxs,mask) for name in names]
@@ -4044,34 +3999,7 @@ def intensity(run,names,mins=(0,0),maxs=(16,128),mask=None,outfile=None):
 
     
 
-def echofr(run,names,mins=(0,0),maxs=(16,128),mask=None,outfile=None):
-#    names = [name for name in names if float(name) != 5.475]
-    print names
-    data = [fr(run,name,mins,maxs,mask) for name in names]
-    errs = np.array([x[1] for x in data])
-    data = np.array([x[0] for x in data])
-    data[np.isnan(data)]=0
-    errs[np.isnan(data)]=1
-    xs = np.array([float(x) for x in names])
-    print xs
-    plt.errorbar(xs,data,yerr=errs)
-#    if outfile is None:
-    plt.show()
-    if outfile is not None:
-        np.savetxt(outfile,np.transpose(np.vstack((xs,data,errs))))
-    #trying the fitting
-    # data = (data-1.0)/(data+1.0)
-    # print(data)
-    # data = np.log(data)
-    # fit = np.polyfit(xs,data,2)
-    # a = fit[0]
-    # b = fit[1]
-    # c = fit[2]
-    # print(fit)
-    # plt.plot(xs,np.exp(data),"b*")
-    # plt.plot(xs,np.exp(c+b*xs+a*xs**2),"r-")
-    # plt.show()
-    # print(-1*b/(2*a))
+<<reduction_echofr>>
 
 def poldrift(runs,mins,maxs,outfile=None):
     if len(runs)%2 == 1:
@@ -4092,21 +4020,7 @@ def poldrift(runs,mins,maxs,outfile=None):
     if outfile is not None:
         np.savetxt(outfile,np.transpose(np.vstack((xs,p,err))))
 
-def echodiff(run,names,split,mins,maxs,outfile=None):
-    data = np.vstack(tuple([np.arccos(spectrum(run,name,mins,(split,302))) - 
-                            np.arccos(spectrum(run,name,(split,223),maxs)) for name in names]))
-
-    data[np.isnan(data)]=0
-
-    xs = np.arange(RESOLUTION)*20.0/RESOLUTION
-    ys = np.array([float(x) for x in names])
-    plt.pcolor(xs,ys,data,vmin=-np.pi,vmax=np.pi)
-    if outfile is None:
-        plt.show()
-    else:
-        print name
-        plt.savefig(outfile)
-        plt.clf()
+<<reduction_echodiff>>
 
 def two_flipper(runs, flipper1, flipper2, minmon, current, \
                 watch="2"):
@@ -4676,4 +4590,170 @@ def export(runs,sortby=None,flipper=0,minmon=8,current=None,\
             
 
 
+#+end_src
+
+** Import
+
+The =spectrum= function takes a run number directory (=run=) and a designation
+(=name=) and returns the polarization spectrum.  The remaining
+optional parameters allow the user to specify which parts of the
+detector contain the signal.
+
+#+name: reduction_spectrum
+#+begin_src python
+def spectrum(run,name,mins=(0,0),maxs=(16,128),mask=None):
+    name = normalize_name(name)
+    p = PelFile(basedir+"SESAME_%i/" % run + name+"up_neutron_event.dat")
+    mon = MonFile(basedir+"SESAME_%i/" % run + name+"up_bmon_histo.dat",False)
+    up = p.make1d(mins,maxs,mask)
+    uperr = np.sqrt(up)/np.sum(mon.spec)
+    up /= np.sum(mon.spec)
+    p = PelFile(basedir+"SESAME_%i/" % run + name+"down_neutron_event.dat")
+    mon = MonFile(basedir+"SESAME_%i/" % run + name+"down_bmon_histo.dat",False)
+    down = p.make1d(mins,maxs,mask)
+    downerr = np.sqrt(down)/np.sum(mon.spec)
+    down /= np.sum(mon.spec)
+
+    return (up-down)/(up+down)
+#+end_src
+
+
+** Plotting
+
+The single plot command takes a single data file and plots it to the
+screen.
+
+- run :: The run number of the directory where the file is stored.
+- name :: The file name for the data file to be plotted.
+- mins :: The upper left pixel of the region of interest on the detector.
+- maxs :: The lower right pixel of the region of interest on the detector.
+
+#+name: reduction_singleplot
+#+begin_src python
+def singleplot(run,name,mins=(0,0),maxs=(16,128)):
+    data = spectrum(run,name,mins,maxs)
+    data[np.isnan(data)]=0
+    plt.plot(np.arange(RESOLUTION)*20.0/RESOLUTION,data,"r-")
+    plt.show()
+#+end_src
+
+=echofr= takes a list of runs generated by a =sortby= and plots the
+flipping ratio, integrated over all wavelengths, versus the current
+
+#+name:reduction_echofr
+#+begin_src python
+def echofr(run,names,mins=(0,0),maxs=(16,128),mask=None,outfile=None):
+#    names = [name for name in names if float(name) != 5.475]
+    print names
+    data = [fr(run,name,mins,maxs,mask) for name in names]
+    errs = np.array([x[1] for x in data])
+    data = np.array([x[0] for x in data])
+    data[np.isnan(data)]=0
+    errs[np.isnan(data)]=1
+    xs = np.array([float(x) for x in names])
+    print xs
+    plt.errorbar(xs,data,yerr=errs)
+#    if outfile is None:
+    plt.show()
+    if outfile is not None:
+        np.savetxt(outfile,np.transpose(np.vstack((xs,data,errs))))
+    #trying the fitting
+    # data = (data-1.0)/(data+1.0)
+    # print(data)
+    # data = np.log(data)
+    # fit = np.polyfit(xs,data,2)
+    # a = fit[0]
+    # b = fit[1]
+    # c = fit[2]
+    # print(fit)
+    # plt.plot(xs,np.exp(data),"b*")
+    # plt.plot(xs,np.exp(c+b*xs+a*xs**2),"r-")
+    # plt.show()
+    # print(-1*b/(2*a))
+#+end_src
+
+=echodiff= is useful for finding position sensitive differences in the
+echo polarization.  It plots a color plot versus both tuning current
+and wavelength.  The intensity in the plot is based on the difference
+in neutron precession angle, in radians, between the top and bottom of
+the detector.  The =split= variable is used to declare the dividing
+line between the "top" and the "botto".
+
+#+name:reduction_echodiff
+#+begin_src python
+def echodiff(run,names,split,mins,maxs,outfile=None):
+    data = np.vstack(tuple([np.arccos(spectrum(run,name,mins,(split,302))) - 
+                            np.arccos(spectrum(run,name,(split,223),maxs)) for name in names]))
+
+    data[np.isnan(data)]=0
+
+    xs = np.arange(RESOLUTION)*20.0/RESOLUTION
+    ys = np.array([float(x) for x in names])
+    plt.pcolor(xs,ys,data,vmin=-np.pi,vmax=np.pi)
+    if outfile is None:
+        plt.show()
+    else:
+        print name
+        plt.savefig(outfile)
+        plt.clf()
+#+end_src
+
+The =echoplot= is a full spectrum color plot of the echo tune.  The
+axes are wavelength and tuning current and the color represents the
+polarization.  This is slower =echofr= and harder to read.  However,
+it does have the advantage that it's possible to distinguish between a
+deploarized beam and a beam which is far from echo.  It's also
+possible to to tell whether a given peak is on echo or just near it.
+=echoplot= also can show if there are problems out at long
+wavelengths, which would be masked by the high counts at short
+wavelength in =echofr=.  Finally, it's much prettier than =echofr=.
+
+#+name:reduction_echoplot
+#+begin_src python
+def echoplot(run,names,mins=(0,0),maxs=(16,128),mask=None,outfile=None):
+    data = [errspectrum(run,name,mins,maxs,mask) for name in names]
+    errs = np.vstack(tuple([d[1] for d in data]))
+    data = np.vstack(tuple([d[0] for d in data]))
+    data[np.isnan(data)]=0
+    xs = np.arange(101)*0.1
+    ys = sorted([float(x) for x in names])
+    ys += [ys[-1]+ys[1]-ys[0]] #Add last element
+    ys = np.array(ys)
+    plt.pcolor(xs,ys,data,vmin=-1,vmax=1)
+    if outfile is None:
+        plt.show()
+    else:
+        print name
+        if outfile[-4:] == ".png":
+            plt.savefig(outfile)
+            plt.clf()
+        else:
+            with open(outfile,"w") as of:
+                y,x = data.shape
+                of.write("wavelength\tcurrent\tpolarization\terror\n")
+                for i in range(x):
+                    for j in range(y):
+                        print((xs[i],ys[j]))
+                        print(data[j,i])
+                        of.write("%f\t%f\t%f\t%f\n"
+                                 %(xs[i],ys[j],data[j,i],errs[j,i]))
+
+
+
+#+end_src
+
+#+name:reduction_intensity
+#+begin_src python
+#+end_src
+
+#+name:reduction_poldrift
+#+begin_src python
+#+end_src
+
+#+name:reduction_plot_int_range
+#+begin_src python
+#+end_src
+
+#+name:reduction_plot_pol_range
+#+begin_src python
 #+end_src
