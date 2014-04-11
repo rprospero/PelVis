@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 from optparse import OptionParser
 import os
 
-basedir = "C:/userfiles/EXP011/"
+basedir = "C:/userfiles/EXP012/"
 
 if __name__=='__main__':
 
@@ -24,4 +24,11 @@ if __name__=='__main__':
     data = np.asarray([len(p.data)/2 for p in data])
 
     plt.plot(runs,data)
+    plt.show()
+    u = np.array(data[0::2],dtype=np.float64)
+    d = np.array(data[1::2],dtype=np.float64)
+    if len(u) > len(d):
+        u = u[:-1]
+    p = (u-d)/(u+d)
+    plt.plot(runs[1::2],p)
     plt.show()
