@@ -3878,24 +3878,8 @@ RESOLUTION = 400
 <<reduction_load>>
 
 <<reduction_export>>
-def plot_2d_range(data,rnge=None,steps=100,mask=None):
-    """Takes a 2d data set and plots a plateau plot"""
-    if type(rnge) is tuple:
-        vmin,vmax=rnge
-    else:
-        vmin = np.min(data)
-        vmax = np.max(data)
-    if mask is None:
-        mask = data >= vmin
-    print(vmax,vmin,steps)
-    print((vmax-vmin))
-    print((vmax-vmin)/steps)
-    xs = np.arange(vmin,vmax,(vmax-vmin)/steps)
-    ys = [len(np.where(np.logical_and(data<x,mask))[0]) for x in xs]
-    ys = np.array(ys)
-    plt.plot(xs,ys,"r*")
-    plt.show()
 
+<<reduction_plot_2d_range>>
 def get_2d_int(run,name):
     p = PelFile(basedir+"SESAME_%i/" % run + name+"_neutron_event.dat")
     mon = MonFile(basedir+"SESAME_%i/" % run + name+"_bmon_histo.dat",False)
@@ -3983,43 +3967,12 @@ def run_int(run,name,mins=(0,0),maxs=(16,128),mask=None):
 <<reduction_singleplot>>
 
 <<reduction_echoplot>>
-def intensity(run,names,mins=(0,0),maxs=(16,128),mask=None,outfile=None):
-    names = [name for name in names if float(name) != 5.475]
-    data = [run_int(run,name,mins,maxs,mask) for name in names]
-    errs = np.array([x[1] for x in data])
-    data = np.array([x[0] for x in data])
-    data[np.isnan(data)]=0
-    errs[np.isnan(data)]=1
-    xs = np.array([float(x) for x in names])
-    plt.errorbar(xs,data,yerr=errs)
-#    if outfile is None:
-    plt.show()
-    if outfile is not None:
-        np.savetxt(outfile,np.transpose(np.vstack((xs,data,errs))))
-
+<<reduction_intensity>>
     
 
 <<reduction_echofr>>
 
-def poldrift(runs,mins,maxs,outfile=None):
-    if len(runs)%2 == 1:
-        runs = runs[:-1]
-    ups = [simple_spectrum(run,mins,maxs)
-                           for run in runs[1::2]]
-    downs = [simple_spectrum(run,mins,maxs)
-                           for run in runs[0::2]]
-    uperrs = np.array([np.sqrt(np.sum(run[1]**2)) for run in ups])
-    downerrs = np.array([np.sqrt(np.sum(run[1]**2)) for run in downs])
-    ups = np.array([np.sum(run[0]) for run in ups])
-    downs = np.array([np.sum(run[0]) for run in downs])
-    p = ups/downs
-    err = p * np.sqrt((uperrs/ups)**2+(downerrs/downs)**2)
-    xs = np.array(runs[0::2])
-    plt.errorbar(xs,p,yerr=err)
-    plt.show()
-    if outfile is not None:
-        np.savetxt(outfile,np.transpose(np.vstack((xs,p,err))))
-
+<<reduction_poldrift>>
 <<reduction_echodiff>>
 
 def two_flipper(runs, flipper1, flipper2, minmon, current, \
@@ -4742,13 +4695,75 @@ def echoplot(run,names,mins=(0,0),maxs=(16,128),mask=None,outfile=None):
 
 #+end_src
 
+The =intensity= plot gives the detector count, with uncertainty,
+versus current.  It doesn't come in handy very often.
+
 #+name:reduction_intensity
 #+begin_src python
+def intensity(run,names,mins=(0,0),maxs=(16,128),mask=None,outfile=None):
+    names = [name for name in names if float(name) != 5.475]
+    data = [run_int(run,name,mins,maxs,mask) for name in names]
+    errs = np.array([x[1] for x in data])
+    data = np.array([x[0] for x in data])
+    data[np.isnan(data)]=0
+    errs[np.isnan(data)]=1
+    xs = np.array([float(x) for x in names])
+    plt.errorbar(xs,data,yerr=errs)
+#    if outfile is None:
+    plt.show()
+    if outfile is not None:
+        np.savetxt(outfile,np.transpose(np.vstack((xs,data,errs))))
+
 #+end_src
+
+The =poldrift= function plots the polarization versus run number.
+This functionality has laregely been supplanted by [[beamdeath]], which
+makes runs far faster, though it does not produce errorbars.
 
 #+name:reduction_poldrift
 #+begin_src python
+def poldrift(runs,mins,maxs,outfile=None):
+    if len(runs)%2 == 1:
+        runs = runs[:-1]
+    ups = [simple_spectrum(run,mins,maxs)
+                           for run in runs[1::2]]
+    downs = [simple_spectrum(run,mins,maxs)
+                           for run in runs[0::2]]
+    uperrs = np.array([np.sqrt(np.sum(run[1]**2)) for run in ups])
+    downerrs = np.array([np.sqrt(np.sum(run[1]**2)) for run in downs])
+    ups = np.array([np.sum(run[0]) for run in ups])
+    downs = np.array([np.sum(run[0]) for run in downs])
+    p = ups/downs
+    err = p * np.sqrt((uperrs/ups)**2+(downerrs/downs)**2)
+    xs = np.array(runs[0::2])
+    plt.errorbar(xs,p,yerr=err)
+    plt.show()
+    if outfile is not None:
+        np.savetxt(outfile,np.transpose(np.vstack((xs,p,err))))
+
 #+end_src
+
+#+name:reduction_plot_2d_range
+#+begin_src python
+def plot_2d_range(data,rnge=None,steps=100,mask=None):
+    """Takes a 2d data set and plots a plateau plot"""
+    if type(rnge) is tuple:
+        vmin,vmax=rnge
+    else:
+        vmin = np.min(data)
+        vmax = np.max(data)
+    if mask is None:
+        mask = data >= vmin
+    print(vmax,vmin,steps)
+    print((vmax-vmin))
+    print((vmax-vmin)/steps)
+    xs = np.arange(vmin,vmax,(vmax-vmin)/steps)
+    ys = [len(np.where(np.logical_and(data<x,mask))[0]) for x in xs]
+    ys = np.array(ys)
+    plt.plot(xs,ys,"r*")
+    plt.show()
+#+end_src
+
 
 #+name:reduction_plot_int_range
 #+begin_src python
