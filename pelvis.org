@@ -3880,88 +3880,25 @@ RESOLUTION = 400
 <<reduction_export>>
 
 <<reduction_plot_2d_range>>
-def get_2d_int(run,name):
-    p = PelFile(basedir+"SESAME_%i/" % run + name+"_neutron_event.dat")
-    mon = MonFile(basedir+"SESAME_%i/" % run + name+"_bmon_histo.dat",False)
-    return np.sum(p.make3d(),axis=2) / np.sum(mon.spec)    
+<<reduction_get_2d_int>>
 
-def plot_int_range(run):
-    up = get_2d_int(run,"up")
-    down = get_2d_int(run,"down")
-    plot_2d_range(up+down,steps=1000)
+<<reduction_plot_int_range>>
 
-def plot_pol_range(run,mask=None):
-    up = get_2d_int(run,"down")
-    down = get_2d_int(run,"up")
-    plot_2d_range((up-down)/(up+down),(-1.0,1.0),mask=mask)
+<<reduction_plot_pol_range>>
     
     
-
-def getIntegratedSpectra(run,name,mins,maxs,mask):
-    name = normalize_name(name)
-    p = PelFile(basedir+"SESAME_%i/" % run + name+"up_neutron_event.dat")
-    mon = MonFile(basedir+"SESAME_%i/" % run + name+"up_bmon_histo.dat",False)
-    up = np.sum(p.make1d(mins,maxs,mask)[40:90])
-    uperr = np.sqrt(up)/np.sum(mon.spec)
-    up /= np.sum(mon.spec)
-    p = PelFile(basedir+"SESAME_%i/" % run + name+"down_neutron_event.dat")
-    mon = MonFile(basedir+"SESAME_%i/" % run + name+"down_bmon_histo.dat",False)
-    down = np.sum(p.make1d(mins,maxs,mask)[40:90])
-    downerr = np.sqrt(down)/np.sum(mon.spec)
-    down /= np.sum(mon.spec)
-
-    return (up,uperr,down,downerr)
-
-def normalize_name(name):
-    if name != '':
-        return "%0.3f"%float(name)
-    else:
-        return name
+<<reduction_getIntegratedSpectra>>
+<<reduction_normalize_name>>
 
 
 <<reduction_spectrum>>
 
-def errspectrum(run,name,mins=(0,0),maxs=(16,128),mask=None):
-    name = normalize_name(name)
-    p = PelFile(basedir+"SESAME_%i/" % run + name+"up_neutron_event.dat")
-    mon = MonFile(basedir+"SESAME_%i/" % run + name+"up_bmon_histo.dat",False)
-    up = p.make1d(mins,maxs,mask)
-    uperr = np.sqrt(up)/np.sum(mon.spec)
-    up /= np.sum(mon.spec)
-    p = PelFile(basedir+"SESAME_%i/" % run + name+"down_neutron_event.dat")
-    mon = MonFile(basedir+"SESAME_%i/" % run + name+"down_bmon_histo.dat",False)
-    down = p.make1d(mins,maxs,mask)
-    downerr = np.sqrt(down)/np.sum(mon.spec)
-    down /= np.sum(mon.spec)
+<<reduction_errspectrum>>
+<<reduction_simple_spectrum>>
 
-    p = (up-down)/(up+down)
-    err = p*np.sqrt((up-down)**-2+(up+down)**-2)*np.sqrt(uperr**2+downerr**2)
-    return p,err
+<<reduction_fr>>
 
-def simple_spectrum(run,mins=(0,0),maxs=(16,128),mask=None):
-    p = PelFile(basedir+"SESAME_%i/SESAME_%i_neutron_event.dat"%(run,run))    
-    mon = MonFile(basedir+"SESAME_%i/SESAME_%i_bmon_histo.dat"%(run,run),False)    
-    data = p.make1d(mins,maxs,mask)
-    err = np.sqrt(data)/np.sum(mon.spec)
-    data /= np.sum(mon.spec)
-
-    return (data,err)
-
-def fr(run,name,mins=(0,0),maxs=(16,128),mask=None):
-    up,uperr,down,downerr = getIntegratedSpectra(run,name,mins,maxs,mask)
-
-    ratio = up/down
-    rerr = ratio * np.sqrt((uperr/up)**2+(downerr/down)**2)
-
-    return (ratio,rerr)
-
-def run_int(run,name,mins=(0,0),maxs=(16,128),mask=None):
-    up,uperr,down,downerr = getIntegratedSpectra(run,name,mins,maxs,mask)
-
-    total = up+down
-    total_err = np.sqrt(uperr**2+downerr**2)
-
-    return (total,total_err)
+<<reduction_run_int>>
 
 
 <<reduction_singleplot>>
@@ -3975,56 +3912,7 @@ def run_int(run,name,mins=(0,0),maxs=(16,128),mask=None):
 <<reduction_poldrift>>
 <<reduction_echodiff>>
 
-def two_flipper(runs, flipper1, flipper2, minmon, current, \
-                watch="2"):
-    
-    data = load(runs,current)
-    keys = data.keys()
-    values = [""]
-    base = basedir + "SESAME_%i/" % runs[-1]
-
-    for value in values:
-        if type(value) is not str:
-            value = normalize_name(value)
-        upup = [x for x in keys if x[flipper1] < 0 and x[flipper2] < 0 \
-                and x[choices[watch]]==current]
-        updown = [x for x in keys if x[flipper1] < 0 and x[flipper2] > 0 \
-                  and x[choices[watch]]==current]
-        downup = [x for x in keys if x[flipper1] > 0 and x[flipper2] < 0 \
-                  and x[choices[watch]]==current]
-        downdown = [x for x in keys if x[flipper1] > 0 and x[flipper2] > 0 \
-                    and x[choices[watch]]==current]
-        if filter is not None:
-            value = "" #Don't put values on files when we're only running a single export
-
-        if upup != []:
-            print "-------------- Up/Up state --------------"
-            Combiner.save(base+value+"upup_current=" + str(current),
-                          minmon,
-                          upup,
-                          data)
-        if updown != []:
-            print "-------------- Up/Down state --------------"
-            Combiner.save(base+value+"updown_current=" + str(current),
-                          minmon,
-                          updown,
-                          data)
-        if downup != []:
-            print "-------------- Down/Up state --------------"
-            Combiner.save(base+value+"downup_current=" + str(current),
-                          minmon,
-                          downup,
-                          data)
-        if downdown != []:
-            print "-------------- Down/Down state --------------"
-            Combiner.save(base+value+"downdown_current=" + str(current),
-                          minmon,
-                          downdown,
-                          data)
-            
-        if [upup,updown,downup,downdown]==[[],[],[],[]]:
-            print("No data to write")
-           
+<<reduction_twoflipper>>           
     
 <<reduction_main>>
 #+end_src
@@ -4545,6 +4433,66 @@ def export(runs,sortby=None,flipper=0,minmon=8,current=None,\
 
 #+end_src
 
+The =twoflipper= function allows for exporting the states of a
+two-flipper measurement.  This is deprecated, since the same
+functionality can be performed by =sortby=.
+
+#+name:reduction_twoflipper
+#+begin_src python
+def two_flipper(runs, flipper1, flipper2, minmon, current, \
+                watch="2"):
+    
+    data = load(runs,current)
+    keys = data.keys()
+    values = [""]
+    base = basedir + "SESAME_%i/" % runs[-1]
+
+    for value in values:
+        if type(value) is not str:
+            value = normalize_name(value)
+        upup = [x for x in keys if x[flipper1] < 0 and x[flipper2] < 0 \
+                and x[choices[watch]]==current]
+        updown = [x for x in keys if x[flipper1] < 0 and x[flipper2] > 0 \
+                  and x[choices[watch]]==current]
+        downup = [x for x in keys if x[flipper1] > 0 and x[flipper2] < 0 \
+                  and x[choices[watch]]==current]
+        downdown = [x for x in keys if x[flipper1] > 0 and x[flipper2] > 0 \
+                    and x[choices[watch]]==current]
+        if filter is not None:
+            value = "" #Don't put values on files when we're only running a single export
+
+        if upup != []:
+            print "-------------- Up/Up state --------------"
+            Combiner.save(base+value+"upup_current=" + str(current),
+                          minmon,
+                          upup,
+                          data)
+        if updown != []:
+            print "-------------- Up/Down state --------------"
+            Combiner.save(base+value+"updown_current=" + str(current),
+                          minmon,
+                          updown,
+                          data)
+        if downup != []:
+            print "-------------- Down/Up state --------------"
+            Combiner.save(base+value+"downup_current=" + str(current),
+                          minmon,
+                          downup,
+                          data)
+        if downdown != []:
+            print "-------------- Down/Down state --------------"
+            Combiner.save(base+value+"downdown_current=" + str(current),
+                          minmon,
+                          downdown,
+                          data)
+            
+        if [upup,updown,downup,downdown]==[[],[],[],[]]:
+            print("No data to write")
+
+#+end_src
+
+
+
 ** Import
 
 The =spectrum= function takes a run number directory (=run=) and a designation
@@ -4568,6 +4516,134 @@ def spectrum(run,name,mins=(0,0),maxs=(16,128),mask=None):
     down /= np.sum(mon.spec)
 
     return (up-down)/(up+down)
+#+end_src
+
+The =errspectrum= function is similar to =spectrum=, except that it
+also returns the uncertainty in the polarization.
+
+#+name: reduction_errspectrum
+#+begin_src python
+def errspectrum(run,name,mins=(0,0),maxs=(16,128),mask=None):
+    name = normalize_name(name)
+    p = PelFile(basedir+"SESAME_%i/" % run + name+"up_neutron_event.dat")
+    mon = MonFile(basedir+"SESAME_%i/" % run + name+"up_bmon_histo.dat",False)
+    up = p.make1d(mins,maxs,mask)
+    uperr = np.sqrt(up)/np.sum(mon.spec)
+    up /= np.sum(mon.spec)
+    p = PelFile(basedir+"SESAME_%i/" % run + name+"down_neutron_event.dat")
+    mon = MonFile(basedir+"SESAME_%i/" % run + name+"down_bmon_histo.dat",False)
+    down = p.make1d(mins,maxs,mask)
+    downerr = np.sqrt(down)/np.sum(mon.spec)
+    down /= np.sum(mon.spec)
+
+    p = (up-down)/(up+down)
+    err = p*np.sqrt((up-down)**-2+(up+down)**-2)*np.sqrt(uperr**2+downerr**2)
+    return p,err
+#+end_src
+
+
+Most of the plotting functions rely upon =getIntegratedSpectra= to get
+the actual state counts for their results.  It returns the monitor
+normalized intensity spectrums of the spin up and spin down states,
+as well as the corresponding uncertainties.
+
+- run :: The run number for the folder containing the data
+- name :: Any additional infixed on the name of the run.  This is
+          mostly to handle sortby runs where we need to load a
+          specific power supply state.
+- mins :: The minimum x and y corrdinate on the detector to examine
+- maxs :: The maximum x and y corrdinate to examine
+- mask :: A bit mask for eliminating unwanted pixels.
+
+In theory, the =spectrum= and =errspectrum= functions can be rewritten
+as a quick wrappers around =getIntegratedSpectra=.  You should do
+this.
+
+#+name: reduction_getIntegratedSpectra
+#+begin_src python
+def getIntegratedSpectra(run,name,mins,maxs,mask):
+    name = normalize_name(name)
+    p = PelFile(basedir+"SESAME_%i/" % run + name+"up_neutron_event.dat")
+    mon = MonFile(basedir+"SESAME_%i/" % run + name+"up_bmon_histo.dat",False)
+    up = np.sum(p.make1d(mins,maxs,mask)[40:90])
+    uperr = np.sqrt(up)/np.sum(mon.spec)
+    up /= np.sum(mon.spec)
+    p = PelFile(basedir+"SESAME_%i/" % run + name+"down_neutron_event.dat")
+    mon = MonFile(basedir+"SESAME_%i/" % run + name+"down_bmon_histo.dat",False)
+    down = np.sum(p.make1d(mins,maxs,mask)[40:90])
+    downerr = np.sqrt(down)/np.sum(mon.spec)
+    down /= np.sum(mon.spec)
+
+    return (up,uperr,down,downerr)
+
+#+end_src
+
+The =reduction_fr= function is a thin wrapper around the
+getIntegratedSpectra function to provide the flipping ratio versus
+wavelength for a given run.
+
+#+name: reduction_fr
+#+begin_src python
+def fr(run,name,mins=(0,0),maxs=(16,128),mask=None):
+    up,uperr,down,downerr = getIntegratedSpectra(run,name,mins,maxs,mask)
+
+    ratio = up/down
+    rerr = ratio * np.sqrt((uperr/up)**2+(downerr/down)**2)
+
+    return (ratio,rerr)
+#+end_src
+
+Similarly, =reduction_run_int= gives the total neutron intensity
+between the spin up and spin down states.
+
+#+name:reduction_run_int
+#+begin_src python
+def run_int(run,name,mins=(0,0),maxs=(16,128),mask=None):
+    up,uperr,down,downerr = getIntegratedSpectra(run,name,mins,maxs,mask)
+
+    total = up+down
+    total_err = np.sqrt(uperr**2+downerr**2)
+
+    return (total,total_err)
+#+end_src
+
+
+The =simple_spectrum= routine is similar to =getIntegrateSpectra=,
+but it only loads a single subrun based on the run number.  It's
+largest advantage is that the data does not need to be exported for
+it to be used.
+
+#+name:reduction_simple_spectrum
+#+begin_src python
+def simple_spectrum(run,mins=(0,0),maxs=(16,128),mask=None):
+    p = PelFile(basedir+"SESAME_%i/SESAME_%i_neutron_event.dat"%(run,run))    
+    mon = MonFile(basedir+"SESAME_%i/SESAME_%i_bmon_histo.dat"%(run,run),False)    
+    data = p.make1d(mins,maxs,mask)
+    err = np.sqrt(data)/np.sum(mon.spec)
+    data /= np.sum(mon.spec)
+
+    return (data,err)
+#+end_src
+
+
+
+Some plots depend more on the 2d detector image and less on the
+wavelength spectrum.  The =get_2d_int= function returns a monitor
+normalized 2d array representing the neutron intensity per pixel.
+
+- run :: The run number for the directory where the flipping run data
+         has been exported
+- name :: The name of the data file.  This can theoretically allow
+          this function to be used to load the results of a sortby
+          operation, but, in practice, it's only ever used for just
+          up and down spin states.
+
+#+name:reduction_get_2d_int
+#+begin_src python
+def get_2d_int(run,name):
+    p = PelFile(basedir+"SESAME_%i/" % run + name+"_neutron_event.dat")
+    mon = MonFile(basedir+"SESAME_%i/" % run + name+"_bmon_histo.dat",False)
+    return np.sum(p.make3d(),axis=2) / np.sum(mon.spec)    
 #+end_src
 
 
@@ -4743,6 +4819,18 @@ def poldrift(runs,mins,maxs,outfile=None):
 
 #+end_src
 
+The =plot_2d_range= plot takes in a 3D data set of any sort.  It then
+finds creates a scatter plot.  The x axis of the scatter plot is a
+given pixel value.  The y axis is the number of pixel whose value is
+less than the x-coordinate.  Think of it like a cummulative histogram
+of the data.
+
+The optional =rnge= variable gives the domain of the x-axis.  If no
+domain is given, it runs over the full pixel value range of the given
+data.  The =steps= parameter can be used to chose the resolution of
+the plot along the x-axis.  Finally, =mask= can be used to pass a
+binary mask of pixels to ignore.
+
 #+name:reduction_plot_2d_range
 #+begin_src python
 def plot_2d_range(data,rnge=None,steps=100,mask=None):
@@ -4764,11 +4852,40 @@ def plot_2d_range(data,rnge=None,steps=100,mask=None):
     plt.show()
 #+end_src
 
+The =plot_int_range= takes a single run number and plots a cumulative
+histogram of the wavelength integrate intensity of the pixels.  The
+x-axis is the minimum pixel intensity and the y axis is how many
+pixels meat that minimum.  The function examines both spin states for
+the run and it is assumed that reduction has already exported the up
+and down run files for that run.
 
 #+name:reduction_plot_int_range
 #+begin_src python
+def plot_int_range(run):
+    up = get_2d_int(run,"up")
+    down = get_2d_int(run,"down")
+    plot_2d_range(up+down,steps=1000)
 #+end_src
+
+The =plot_pol_range= function is similar to =plot_int_range=, except
+that it examines the polarization at each pixel, instead of the total intensity.
 
 #+name:reduction_plot_pol_range
 #+begin_src python
+def plot_pol_range(run,mask=None):
+    up = get_2d_int(run,"down")
+    down = get_2d_int(run,"up")
+    plot_2d_range((up-down)/(up+down),(-1.0,1.0),mask=mask)
+#+end_src
+
+
+=normalize_name= 
+
+#+name:reduction_normalize_name
+#+begin_src python
+def normalize_name(name):
+    if name != '':
+        return "%0.3f"%float(name)
+    else:
+        return name
 #+end_src
