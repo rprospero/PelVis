@@ -3859,6 +3859,287 @@ class MonFile:
 #+end_src
 
 
+
+** Combiner
+
+The =Combiner= module contains two helper functions.  These function
+are used for parsing the metadata from individual runs and combining
+them into a single run file.
+
+*** Combiner Skeleton
+
+The =XMLNS= global variable is the [[http://www.w3.org/TR/REC-xml-names/][XML Namespace]] that the SNS has
+chosen to use in their configuration files.  The good news is that
+Python's =xml.etree= module correctly handles namespaces.  The bad
+news is that every attempt to pull a tag from an XML file requires
+that the tag be prefaced with the namespace, which is a pain.
+
+#+begin_src python :tangle Combiner.py :noweb tangle :padline no
+import xml.etree.ElementTree as ET
+import HTMLParser
+import json
+import numpy as np
+import os.path
+from time import strptime,mktime
+from math import floor,sqrt
+
+XMLNS = "{http://neutrons.ornl.gov/SNS/DAS/runinfo_v4_3}"
+
+<<combiner-load>>
+<<combiner-save>>
+#+end_src
+
+
+
+*** Load
+
+The =load= function takes a list of paths to runinfo files and
+returns a dictionary with the current configurations as a key and the
+runs associated with the configuration as the value.  It also takes
+an optional =filter= parameter, which is currently ignored and should
+be removed.
+
+#+name:combiner-load
+#+begin_src python
+def load(paths,filter=None):
+    currents = set([])#List of the configurations of the instrument
+    runsets = {}#Directionary of lists of run nodes, indexed by their instrument configuration
+
+#+end_src
+
+For each run_info file, we use element tree to find the =<Notes>=
+tag.  This text is then extracted out.  The SNS software does HTML
+encoding on the text in the notes tag, despite the fact that this is
+XML and not HTML.  In any case, we use the HTMLParser module to
+remove the text encoding.  Finally, our =save= function in
+=Sesame_init.py= saves the power supply status as a [[http://www.json.org][JSON]] string,
+which we then interpret.
+
+#+name:combiner-load
+#+begin_src python
+#
+    for path in paths:
+        print(path)
+        base = os.path.dirname(path)
+        text = ET.parse(path).getroot().find(".//"+XMLNS+"Notes").text 
+        text = HTMLParser.HTMLParser().unescape(text)
+        manifest = json.loads(text)
+#+end_src
+
+The dictionary of the power supply currents is turned into a tuple.
+The tuple is a value by itself and can be put into a Set, while the
+dictionary is an object with a unique identity and doesn't mesh as
+well with Sets and uniqueness checking.  A useful improvement would
+be to turn this into a [[https://docs.python.org/2/library/collections.html][NamedTuple]], which would allow the constituents
+to be called by name, instead of location.
+
+#+name:combiner-load
+#+begin_src python
+        
+##        if ((filter is not None) and 
+##            (floor(float(manifest['triangle1'])) != filter)):
+##            continue #wrong triangle current
+        try:
+            current = (manifest['Flipper'],
+                       manifest['Guide'],
+                       manifest['Phase'],
+                       manifest['Sample'],
+                       manifest['Triangle1'],
+                       manifest['Triangle2'],
+                       manifest['Triangle3'],
+                       manifest['Triangle4'],
+                       manifest['Triangle5'],
+                       manifest['Triangle6'],
+                       manifest['Triangle7'],
+                       manifest['Triangle8'])
+        except:
+            print("Could not retrieve currents for run " + str(base[-5:]))
+            continue
+#+end_src
+
+If this combination of power supply currents hasn't been seen before,
+it's added to the dictionary.  Replacing runsets with a [[https://docs.python.org/2/library/collections.html][defaultDict]]
+could save us some effort here.
+
+Finally, the function returns the dictionary.
+
+#+name:combiner-load
+#+begin_src python
+#
+        if current in currents:
+            runsets[current].append(path)
+        else:
+            currents.add(current)
+            runsets[current]=[path]
+    return runsets
+
+#+end_src
+
+*** Save
+
+The =save= function is used to export a set of runs into a single
+file.
+
+- path :: The location where the file should be saved.  This includes
+          both the directory and the prefix for the file name.  For
+          instance, if =path= is "C:/PELVis/example", then the
+          detector data would be saved in "example_neutron_event.dat"
+          in the "C:/PELVis" directory.
+- minmon :: The minimum number of monitor counts per second that we
+            expect when the beam is on.  Runs with a count rate below
+            this will be ignored, as the assumption is that there
+            were no neutrons and the detector merely contains noise.
+- keys :: Which current sets should be included in the export
+- runsets :: The dictionary of data runs produced by =load=
+
+We begin by using the key to extract from the dictionary the paths
+for all of the runs were are interested in.
+#+name:combiner-save
+#+begin_src python
+def save(path,minmon,keys,runsets):
+    runs = [x for key in keys for x in runsets[key]]
+#+end_src
+
+The =mon= array holds out total monitor spectrum.
+
+#+name:combiner-save
+#+begin_src python
+#
+    mon = np.zeros((50001,),dtype=np.int32)
+#+end_src
+
+The =tottime= and =detcount= are just interesting statistics and
+could be dropped.
+
+#+name:combiner-save
+#+begin_src python
+#
+    tottime = 0
+    detcount=0
+#+end_src
+
+There's a weird bug in the SNS code.  I'm pretty sure that the bug is
+in their code and is not something that I did.  When a runinfo file is
+saved, it gives a malformatted timestamp for the =StartTime= and
+=StopTime=.  The format strings below allow Python to parse these strings.
+
+#+name:combiner-save
+#+begin_src python
+#
+    format1 = "%Y-%m-%dT%H:%M:%S-04:00"
+    format2 = "%Y-%m-%dT%H:%M:%S-04:00-04:00"
+#+end_src
+
+We open the final output file (outfile), and cycle through the
+monitor files (monpath) and detecto files (detpath).
+
+#+name:combiner-save
+#+begin_src python
+#
+    with open(path+"_neutron_event.dat","wb") as outfile:
+        for r in runs:
+            monpath = r[:-11] + "bmon_histo.dat"
+            detpath = r[:-11] + "neutron_event.dat"
+#+end_src
+
+We extract the starting and ending times and put the total number of
+seconds spent during the measurement into the variable =time=.
+
+#+name:combiner-save
+#+begin_src python
+#
+            starttime = strptime(ET.parse(r).getroot().find(".//"+XMLNS+"StartTime").text.strip(),format1)
+            stoptime = strptime(ET.parse(r).getroot().find(".//"+XMLNS+"StopTime").text.strip(),format2)
+
+            time = mktime(stoptime)-mktime(starttime)
+
+#+end_src
+
+The monitor spectrum for the individual run is slurped into the
+variable =montemp= with the total number of counts being stored in
+=moncount=. 
+
+#+name:combiner-save
+#+begin_src python
+#
+            with open(monpath,"r") as infile:
+                montemp = np.fromfile(infile,dtype=np.int32)
+
+            moncount = 1.*np.sum(montemp)
+            print "Run number: " + str(r[-17:-12])
+            print "Time: " + str(time)
+
+
+#+end_src
+
+We check to see if we're within 20 counts per second of the expected
+monitor count rate.  If not, then we stop processing this run.
+
+#+name:combiner-save
+#+begin_src python
+#
+            #Fixed for enabling dead run substraction 04/01/2013 done by Radian 
+            if time <= 0 or ((moncount/time < minmon-20 or \
+                              moncount/time>minmon+20) and minmon >0):
+                print ":::: SKIPPING RUN: " + str(r[-17:-12]) + " ::::\n"
+                print moncount/time
+                print time
+                continue
+
+            print "Monitor counts: " + str(moncount)
+            print "Monitor count rate: " + str(round(moncount/time,2))
+
+            mon += montemp
+            tottime += time
+
+#+end_src
+
+The contents of the detector file is loaded into dettemp.  There's
+also some code 
+
+#+name:combiner-save
+#+begin_src python
+#
+            with open(detpath,"rb") as infile:
+                dettemp = np.fromfile(infile,count=-1)
+                dc = 1.*len(dettemp)
+                dcr = round(dc/moncount,2)
+                dcrerr = sqrt(dc/(moncount**2) + (dc**2)/(moncount**3))
+                print "Detector counts: " + str(dc)
+                print "Detector count rate: " + str(round(dc/time,2))
+                print "Detector counts/Monitor counts: " + str(dcr) + \
+                      " +/- " + str(dcrerr) + "\n"
+                if dcr <= 0:# or dcrerr/dcr > 0.02:
+                    print "#### SKIPPING RUN: " + str(r[-17:-12]) + " ####\n"
+                    mon -= montemp
+                    continue
+
+#+end_src
+
+#+name:combiner-save
+#+begin_src python
+#
+                detcount += len(dettemp)
+                dettemp.tofile(outfile)
+                del dettemp
+
+#+end_src
+
+#+name:combiner-save
+#+begin_src python
+#
+    with open(path+"_bmon_histo.dat","wb") as stream:
+        mon.tofile(stream)
+    print "Total Monitor Counts = " + str(np.sum(mon))
+    print "Total Detector Counts = " + str(detcount)
+    print "Total Time = " + str(tottime)
+    if tottime > 0:
+        print "Monitor Count Rate = " + str(np.sum(mon)/tottime)
+        print "Detector Count Rate = " + str(detcount/tottime)
+
+#+end_src
+
+
 * Reduction
 
 ** Reduction Skeleton
