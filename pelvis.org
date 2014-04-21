@@ -3089,6 +3089,236 @@ class SpectrumDialog(wx.Dialog):
 #+end_src
 
 
+** Livewatch
+
+   =Livewatch.py= is a utility to display the polarization as it comes
+   in.  It takes two parameters at the command line.  The first is the
+   run number for the run.  The second is the current in triangle 1
+   for the runs which we wish to analyze.
+
+*** Livewatch skeleton
+
+#+begin_src python :tangle livewatch.py :noweb tangle :padline no
+import numpy as np
+from matplotlib import pyplot as plt
+import matplotlib as mpl
+import time
+from reader import PelFile
+from monfile import MonFile
+import sys
+import os.path
+import xml.etree.ElementTree as ET
+import HTMLParser
+import json
+
+RUN = 32725
+basedir = "C:/userfiles/EXP011/"
+XMLNS = "{http://neutrons.ornl.gov/SNS/DAS/runinfo_v4_3}"
+REBIN = 4
+
+plt.ion()
+
+<<livewatch_spectrum>>
+mpl.rcParams['interactive'] = True
+
+<<livewatch_manifestly>>
+def spectra(gen):
+    while True:
+        next = gen.next()
+        if next is None:
+            yield None
+            continue
+        i,_=next
+        s = spectrum(i)
+        if s is None:
+            yield None
+        else:
+            data,counts,manifest = s
+            yield data,counts,manifest
+            print i
+            print(manifest)
+            i += 1
+
+def filter(gen,f):
+    next = gen.next()
+    while True:
+        if next is None:
+            yield None
+        else:
+            if f(next):
+                yield next
+        next = gen.next()
+
+def integrator(gen):
+    data = np.zeros(400/REBIN)
+    counts = 0
+    while True:
+        next = gen.next()
+        if next is not None:
+            data += rebin(next[0],REBIN)
+            counts += next[1]
+        yield data/counts,np.sqrt(data)/counts
+        
+
+def joiner(gens):
+    while True:
+        streams = [g.next() for g in gens]
+        yield streams
+
+def plotter(source,count=1):
+    xs = np.arange(0,20,0.05*REBIN) 
+    plt.figure("Live Update")
+    plt.ylim([-1,1])
+    graphs = [plt.errorbar(xs,np.zeros(400/REBIN),np.zeros(400/REBIN),marker="o") for i in range(count)]
+    while True:
+        data=source.next()
+        for g,d in zip(graphs,data):
+            if d is not None:
+                g[0].set_ydata(d)
+        plt.draw()
+        plt.pause(5)
+
+def polarization(up,down):
+    up = integrator(up)
+    down = integrator(down)
+    while True:
+        u = up.next()[0]
+        d = down.next()[0]
+        yield -1*(u-d)/(u+d)
+        #yield d/u
+
+def fullpol(i,f):
+    upstate = lambda x: x[1]['Flipper'] < 0
+    downstate = lambda x: x[1]['Flipper'] > 0
+
+    ups = spectra(filter(filter(manifestly(i),upstate),f))
+    downs = spectra(filter(filter(manifestly(i),downstate),f))
+    return polarization(ups,downs)
+
+<<livewatch_rebin>>
+
+if __name__=="__main__":
+
+    lowcur = lambda x: x[1]['Triangle1'] ==3
+    midcur = lambda x: x[1]['Triangle1'] ==9
+    hicur = lambda x: x[1]['Triangle1'] ==15
+
+    start = int(sys.argv[1])
+
+    filters = [lambda x: x[1]['Triangle1'] == float(i) for i in sys.argv[2:]]
+
+    polarizers = [fullpol(start,f) for f in filters]
+
+    p = plotter(joiner(polarizers),count=len(polarizers))
+    plotter(p)
+
+#+end_src
+
+
+*** Low Level Functions
+
+The livewatch_spectrum function loads in the intensity spectrum and
+uncertainty of a single run from its run number.  This code was copied
+almost verbatim from [[Reduction]].  The only major change is that a
+dictionary containing the current values is also returned, allowing
+for other functions to sort the data.
+
+#+name: livewatch_spectrum
+#+begin_src python
+def spectrum(run,mins=(0,0),maxs=(16,128),mask=None):
+    eventfile = basedir+"SESAME_%i/SESAME_%i" % (run,run) + "_neutron_event.dat"
+    if not os.path.isfile(eventfile):
+        return None
+    p = PelFile(eventfile)
+    mon = MonFile(basedir+"SESAME_%i/SESAME_%i" % (run,run) +"_bmon_histo.dat",False)
+    up = p.make1d(mins,maxs,mask)
+
+    manifestFile = basedir+"SESAME_%i/SESAME_%i" % (run,run) + "_runinfo.xml"
+
+    text = ET.parse(manifestFile).getroot().find(".//"+XMLNS+"Notes").text
+    text = HTMLParser.HTMLParser().unescape(text)
+    manifest = json.loads(text)
+
+    return up,np.sum(mon.spec),manifest
+
+
+#+end_src
+
+Livewatch has a function for rebinning numpy arrays.  It takes the
+original arrays and a number giving how many of the original array
+elements should be combined together in the new array.
+
+#+name: livewatch_rebin
+#+begin_src python
+def rebin(x,bins):
+    result=np.zeros(len(x)/bins,dtype=np.float64)
+    for b in range(bins):
+        result += x[b::bins]
+    return result
+#+end_src
+
+
+
+*** Generators
+
+The main structure of livewatch is based around python
+generators. Generators tend to come in three kinds
+
+- Sources :: A generator which produces a continuously updating list
+             of data.
+- Pipes :: A generator which reads from another generator, performs
+           some transformations on the results, and yields that
+           result.
+
+There's another related kind of function that isn't a generator.
+- Sinks :: A function that reads through a generator and performs
+           actions based on the results, but doesn't perform pass data
+           to any higher level generators.
+
+**** Sources
+
+Manifestly starts with a single run number.  It then continuously
+scans that directory, waiting for a monitor file to be written.  If
+the monitor file exists, we know that the data acquisition system has
+finished then run and we can continue.  If there is no new run, we
+signal that information up the chain with a =None=.
+
+Once the monitor file has been written, we read the runinfo file to
+get the current data from the =Notes= heading.  This is turned into a
+dictionary via json parsing.  The run number and manifest can then be
+passed up the chain.  Finally, we increment the run number and return
+to waiting for the new run to finish.
+
+I also apologize for the stupid name.
+
+#+name: livewatch_manifestly
+#+begin_src python
+def manifestly(start):
+    i = start
+    while True:
+        manifestFile = basedir+"SESAME_%i/SESAME_%i" % (i,i) + "_runinfo.xml"
+        monitorFile = basedir+"SESAME_%i/SESAME_%i" % (i,i) + "_bmon_histo.dat"
+        if not os.path.isfile(monitorFile):
+            #If the monitor file hasn't been written, the run isn't
+            #done yet and we shouldnt' read it
+            yield None
+        else:
+            try:
+                manifestFile = basedir+"SESAME_%i/SESAME_%i" % (i,i) + "_runinfo.xml"
+
+                text = ET.parse(manifestFile).getroot().find(".//"+XMLNS+"Notes").text
+                text = HTMLParser.HTMLParser().unescape(text)
+                manifest = json.loads(text)
+                yield i,manifest
+                i += 1
+            except ValueError:
+                yield None
+
+
+
+#+end_src
+
+
 * Utility Classes
 
   This section is for libraries which are used by more than one part
@@ -5647,3 +5877,4 @@ if __name__=="__main__":
     
 
 #+end_src
+#  LocalWords:  livewatch
