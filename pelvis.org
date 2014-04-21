@@ -4095,7 +4095,8 @@ monitor count rate.  If not, then we stop processing this run.
 #+end_src
 
 The contents of the detector file is loaded into dettemp.  There's
-also some code 
+also some code to calculate the detector count rate.  That code could
+probably be removed.
 
 #+name:combiner-save
 #+begin_src python
@@ -4116,6 +4117,9 @@ also some code
 
 #+end_src
 
+We increment the total detector count and add the events to our final
+run file.  We also delete the current data from memory to save some space.
+
 #+name:combiner-save
 #+begin_src python
 #
@@ -4124,6 +4128,9 @@ also some code
                 del dettemp
 
 #+end_src
+
+Finally, we dump the total monitor spectrum to a file and display the
+cumulative statistics for all of the runs.
 
 #+name:combiner-save
 #+begin_src python
@@ -5160,7 +5167,11 @@ def plot_pol_range(run,mask=None):
 #+end_src
 
 
-=normalize_name= 
+=normalize_name= takes either a number or an empty string.  If it
+takes an empty string, it returns the same.  If it gets a number, it
+returns a string with that number out to three places after the
+decimal.  This is useful for naming runs, since we don't always want
+to append a current value to the file name.
 
 #+name:reduction_normalize_name
 #+begin_src python
@@ -5182,7 +5193,7 @@ def normalize_name(name):
   the Motor computer and the =Coils= class needs to be loaded into
   PyDAS.  The =sesame_init.py= script currently loads the power supply
   client into the variable =coils=.
-
+  
 ** Power Supply Server
 
 *** Power Supply Class Module
