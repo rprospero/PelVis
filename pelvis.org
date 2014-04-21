@@ -2,6 +2,23 @@
 #+AUTHOR: Adam Washington
 #+OPTIONS: toc:4
 
+
+#+BEGIN_LATEX
+\lstset{
+  belowcaptionskip=1\baselineskip,
+  breaklines=true,
+  frame=L,
+  xleftmargin=\parindent,
+  language=Python,
+  showstringspaces=false,
+  basicstyle=\footnotesize\ttfamily,
+  keywordstyle=\bfseries\color{cyan},
+  commentstyle=\itshape\color{olive},
+  identifierstyle=\color{black},
+  stringstyle=\color{orange},
+}
+#+END_LATEX
+
 * Introduction
 
   This docment is a [[http://www.literateprogramming.com/index.html][literate]] program for analyzing data collected on
@@ -179,15 +196,15 @@
 #+end_src
 
 
-** GUI Controls
+* GUI Controls
 
-   We're using [[https://www.wxwidgets.org/][wxWidgets]] as our GUI toolkit through the [[http://www.wxpython.org][wxPython]]
-   binding library.  wxWidgets was chosen as it is cross platform and
-   provided a more complete toolkit than the default Tk toolkit that
-   comes with Python.  The largest disadvantage to this decision is
-   that wxPython has not yet been officially ported to Python 3.
+  We're using [[https://www.wxwidgets.org/][wxWidgets]] as our GUI toolkit through the [[http://www.wxpython.org][wxPython]]
+  binding library.  wxWidgets was chosen as it is cross platform and
+  provided a more complete toolkit than the default Tk toolkit that
+  comes with Python.  The largest disadvantage to this decision is
+  that wxPython has not yet been officially ported to Python 3.
 
-*** Pelvis Frame
+** Pelvis Frame
 
     The Pelvis Frame is the main UI for the application.
     Unfortunately, it also contains a large amount of application
@@ -278,7 +295,7 @@
   
 #+end_src
 
-**** Initialization
+*** Initialization
 
      The frame is created with a single parameter: =Yield=.  This points
      to a function which allows Pelvis to temporarily return control
@@ -306,7 +323,7 @@
 
 
      Now we can create the actual components of the GUI.  The =xPanel=
-     and =yPanel= are [[GraphPanel][graphs]] which display the integrated intensity
+     and =yPanel= are [[Graph Panel][graphs]] which display the integrated intensity
      along an axis.  =imPanel= displays the actual, 2D detector [[ImagePanel][image]].
      =colorbar= gives the current scale of the color scheme on the
      imPanel.  =opPanel= is a generic [[Option Panel][panel]] for the user to input data
@@ -496,7 +513,7 @@
      
 
 
-**** Handling Pel Files
+*** Handling Pel Files
 
      There's a large amount of references to Pel files in this
      section, which might be confusing, since you will almost never
@@ -623,7 +640,7 @@
 
 
 
-**** Menu Commands
+*** Menu Commands
 
      The Image Array command causes Pelvis to export the detector
      image, one wavelength bin at a time.  It can be useful to find
@@ -828,6 +845,7 @@
      compactness.  Not that =OnExportROI= does *not* change the
      current mask for the application. 
 
+<<OnExportROI>>
 #+name:pelvis_menu_commands
 #+begin_src python 
   
@@ -1062,7 +1080,7 @@
 
      
 
-**** Updaters
+*** Updaters
 
      There are two updates which need to be performed.  The first is
      updating the data, which involves taking the 3D arrays of neutron
@@ -1175,14 +1193,14 @@
 #+end_src
 
 
-*** Position Panel
+** Position Panel
 
-    This is a class to provide a small panel which provides
-    information about single pixels of detector data via the cursor
-    position.  It also provides aggregate information over the region
-    of interest.
+   This is a class to provide a small panel which provides
+   information about single pixels of detector data via the cursor
+   position.  It also provides aggregate information over the region
+   of interest.
 
-**** Position Panel Class Skeleton
+*** Position Panel Class Skeleton
 
 #+Name:position_panel
 #+begin_src python :noweb tangle
@@ -1202,7 +1220,7 @@
       <<position_panel_updating>>
 #+end_src
 
-**** Initialization of the PositionPanel
+*** Initialization of the PositionPanel
 
      Creating a new PositionPanel requires only a single parameter:
      the parent frame which will hold the panel.  The constructor
@@ -1270,7 +1288,7 @@ Finally, we need to do the standard GUI layout code.
           self.Layout()
 #+end_src
 
-**** Update position data
+*** Update position data
 
      As implied by the name, the primary function of the position
      panel is to provide the direct numbers for the value under the
@@ -1321,7 +1339,7 @@ Finally, we need to do the standard GUI layout code.
 #+end_src
 
 
-*** Option Panel
+** Option Panel
 
     The class PelvisOptionPanel creates a panel of labeled text boxes
     for user entry.  This is used to control values such as the
@@ -1388,7 +1406,7 @@ Finally, we need to do the standard GUI layout code.
   
 #+end_src
 
-**** Initialization
+*** Initialization
 
      We begin by initializing the superclass and creating a sizer for
      the panel
@@ -1424,7 +1442,7 @@ Finally, we need to do the standard GUI layout code.
           self.Layout()
 #+end_src
 
-**** Wavelength Range
+*** Wavelength Range
 
      When a set of parameters is added, it's useful to put in a
      standard getter and setter.  The setters are fairly standard, but
@@ -1458,7 +1476,7 @@ Finally, we need to do the standard GUI layout code.
           self.options["lambdaMax"].SetValue(str(max))
 #+end_src
 
-**** Intensity Range
+*** Intensity Range
 
      We create similar getters and setters for the minimum and maximum
      intensity.  The values create bounds for both the 2D color plot
@@ -1491,7 +1509,7 @@ Finally, we need to do the standard GUI layout code.
 
 #+end_src
 
-**** Region of Interest
+*** Region of Interest
 
      Finally, we need getters and setters for our region of interest.
      The getter works pretty much the same as the others, but the
@@ -1538,16 +1556,16 @@ Finally, we need to do the standard GUI layout code.
           self.options["yMax"].SetValue(str(y))
 #+end_src
 
-#  LocalWords:  wxWidget
+#  LocalWords:  wxWidget SNS numpy DAQmx DAC XMLRPC PowerSupply
 
 
-*** Graph Panel
+** Graph Panel
 
-    The =GraphPanel= module creates a single filled-line plot that can
-    be embedded in a wxWidgets frame.  It's used by PelVis to present
-    the detector image integrated along axis.
+   The =GraphPanel= module creates a single filled-line plot that can
+   be embedded in a wxWidgets frame.  It's used by PelVis to present
+   the detector image integrated along axis.
 
-**** Graph Panel Skeleton
+*** Graph Panel Skeleton
 
 #+begin_src python :tangle GraphPanel.py :noweb tangle :padline no
 """Classes for adding sumlines to frames
@@ -1568,6 +1586,44 @@ from matplotlib.figure import Figure
 
 import wx
 
+<<graphpanel_rebin>>
+
+class GraphPanel(wx.Panel):
+    """This class creates a panel that displays a filled plot. """
+
+    
+    HORIZONTAL = 0 
+    INVERTED = 1
+    VERTICAL = 2
+    <<graphpanel_init>>
+    <<graphpanel_setplot>>
+
+#     def SetYLim(self,range):
+#         self.axes.set_ylim(range)
+
+#     def SetXLim(self,range):
+#         self.axes.set_xlim(range)
+
+    <<graphpanel_setpos>>
+
+    <<graphpanel_onpaint>>
+
+#+end_src
+
+
+*** rebin function
+
+The rebin function takes an numpy array and an integer of how many
+bins to combine.  The result is a new numpy array where each group of
+=count= bins have been averaged together.
+
+This is non-intuitive and the =mean= function should be replaced with
+a =sum= to make the results more obvious.
+
+This function is no longer in use and should probably be removed.
+
+#+name:graphpanel_rebin
+#+begin_src python
 # FIXME:  This function is extremely brittle
 def rebin(a,count):
     """A quick function to rebin an array
@@ -1586,14 +1642,29 @@ def rebin(a,count):
     """
 
     return np.array([a[i:i+count].mean() for i in range(0,len(a),count)])
+#+end_src
 
-class GraphPanel(wx.Panel):
-    """This class creates a panel that displays a filled plot. """
+*** Initialization
 
-    
-    HORIZONTAL = 0 
-    INVERTED = 1
-    VERTICAL = 2
+     A =GraphPanel= object needs four parameters.  The first is the
+     =parent=, which holds the container in which the panel will be
+     displayed.  The second, =fig=, is a tuple with the relative
+     dimensions of the panel.  For instance, if =fig= is =(2,3)=, then
+     the panel will be two units wide and three units tall.  The =res=
+     parameter gives the number of pixels per unit for the dimensions
+     in =fig=.  Finally, the orientation is either
+     =GraphPanel.HORIZONTAL=, =GraphPanel.INVERTED=, or
+     =GraphPanel.VERTICAL=.  A =HORIZONTAL= gives a graph with the
+     x-axis along the bottom and the y-axis pointing up.  =VERTICAL=
+     has it's x-axis along the right edge and the y-axis pointing
+     left.  Finally, =INVERTED= has it's x-axis along the top and the
+     y-axis pointing downward.
+
+     Just as with the =[[Image Panel]]=, the object contains a matplotlib
+     =Figure= and a wxAgg =FigureCanvas= to do the actual plotting.
+
+#+name:graphpanel_init
+#+begin_src python
     def __init__(self,parent,fig,res,orientation):
         """Create a new panel for plotting.
 
@@ -1622,7 +1693,18 @@ class GraphPanel(wx.Panel):
         self.canvas = FigureCanvas(self,-1,self.figure)
         #The rotation of the figure.
         self.orientation=orientation
+#+end_src
 
+
+
+*** Plotting
+
+     The =SetPlot= function gives the panel its data for plotting.
+     The first variable is an array of the x-coordinate and the second
+     is the y-coordinates.
+
+#+name:graphpanel_setplot
+#+begin_src python
     def SetPlot(self,x,y):
         """Set the x and y coordinates of the data to be plotted."""
         self.figure.clear()
@@ -1648,14 +1730,16 @@ class GraphPanel(wx.Panel):
 
         self.axes.autoscale_view(True,True,True)
         self.Refresh()
+#+end_src
 
-#     def SetYLim(self,range):
-#         self.axes.set_ylim(range)
+     The =SetPlot= function uses =SetPos= to move the graph around
+     within the panel.  We want the graph to extend across the whole
+     panel, but, by default, matplotlib takes some space for the
+     axes.  We use =SetPos= to tell matplotlib to only use the part of
+     the plot that contains the actual graph.
 
-#     def SetXLim(self,range):
-#         self.axes.set_xlim(range)
-
-
+#+name:graphpanel_setpos
+#+begin_src python
     def SetPos(self,pos):
         """Set the position of the graph within the panel.
 
@@ -1669,23 +1753,31 @@ class GraphPanel(wx.Panel):
 
         """
         self.axes.set_position(pos)
+#+end_src
 
+     We need to override the =OnPaint= event handler to tell the
+     =FigureCanvas= to redraw the graph every time the panel is
+     redrawn.
+
+#+name: graphpanel_onpaint
+#+begin_src python
     def __OnPaint(self,event):
         """An event handler to tell the canvas to draw
         when the panel is redrawn."""
         self.canvas.draw()
         event.Skip()
-
 #+end_src
 
 
-*** Image Panel
 
-    The Image Panel is a custom widget for displaying a 2D array of
-    data.  It forms the largest part of the graphical representation
-    of the data in PELVis.
 
-**** Image Panel Skeleton
+** Image Panel
+
+   The Image Panel is a custom widget for displaying a 2D array of
+   data.  It forms the largest part of the graphical representation
+   of the data in PELVis.
+
+*** Image Panel Skeleton
 
 #+begin_src python :tangle ImagePanel.py :noweb tangle :padline no
 """This module contains classes which help in displaying 2D data
@@ -1724,7 +1816,7 @@ class ImagePanel(wx.Panel):
 #+end_src
 
 
-**** Initialization
+*** Initialization
 
      The panel is constructed with a couple of arguments.  The first
      is simply the parent frame where the image is to be displayed.
@@ -1796,7 +1888,7 @@ class ImagePanel(wx.Panel):
 #+end_src
 
 
-**** Event Handling
+*** Event Handling
 
      When an event occurs, it calls the bound callback function with a
      single =Event= object.  This event contains the information that
@@ -1865,7 +1957,7 @@ class ImagePanel(wx.Panel):
      event that will call =saveImage= to put the 
 
 
-**** Data Handling
+*** Data Handling
 
      The single most important part of the Image Panel is the =update=
      function, which gives the Image Panel the data to display.  It
@@ -1940,6 +2032,1290 @@ class ImagePanel(wx.Panel):
             wx.TheClipboard.Clear()
             wx.TheClipboard.SetData(wx.BitmapDataObject(bitmap))
             wx.TheClipboard.Close()
+#+end_src
+
+
+** Color Bar Panel
+
+   
+*** Color Bar Skeleton
+
+    The skeleton for the color bar panel also handles the [[Action Color
+    Bar]] and the [[Color Bar Picker]].  All three are used for displaying
+    and chosing a maping between an intensity and a color for display
+    of the 2D detector data.
+
+#+begin_src python :tangle colorbarpanel.py :noweb tangle :padline no
+"""Classes for handling color spectra
+
+This module implements a series of classes for handling the different color
+spectra produced by matplot lib.  The basic class is ColorBarPanel, which
+simply displays a given color map.  ActionColorbar subclasses ColorBarPanel
+to add simple click response abilities.  Finally, ColorBarPicker gives the
+user the ability to select any of the color maps that matplotlib is aware of.
+Note that ColorBarPicker takes time to render when it first loads, so care
+should be taken not to create one unless it's necessary and then to keep
+that same on for as long as possible.
+
+"""
+
+from matplotlib.backends.backend_wxagg import FigureCanvasWxAgg as FigureCanvas
+from matplotlib.backends.backend_wx import NavigationToolbar2Wx
+from matplotlib.figure import Figure
+from matplotlib.colorbar import ColorbarBase
+from matplotlib.colors import Normalize
+import matplotlib.cm as cm
+
+import wx
+
+class ColorBarPanel(wx.Panel):
+    """Panel to display a ColorBar in a wxWidgets container."""
+    <<colorbarpanel_init>>    
+    <<colorbarpanel_setrange>>
+    <<colorbarpanel_setcmap>>
+    <<colorbarpanel_update>>
+        
+    <<colorbarpanel_onpaint>>
+
+<<actioncolorbar>>
+
+<<colormappicker>>
+
+
+
+if __name__ == '__main__':
+    def printcmap(cmap):
+        print(cmap)
+
+    app=wx.PySimpleApp()
+    frame = ColorMapPicker(None,printcmap)
+    frame.Show()
+    app.MainLoop()
+
+#+end_src
+
+*** Initialization
+
+    The color bar panel takes several parameters
+
+    - parent :: The container for the panel
+    - cmap :: A starting color bar for the panel
+    - fig :: A tuple containing the dimensions of the panel in
+             arbitrary units.  For example, the value of (2,3) would
+             make the panel two units tall by three units wide.  The
+             default value is (1,10), which fits in with the layout of
+             the PELVis frame.
+    - res :: The number of pixels per unit in fig.
+    - orientation :: The direction along which the color bar's
+                     spectrum is encoded.  If the value is the string
+                     'vertical', the rainbow will progress from top
+                     to bottom.  To have the rainbow move from left to
+                     right, set the value to 'horizontal'.
+    - size :: By default, matplotlib includes a scale on the color bar
+              panel.  This is useful along the axis of the rainbow,
+              but rather obviously useless in the other direction.
+              The size command picks a subset of the colorbar to
+              eliminate the extra axis.
+
+    As with other panels, the general framework is a matplotlib
+    =Figure= and a wxAgg =FigureCanvas= to provide the actual graphing
+    components. 
+
+#+name:colorbarpanel_init
+#+begin_src python
+    def __init__(self,parent,cmap,fig=(1,10),
+                 res=64,orientation='vertical',
+                 size=[0.05,0.025,.25,0.95]):
+        """Creates a ColorBarPanel.
+
+        Keyword arguments:
+        parent -- container which holds the panel.
+        cmap -- the color map to display in the color bar.
+                This should be a matplotlib cmap object
+        fig -- the relative width to height of the color bar
+        res -- the number of pixels per unit in fig
+        orientation -- the rotation of the color bar
+        size -- the position of the color bar in the panel
+
+        res and size combine to produce the actual size of the
+        panel in pixels.  For instance, with fig=(1,10) and res=64,
+        the panel will be 64 pixels wide and 640 pixels tall.
+
+        size is a four element array which marks the far
+        corners of the graph.  The coordinates are given as a fraction
+        of the size of the panel.  For instance, pos=[0,0.3333,1,0.6666]
+        would produce a graph that stretches across the panel in the x
+        direction, but only uses the middle third in the y direction.
+        The default value should allow the axes to be seen.
+
+        """
+
+        wx.Panel.__init__(self,parent)
+        self.Bind(wx.EVT_PAINT,self.__OnPaint)
+
+        self.figure = Figure(figsize=fig,dpi=res)#the actual plot
+        #the object to display the plot
+        self.canvas = FigureCanvas(self,-1,self.figure)
+        #the direction of the color bar
+        self.orientation=orientation
+        #the color map to use
+        self.cmap=cmap
+        self.vmin=0 #The minimum value on the color bar
+        self.vmax=18 #The maximum value on the color bar
+        self.size=size #The position of the color bar in the frame
+        self.update()
+
+#+end_src
+
+*** Display
+
+    The =update= function replots thecolor bar.  This is necessary
+    after any of the parameters have changed.
+
+#+name:colorbarpanel_update
+#+begin_src python
+    def update(self):
+        """Reacts to any changes in the objects members."""
+        axes = self.figure.add_axes(self.size)
+        norm = Normalize(vmin=self.vmin,vmax=self.vmax)
+        colorbar = ColorbarBase(axes,cmap=self.cmap,norm=norm,
+                                orientation=self.orientation)
+        self.Refresh()
+#+end_src
+
+    As with any graphical widget, we need to intercept the OnPaint
+    event to ensure that the graph is drawn onto the panel.
+
+#+name:colorbarpanel_onpaint
+#+begin_src python
+    def __OnPaint(self,event):
+        """An event handler to update the graph when the panel is redrawn."""
+        self.canvas.draw()
+        event.Skip()
+#+end_src
+
+
+*** Configuration
+
+    The =setRange= function choses the domain over which the colarbar
+    will map values into colors.
+
+#+name:colorbarpanel_setrange
+#+begin_src python
+    def setRange(self,vmin,vmax):
+        """Set the range for the axes on the colorbar."""
+        self.vmin=vmin
+        self.vmax=vmax
+
+#+end_src
+
+    The =setCmap= function sets the color map for the panel.
+
+#+name:colorbarpanel_setcmap
+#+begin_src python
+    def setCmap(self,cmap):
+        """Pick the colormap to display."""
+        self.cmap = cmap
+#+end_src
+
+
+
+** Action Color Bar
+
+   The Action Color Bar is a color bar that also functions as a
+   button.  The class itself lives in the [[Color Bar Skeleton][colorbar]] module.  It's
+   primary purpose is to provide a clickable colorbar for the [[Color Bar Picker][picker]].
+
+#+name:actioncolorbar
+#+begin_src python
+class ActionColorbar(ColorBarPanel):
+    """A simplistic colorbar button
+
+    This class displays a colormap and returns the name of its colormap
+    to a given function when clicked on by the user.
+
+    """
+#+end_src
+
+   The initialization is much simpler than for the [[Color Bar Panel][Color Bar Panel]].
+   - parent :: The container to hold the action color bar
+   - cmap :: The actual color map for the color bar
+   - command :: The function to be called when the color bar is clicked
+
+#+name:actioncolorbar
+#+begin_src python
+#
+    def __init__(self,parent,cmap,command):
+        """Creates an ActionColorbar
+
+        Keyword arguments:
+        parent -- the container to hold the panel.
+        cmap -- a string naming a colormap.
+        command -- the function to run when the colormap is clicked.
+
+        """
+        #title attribute is needed by update, which is called by init
+        self.title=cmap#The title of the colormap
+        ColorBarPanel.__init__(self,parent,cm.get_cmap(cmap),fig=(5,1),orientation='horizontal',size=[0,0,1,0.6])
+        self.comm = command#The command to run on clicks
+        self.canvas.Bind(wx.EVT_LEFT_UP,self.__OnClick)
+#+end_src
+
+   The =update= function is identical to that of the regular Color Bar
+   Panel, except that a title has been added to the figure so that
+   it's possible to know the name of the color map being clicked.
+
+#+name:actioncolorbar
+#+begin_src python
+#
+    def update(self):
+        """Reacts to any changes in the objects members."""
+        axes = self.figure.add_axes(self.size,title=self.title)
+        norm = Normalize(vmin=self.vmin,vmax=self.vmax)
+        colorbar = ColorbarBase(axes,cmap=self.cmap,norm=norm,
+                                orientation=self.orientation)
+        self.Refresh()
+#+end_src
+
+   =__OnClick= is the event handler for when the user left clicks on
+   the action bar.  It calls the command using the current color map
+   as its only argument.
+
+#+name:actioncolorbar
+#+begin_src python
+#
+    def __OnClick(self,event):
+        """Event handler to call self.comm when the panel is clicked."""
+        self.comm(self.cmap)
+        event.Skip()
+#+end_src
+
+
+** Color Map Picker
+
+   The color map picker is a dialog box which presents all of the
+   color maps know to matplotlib and allows the user to chose one by
+   clicking on it.
+
+   Since it generates so many graphs (one for each color map), it can
+   take quite a while to load.  It's usually only generated the first
+   time that the user calls for it and is not regenerated as long as
+   the program runs.
+
+#+name:colormappicker
+#+begin_src python
+class ColorMapPicker(wx.Frame):
+    """A window for selecting a color map"""
+#+end_src 
+
+   The initialization takes only two parameters.  The first is a
+   parent window that the dialog will be attached to.  If the parent
+   is =None=, the picker will be the main application window.  The
+   second parameter expects a function that takes one string
+   argument.  Whenever the user clicks on a color map, this function
+   is called on the name of the color map.
+
+   The =cm.datad.keys= function returns a list of all of the color
+   maps known to matplotlib.
+
+#+name:colormappicker
+#+begin_src python
+#
+    def __init__(self,parent,command):
+        """Creates a ColorMapPicker
+
+        Keyword arguments:
+        parent -- parent of this frame or None
+        command -- function to be called on the chosen colormap name
+
+        """
+        wx.Frame.__init__(self,parent,wx.ID_ANY,"Maps",size=(345,355))
+        scroll = wx.ScrolledWindow(self,-1)
+        sizer = wx.BoxSizer(wx.VERTICAL)
+        keys = cm.datad.keys()
+        #Iterate through all of the colormap names
+        for key in keys[:]:
+            sizer.Add(ActionColorbar(scroll,key,command))
+            scroll.SetScrollbars(0,64,0,64)
+        sizer.SetSizeHints(scroll)
+        scroll.SetSizer(sizer)
+        self.Bind(wx.EVT_CLOSE,self.__OnClose)
+#+end_src 
+
+   Since the window takes so long to create, we don't want to recreate
+   it each time it is called for.  To this end, we're overriding the
+   Close event and ignoring it, simply hiding the window instead.
+
+#+name:colormappicker
+#+begin_src python
+#
+    def __OnClose(self,event):
+        """Event handler for closing the window
+
+        Since the window takes so long to build and render, we
+        don't want to be forces to make a new one each time it's
+        closed, so we merely hide it when the user closes it."""
+        self.Hide()
+#+end_src
+
+
+** Graph Frame
+
+   The Graph Frame module provides a class for easily displaying 2D
+   line plots.  It's used by [[MonFile][MonFile]] and [[Spectrum Dialog]] to give
+   information versus wavelength.
+
+   The frame largely serves the same purpose ad
+   matplotlib.pyplot.plot, but it works well with the wx backend that
+   we're using for the rest of the PelVis application and try to start
+   its own main loop.  If you're writing a console application that
+   just needs to draw a couple of graphs, you're better off just
+   working straight through matplotlib.
+
+*** GraphFrame Skeleton
+
+#+begin_src python :tangle graphframe.py :noweb tangle :padline no
+"""Convenience classes for plotting data
+
+This module contains a single class, GraphFrame, which is used for easily
+plotting two dimensional data.  If other such convenience classes are
+ever to be written, they should be put into this module.
+
+"""
+
+import wx
+
+from matplotlib.backends.backend_wxagg import FigureCanvasWxAgg as FigureCanvas
+from matplotlib.backends.backend_wx import NavigationToolbar2Wx
+from matplotlib.figure import Figure
+
+class GraphFrame(wx.Frame):
+    """
+    This class merges wxWidgets and matplotlib to produce an 
+    independent frame which can display a two dimensional
+    plot fo arbitrary data.
+
+    """
+    ID_COPY = 500
+    <<graphframe_init>>
+
+    def __PanelPaint(self,event):
+        """Event handler to tell the canvas to 
+        redraw when the window is drawn."""
+        self.canvas.draw()
+        event.Skip()
+
+    <<graphframe_oncopy>>
+
+    <<graphframe_plot>>
+
+#+end_src
+
+*** Initialization
+#+end_src
+
+    The frame begins with two parameters.  The first is a parent
+    window, which can be =None= to make this window independent.  The
+    second is an optional tital to display in the window's titlebar.
+
+    The constructor begins by performing the basic construction of a
+    frame and creating a panel with a custom paint handler. 
+
+#+name:graphframe_init
+#+begin_src python
+    def __init__(self,parent=None,title=""):
+        """Creates a new frame for displaying graphs
+
+        Keyword arguments:
+        parent -- the parent frame of the new frame
+        title -- the title for the frame.  This is not the title
+                 for the graph.
+
+        """
+        wx.Frame.__init__(self,parent,wx.ID_ANY,title)
+
+        self.panel = wx.Panel(self)
+        self.panel.Bind(wx.EVT_PAINT,self.__PanelPaint)
+#+end_src
+
+    We add a menu bar purely to handle the =Copy= command.  We use this
+    to allow the user to copy the graph to the clipboard, saving the
+    effort of writing the image to a disk and loading it up in another
+    application.  Establishing the menu also bounds the copy command
+    to the =Ctrl-c= hotkey.
+
+#+name:graphframe_init
+#+begin_src python
+    #
+        menubar = wx.MenuBar()
+        editmenu = wx.Menu()
+        editmenu.Append(self.ID_COPY,"&Copy\tCtrl-C"," Copy image to the clipboard")
+        self.Connect(self.ID_COPY,-1,wx.wxEVT_COMMAND_MENU_SELECTED,self.OnCopy)
+        menubar.Append(editmenu,"&Edit")
+        self.SetMenuBar(menubar)
+#+end_src
+
+    We create a matplotlib =Figure= and a wxAgg =FigureCanvas= to
+    handle the actual plotting.  The matplotlib wx backend also
+    provides a convenient Navigation Toolbar that is identical to the
+    one used by =pyplot.plot= and allows the user to scale and
+    translate the graph at will.  The toolbar also handles saving the
+    image to a file.
+
+#+name:graphframe_init
+#+begin_src python
+    #   
+
+        #First, make the plotting figure.
+        self.figure = Figure()
+        #Then give the figure somewhere to display.
+        self.canvas = FigureCanvas(self.panel,-1,self.figure)
+        #Finally, make a Toolbar to adjust the canvas at runtime.
+        self.toolbar = NavigationToolbar2Wx(self.canvas)
+        self.toolbar.Realize()
+#+end_src
+
+    Finally, everything is added to the panel and the sizers are set.
+
+#+name:graphframe_init
+#+begin_src python
+    #
+        sizer = wx.GridBagSizer()
+        sizer.Add(self.canvas,pos=wx.GBPosition(1,0))
+        sizer.Add(self.toolbar,pos=wx.GBPosition(0,0))
+        sizer.SetSizeHints(self)
+        self.SetSizer(sizer)
+#+end_src
+
+
+
+*** Image Export
+
+    The =plot= function handles actualling turning data points into a
+    graph.
+
+    - x :: An array of the x-coordinates of the data
+    - y :: An array of the y-coordinates of the data
+    - range :: An optional tuple of the minimum and maximum y values
+               to plot.  Useful for handling things like flipping
+               ratios, where most of the values will probably be
+               around 30, but a low statistics data point out at 18 Å
+               will suddenly take the plot up to five million.  If the
+               range is =None=, then the graph will auto-scale
+    - xerr :: An optional array of the uncertainties on the
+              x-coordinates.  If =None=, then no x errorbars are used.
+    - yerr :: An optional array of the uncertainties of the
+              y-coordinates.  If =None, then no y errorbars are used.
+
+#+name:graphframe_plot
+#+begin_src python
+    def plot(self,x,y,range=None,xerr=None,yerr=None):
+        """Plots 2D data in the frame
+
+        This method is the main workhorse of the class.  It plots
+        a line representing the x and y data, with optional errorbars.
+
+        Keyword arguments:
+        x -- numpy array of x coordinates
+        y -- numpy array of y corrdinates
+        range -- either a tuple with the minimum and maximum y values,
+                 or None for autoscaling
+        xerr -- numpy array of the errors in the x direction
+        yerr -- numpy array of errors in the y direction
+
+        """
+        self.figure.clear()
+        axes = self.figure.add_subplot(111)
+        print(x.shape)
+        print(y.shape)
+        axes.errorbar(x,y,xerr=xerr,yerr=yerr)
+        if range==None:
+            axes.autoscale_view(True,True,True)
+        else:
+            (vmin,vmax)=range
+            axes.set_ylim(vmin,vmax)
+            axes.autoscale_view(True,True,False)
+        self.Show()
+#+end_src
+
+    The =OnCopy= function is an event handler for the user requesting
+    that the graph be copied to the clipboard.  A new bitmap is made
+    that is the current size of the canvas.  The figure is then drawn
+    onto this bitmap and the bitmap is passed to the clipboard.
+
+#+name:graphframe_oncopy
+#+begin_src python
+    def OnCopy(self,event):
+        """Copies the image of the graph to the system Clipboard"""
+        if wx.TheClipboard.Open():
+            print(self.canvas.GetSize())
+            w,h=self.canvas.GetSize()
+            bitmap = wx.EmptyBitmap(w,h,24)
+            memdc = wx.MemoryDC(bitmap)
+            self.figure.canvas.draw(memdc)
+            wx.TheClipboard.Clear()
+            wx.TheClipboard.SetData(wx.BitmapDataObject(bitmap))
+            wx.TheClipboard.Close()
+#+end_src
+
+
+
+** Spectrum Dialog
+
+   The Spectrum Dialog presents a dialog box to the user which
+   presents the user options on what they would like to do with the
+   spectrum information passed by PELVis.  The information can be
+   given custom wavelength binning and either plotted to the screen or
+   saved in an ASCII file.
+
+*** Spectrum Dialog Skeleton
+
+#+begin_src python :tangle SpectrumDialog.py :noweb tangle :padline no
+"""Classes for dealing with neutron spectra
+
+This module contains a single class:  SpectrumDialog.  This dialog
+handles all of the options and parameters for creating spectrum
+plots of intensities and polarization.  This class also handles
+automated rebinning of data.
+
+"""
+
+import wx
+import numpy as np
+from graphframe import GraphFrame
+
+RESOLUTION = 400
+
+class SpectrumDialog(wx.Dialog):
+    """A dialog to set the options on a spectrum plot"""
+
+    <<spectrumdialog_init>>
+    <<spectrumdialog_setdata>>
+    <<spectrumdialog_setscale>>
+    <<spectrumdialog_setintensityrange>>
+
+    <<spectrumdialog_onview>>
+
+    <<spectrumdialog_onsave>>
+
+    <<spectrumdialog_setmode>>
+
+    <<spectrumdialog_autobinset>>
+
+    <<spectrumdialog_autobin>>
+    <<spectrumdialog_modefunctions>>
+#+end_src
+
+*** Initialization
+
+    The only parameter for the constructor on the SpectrumDialog is
+    the parent frame for the dialog.  The constructor begins by
+    calling the constructor of its superclass to make the actual
+    dialog box.
+
+#+name:spectrumdialog_init
+#+begin_src python
+    def __init__(self,parent=None):
+        """Create a SpectrumDialog"""
+        wx.Dialog.__init__(self,parent,wx.ID_ANY,"Spectrum Options")
+        sizer = wx.GridBagSizer()
+#+end_src
+
+    The class has two members for the data.  =up= is the count of the
+    neutrons per wavelength bin in the spin up state and and =down= is
+    the count of the neutrons per wavelength bin in the spin down state.
+
+#+name:spectrumdialog_init
+#+begin_src python
+    #
+        self.up = None #The spin up data array
+        self.down = None #The spin down data array
+#+end_src
+
+    The =mode= member is a dictionary to convert between a mode string
+    sent by the application and the function which handles that form
+    of data.  The =calSpec= function should point to the current
+    processing function.
+
+#+name:spectrumdialog_init
+#+begin_src python
+    #
+
+        #A dictionary of the available manipulations to perform
+        #on the data before plotting it.
+        self.modes = {"up":self.spinUp,
+                      "down":self.spinDown,
+                      "polar":self.polar,
+                      "flipping":self.flipping}
+        self.calcSpec = self.spinUp #The current data manipulation function
+#+end_src
+
+    Two buttons are added to the bottom of the dialog to allow the
+    user to either view the image on the screen or save the data to an
+    ASCII file.
+
+#+name:spectrumdialog_init
+#+begin_src python
+    #
+        
+        saveButton = wx.Button(self,-1,"Save Spectrum")
+        viewButton = wx.Button(self,-1,"View Spectrum")
+        viewButton.Bind(wx.EVT_BUTTON,self.onView)
+        saveButton.Bind(wx.EVT_BUTTON,self.onSave)
+#+end_src
+
+    A single text box is added with the label "Minimum Percent
+    Error".  This label is horribly misleading and should be changed.
+    In auto-binning mode, it does allow the user to input the minimum
+    percentage error.  However, in fixed binning mode, the value is
+    used to the maximum number of bins.
+
+#+name:spectrumdialog_init
+#+begin_src python
+    #
+        
+        sizer.Add(wx.StaticText(self,-1,"Minimum Percent Error"),
+                  pos=wx.GBPosition(0,0), flag=wx.EXPAND)
+        #An input box for the user's chosen percentage error
+        self.minerr = wx.TextCtrl(self,-1,"10")
+        sizer.Add(self.minerr,pos=wx.GBPosition(0,1), flag=wx.EXPAND)
+#+end_src
+
+    Three radio buttons allow the user to pick the binning mode.
+
+#+name:spectrumdialog_init
+#+begin_src python
+    #    
+
+        #A checkbox for whether the user wants the data autobinned
+        self.nobinrad = wx.RadioButton(self,-1,"Raw Data",style=wx.RB_GROUP)
+        self.autobinrad = wx.RadioButton(self,-1,"Auto binning")
+        self.setbinrad = wx.RadioButton(self,-1,"Fixed Binning")
+#+end_src
+
+    Finally, everything needs to be added to the actual panel
+
+#+name:spectrumdialog_init
+#+begin_src python
+    #
+        sizer.Add(self.nobinrad,wx.GBPosition(1,0),flag=wx.EXPAND)
+        sizer.Add(self.autobinrad,wx.GBPosition(1,1),flag=wx.EXPAND)
+        sizer.Add(self.setbinrad,wx.GBPosition(1,2),flag=wx.EXPAND)
+        
+        sizer.Add(saveButton,pos=wx.GBPosition(2,0),flag=wx.EXPAND)
+        sizer.Add(viewButton,pos=wx.GBPosition(2,1),flag=wx.EXPAND)
+        sizer.SetSizeHints(self)
+        self.SetSizer(sizer)
+
+#+end_src
+
+
+
+*** Configuration
+
+    The =setData= function gives the actual neutron count arrays to
+    the Spectrum Dialog.  If there is only one spin state, it is put
+    in the =up= member and the =down= member is set to none.  Since
+    both arrays are supposed to represent neutron counts, we set any
+    data points less than zero equal to zero, since you can't have a
+    negative count.  This prevents issues like having the polarization
+    go above one or the flipping ratio being negative.
+
+#+name:spectrumdialog_setdata
+#+begin_src python
+    def setData(self,up,down=None):
+        """Sets the spin up and spin down spectra.  Expects two numpys arrays"""
+        del self.up
+        del self.down
+        up[up < 0.0] = 0.0
+        if down is not None:
+            down[down < 0.0] = 0.0
+        self.up=up
+        self.down=down
+#+end_src
+
+    The array received by =setData= are normalized to monitor count.
+    The uscale and dscale variables are the total monitor counts in
+    the up and down states, respectively.  This allows us to recover
+    the raw counts so that we can calculate the uncertainties from the
+    counting statistics.
+
+#+name:spectrumdialog_setscale
+#+begin_src python
+    def setScale(self,up,down=None):
+        """Sets the scaling constants for the spin up and spin down states.
+
+        To calculate error, we need the raw neutron counts, not just the
+        monitor normalized ones.  This function accepts the monitor counts
+        used to do the initial scaling on the detector data, so that
+        the raw counts can be recalculated.
+
+        """
+        self.uscale=up
+        self.dscale=down
+#+end_src
+
+    When the data is being plot, it can be helpful to clamp the range
+    of the plot.  The =setIntensityRange= function accepts a tuple
+    with the minimum and maximum values for the plot range.
+
+#+name:spectrumdialog_setintensityrange
+#+begin_src python
+    def setIntensityRange(self,range):
+        """Set the minimum and maximum y axis for plotting"""
+        self.vmin,self.vmax = range
+#+end_src
+
+    Currently, the spectrum dialog supports plotting the spin up
+    intensity, the spin down intensity, the polarization, and the
+    flipping ratio, all versus wavelength.  The =setmode= function
+    choses the mode with one of the keys of the =modes= member and
+    adjust =calcSpec= accordingly.
+
+#+name: spectrumdialog_setmode
+#+begin_src python
+    def setMode(self,mode):
+        """Chooses the calculation to perform on the data
+
+        Keyword arguments:
+        mode -- a string describing which function out of self.modes
+                should be performed on the data.
+
+        """
+        self.calcSpec = self.modes[mode]
+#+end_src
+
+
+*** Buttons
+
+    The =onView= function is called when the user clicks on the =View=
+    button.  The actual data to plot is calculated by the =calcSpec=
+    function and then displayed by a [[Graph Frame][GraphFrame object]].
+
+#+name: spectrumdialog_onview
+#+begin_src python
+    def onView(self,event):
+        """Display a graph of the spectrum."""
+        x,y,e = self.calcSpec()
+        graph = GraphFrame(self,"Spectrum")
+        graph.plot(x,y,range=(self.vmin,self.vmax),yerr=e)
+        self.Show(False)
+#+end_src
+
+
+    The =onSave= function is called when the user clicks on the =Save=
+    button.  The actual data to plot is calculated by the =calcSpec=
+    function and then written to a file of the user's choice.  The
+    file writing routine should probably be replaced by a numpy
+    savetxt function.
+
+#+name: spectrumdialog_onsave
+#+begin_src python
+    def onSave(self,event):
+        """Save a graph of the spectrum to a file."""
+        x,y,e = self.calcSpec()
+        dialog=wx.FileDialog(self,"Name the spectm file",
+                             wildcard="ASCII (dat)|*.dat",
+                             style=wx.FD_SAVE|wx.FD_OVERWRITE_PROMPT)
+        if dialog.ShowModal()==wx.ID_OK:
+            with open(dialog.GetPath(),"w") as stream:
+                for i in range(len(x)):
+                    stream.write("%f\t%f\t%f\n"%(x[i],y[i],e[i]))
+        self.Show(False)
+#+end_src
+
+
+*** Spectrum Modes
+    
+    The =flipping= function presents the two spin states as a flipping
+    ration.  It begins by getting the binned data from autobinset.
+    Note that this means that, for auto-binned graphs, it is the
+    individual spin states who error have been minimized, not the
+    final flipping ratio.
+
+    With the binned data, the flipping ratio and error are
+    calculated.  Note that a small value is added to the denominator
+    of the flipping ratio to prevent divide by zero errors.
+#+end_src
+
+#+name:    spectrumdialog_modefunctions
+#+begin_src python
+    def flipping(self):
+        """Calculate the flipping ratio"""
+        if self.down is not None:
+            (x,u,d)=self.autobinset()
+            y = u/(d+1e-6)
+            uerr = np.sqrt(u*self.uscale)/self.uscale
+            derr = np.sqrt(d*self.dscale)/self.dscale
+            e = y*np.sqrt((uerr/u)**2+(derr/d)**2)
+            #e = y * np.sqrt(1/(u + 1e-6)+1/(d + 1e-6))
+            return (x,y,e)
+#+end_src
+
+    The =polar= function is similar to =flipping=, except that the
+    polarization is calculated, instead of the flipping ratio.  In
+    this case, no value is added to the denominator.
+
+#+name:    spectrumdialog_modefunctions
+#+begin_src python
+    def polar(self):
+        """Calculate the polarization"""
+        if self.down is not None:
+            print "Polar Spectrum"
+            (x,u,d)=self.autobinset()
+            #print((x,u,d))
+            y = (u-d)/(u+d)
+            uerr = np.sqrt(u/self.uscale)
+            derr = np.sqrt(d/self.dscale)
+            e = 2*np.sqrt(u**2*derr**2+d**2*uerr**2)/(u+d)**2
+            #e = nerr/n*(1+abs(y))
+            return (x,y,e)
+#+end_src
+
+    The =spinUp= returns just the rebinned intensity of the spin up
+    state.  If there is only one spin state, then this is the mode
+    which should be used.
+
+#+name:    spectrumdialog_modefunctions
+#+begin_src python
+    def spinUp(self):
+        """Calculate the spin up intensity"""
+        (x,y)=self.autobin(self.up*self.uscale,self.uscale)
+        return (x,y,np.sqrt(y*self.uscale)/self.uscale)
+#+end_src
+
+    Finally, the =spinDown= function returns the rebinned intensity of
+    the spin down state.
+
+#+name:    spectrumdialog_modefunctions
+#+begin_src python
+    def spinDown(self):
+        """Calculate the spin down intensity"""
+        if self.down is not None:
+            (x,y)=self.autobin(self.down*self.dscale,self.dscale)
+            return (x,y,np.sqrt(y*self.dscale)/self.dscale)
+
+
+
+#+end_src
+
+
+*** Binning
+
+    There are currently two binning functions.  =autobin= handles the
+    binning of a single spin state and autobinset handles the binning
+    of two spin states.  Each function then uses conditionals to
+    handle the exact form of binning the user requested.  Honestly,
+    it's a terrible design and should be improved.
+
+**** Autobin
+
+     The function takes two parameters
+
+     - up :: The raw neutron count to be rebinned
+     - scale :: The monitor counts for normalization
+
+     The function begins by checking if any binning has even been
+     requested.  If not, then it returns the normalized counts along
+     with a wavelength spectrum.
+#+end_src
+
+#+name: spectrumdialog_autobin
+#+begin_src python
+    def autobin(self,up,scale):
+        """Rebins one data array based on the user's chosen error
+
+        Keyword arguments:
+        up -- the array to be rebinned
+        scale -- the conversion factor used to normalize against monitor
+
+        """
+        if self.nobinrad.GetValue():
+            return (np.arange(0.0,RESOLUTION)*20.0/RESOLUTION,up/scale)
+#+end_src
+
+    The next case tested for is auto-binning.  It iterates through the
+    count array, adding the neutron events into =utot= and
+    incrementing the =count= since the last data point.  Once the
+    relative uncertainty on =utot= is less that the requested value,
+    the monitor normalized value of utot and the average of the
+    positions are added appended to the y and x axes, respectively.
+
+#+name: spectrumdialog_autobin
+#+begin_src python
+    #
+        elif self.autobinrad.GetValue():
+            x=[]
+            u=[]
+            count=0
+            utot=0
+            #The maximum percentage error in the spin up or spin down state
+            emax = float(self.minerr.GetValue())/100.0
+            for i in range(len(self.up)):
+                utot += up[i]
+                uerr = 1.0/np.sqrt(utot)
+                if uerr < emax:
+                    u.append(utot/scale/(count+1))
+                    x.append((i-0.5*count)*20.0/RESOLUTION)
+                    count = 0
+                    utot=0
+                else:
+                    count += 1
+            return (np.array(x),np.array(u))
+#+end_src
+
+    Finally, if the user has selected fixed binning, then the numpy
+    [[http://docs.scipy.org/doc/numpy/reference/generated/numpy.array_split.html][array_split]] function is used to split the neutron data into the
+    desired number of bins.  These subs arrays are then summed and
+    normalized to make the final, binned array.
+
+#+name: spectrumdialog_autobin
+#+begin_src python
+    #
+        elif self.setbinrad.GetValue():
+            count = int(self.minerr.GetValue())
+            x = np.arange(0.0,RESOLUTION)*20.0/RESOLUTION
+            x = np.array([np.mean(y) for y in np.array_split(x,count)])
+            u = np.array([np.sum(y)/scale for y in np.array_split(up,count)])
+            return (x,u)
+
+
+#+end_src
+
+
+**** Autobinset
+
+     =autobinset= is similar to =autobin=, except that it handles
+     having two spin states.  For the raw and fixed binning, this
+     doesn't have any effect, but it requires special handling for the
+     automated binning, since both data sets need to hxave the same
+     bins.
+
+
+     Again, the function begins by simply returning the values if the
+     raw binning has been request, since there is no actual
+     calculations to perform.
+#+end_src
+
+#+name: spectrumdialog_autobinset
+#+begin_src python
+    def autobinset(self):
+        """Rebins both up and down data based on the user's chosen error."""
+        x=[]
+        u=[]
+        d=[]
+        count=0 #number of channels combined since last binning
+        utot=0 #counts in the up state
+        dtot=0 #counts in the down state
+        #If there's no chosen error bounds, just return the original data.
+        if self.nobinrad.GetValue():
+            return (np.arange(0.0,RESOLUTION)*20.0/RESOLUTION
+                    ,self.up,self.down)
+#+end_src
+
+    If actual calculations are to be involved, then the raw =up= and
+    =down= spin state counts are needed to find the uncertainties.
+
+#+name: spectrumdialog_autobinset
+#+begin_src python
+    #
+        #If we're going any sort of binning, we'll need raw values
+        up=self.up*self.uscale
+        down=self.down*self.dscale
+#+end_src
+
+    The handling of the automatic binning is similar to how it was in
+    =autobin=.  The only difference is that the uncertainties of both
+    the up and down states must be beneath the request relative value
+    before the bin gets added to the main list.
+
+#+name: spectrumdialog_autobinset
+#+begin_src python
+    #
+        #Check for autobinning
+        if self.autobinrad.GetValue():
+            #The maximum percentage error in the spin up or spin down state
+            emax = float(self.minerr.GetValue())/100.0
+            for i in range(len(self.up)):
+                utot += up[i]
+                dtot += down[i]
+                uerr = 1.0/np.sqrt(utot)#error in the up state
+                derr = 1.0/np.sqrt(dtot)#error in the down state
+                #if the error is below the threshold, add the new data point
+                if uerr <= emax and derr <= emax:
+                    u.append(utot/self.uscale)
+                    d.append(dtot/self.dscale)
+                #choose x as the center of the binned data
+                    x.append((i-0.5*count)*20.0/RESOLUTION)
+                    i = 0
+                    utot=0
+                    dtot=0
+                    count=0
+                else:
+                    count += 1
+            return (np.array(x),
+                    np.array(u),
+                    np.array(d))
+#+end_src
+
+    The handling of raw values is exactly identical to how it was
+    performed in =autobin=.
+
+#+name: spectrumdialog_autobinset
+#+begin_src python
+    #
+        elif self.setbinrad.GetValue():
+            count = int(self.minerr.GetValue())
+            x = [np.mean(y) for y in 
+                 np.array_split(np.arange(0.0,RESOLUTION)*20.0/RESOLUTION,count)]
+            u = [np.sum(y)/self.uscale for y in np.array_split(up,count)]
+            d = [np.sum(y)/self.dscale for y in np.array_split(down,count)]
+            #print((x,u,d))
+            return (np.array(x),
+                    np.array(u),
+                    np.array(d))
+#+end_src
+
+    Finally, there is an exception in case some future programmer has
+    added a radio button to the Spectrum Dialog without implementing
+    the binning option here.  It's not likely that this code will ever
+    be called, but it should exist for completeness.
+
+#+name: spectrumdialog_autobinset
+#+begin_src python
+    #
+        else:
+            raise RuntimeException("Need to Implement bullet choice!")
+#+end_src
+
+
+** Livewatch
+
+   =Livewatch.py= is a utility to display the polarization as it comes
+   in.  It takes two parameters at the command line.  The first is the
+   run number for the run.  The second is the current in triangle 1
+   for the runs which we wish to analyze.
+
+*** Livewatch skeleton
+
+#+begin_src python :tangle livewatch.py :noweb tangle :padline no
+import numpy as np
+from matplotlib import pyplot as plt
+import matplotlib as mpl
+import time
+from reader import PelFile
+from monfile import MonFile
+import sys
+import os.path
+import xml.etree.ElementTree as ET
+import HTMLParser
+import json
+
+RUN = 32725
+basedir = "C:/userfiles/EXP011/"
+XMLNS = "{http://neutrons.ornl.gov/SNS/DAS/runinfo_v4_3}"
+REBIN = 4
+
+plt.ion()
+
+<<livewatch_spectrum>>
+mpl.rcParams['interactive'] = True
+
+<<livewatch_manifestly>>
+def spectra(gen):
+    while True:
+        next = gen.next()
+        if next is None:
+            yield None
+            continue
+        i,_=next
+        s = spectrum(i)
+        if s is None:
+            yield None
+        else:
+            data,counts,manifest = s
+            yield data,counts,manifest
+            print i
+            print(manifest)
+            i += 1
+
+def filter(gen,f):
+    next = gen.next()
+    while True:
+        if next is None:
+            yield None
+        else:
+            if f(next):
+                yield next
+        next = gen.next()
+
+def integrator(gen):
+    data = np.zeros(400/REBIN)
+    counts = 0
+    while True:
+        next = gen.next()
+        if next is not None:
+            data += rebin(next[0],REBIN)
+            counts += next[1]
+        yield data/counts,np.sqrt(data)/counts
+        
+
+def joiner(gens):
+    while True:
+        streams = [g.next() for g in gens]
+        yield streams
+
+def plotter(source,count=1):
+    xs = np.arange(0,20,0.05*REBIN) 
+    plt.figure("Live Update")
+    plt.ylim([-1,1])
+    graphs = [plt.errorbar(xs,np.zeros(400/REBIN),np.zeros(400/REBIN),marker="o") for i in range(count)]
+    while True:
+        data=source.next()
+        for g,d in zip(graphs,data):
+            if d is not None:
+                g[0].set_ydata(d)
+        plt.draw()
+        plt.pause(5)
+
+def polarization(up,down):
+    up = integrator(up)
+    down = integrator(down)
+    while True:
+        u = up.next()[0]
+        d = down.next()[0]
+        yield -1*(u-d)/(u+d)
+        #yield d/u
+
+def fullpol(i,f):
+    upstate = lambda x: x[1]['Flipper'] < 0
+    downstate = lambda x: x[1]['Flipper'] > 0
+
+    ups = spectra(filter(filter(manifestly(i),upstate),f))
+    downs = spectra(filter(filter(manifestly(i),downstate),f))
+    return polarization(ups,downs)
+
+<<livewatch_rebin>>
+
+if __name__=="__main__":
+
+    lowcur = lambda x: x[1]['Triangle1'] ==3
+    midcur = lambda x: x[1]['Triangle1'] ==9
+    hicur = lambda x: x[1]['Triangle1'] ==15
+
+    start = int(sys.argv[1])
+
+    filters = [lambda x: x[1]['Triangle1'] == float(i) for i in sys.argv[2:]]
+
+    polarizers = [fullpol(start,f) for f in filters]
+
+    p = plotter(joiner(polarizers),count=len(polarizers))
+    plotter(p)
+
+#+end_src
+
+
+*** Low Level Functions
+
+The livewatch_spectrum function loads in the intensity spectrum and
+uncertainty of a single run from its run number.  This code was copied
+almost verbatim from [[Reduction]].  The only major change is that a
+dictionary containing the current values is also returned, allowing
+for other functions to sort the data.
+
+#+name: livewatch_spectrum
+#+begin_src python
+def spectrum(run,mins=(0,0),maxs=(16,128),mask=None):
+    eventfile = basedir+"SESAME_%i/SESAME_%i" % (run,run) + "_neutron_event.dat"
+    if not os.path.isfile(eventfile):
+        return None
+    p = PelFile(eventfile)
+    mon = MonFile(basedir+"SESAME_%i/SESAME_%i" % (run,run) +"_bmon_histo.dat",False)
+    up = p.make1d(mins,maxs,mask)
+
+    manifestFile = basedir+"SESAME_%i/SESAME_%i" % (run,run) + "_runinfo.xml"
+
+    text = ET.parse(manifestFile).getroot().find(".//"+XMLNS+"Notes").text
+    text = HTMLParser.HTMLParser().unescape(text)
+    manifest = json.loads(text)
+
+    return up,np.sum(mon.spec),manifest
+
+
+#+end_src
+
+Livewatch has a function for rebinning numpy arrays.  It takes the
+original arrays and a number giving how many of the original array
+elements should be combined together in the new array.
+
+#+name: livewatch_rebin
+#+begin_src python
+def rebin(x,bins):
+    result=np.zeros(len(x)/bins,dtype=np.float64)
+    for b in range(bins):
+        result += x[b::bins]
+    return result
+#+end_src
+
+
+
+*** Generators
+
+The main structure of livewatch is based around python
+generators. Generators tend to come in three kinds
+
+- Sources :: A generator which produces a continuously updating list
+             of data.
+- Pipes :: A generator which reads from another generator, performs
+           some transformations on the results, and yields that
+           result.
+
+There's another related kind of function that isn't a generator.
+- Sinks :: A function that reads through a generator and performs
+           actions based on the results, but doesn't perform pass data
+           to any higher level generators.
+
+**** Sources
+
+Manifestly starts with a single run number.  It then continuously
+scans that directory, waiting for a monitor file to be written.  If
+the monitor file exists, we know that the data acquisition system has
+finished then run and we can continue.  If there is no new run, we
+signal that information up the chain with a =None=.
+
+Once the monitor file has been written, we read the runinfo file to
+get the current data from the =Notes= heading.  This is turned into a
+dictionary via json parsing.  The run number and manifest can then be
+passed up the chain.  Finally, we increment the run number and return
+to waiting for the new run to finish.
+
+I also apologize for the stupid name.
+
+#+name: livewatch_manifestly
+#+begin_src python
+def manifestly(start):
+    i = start
+    while True:
+        manifestFile = basedir+"SESAME_%i/SESAME_%i" % (i,i) + "_runinfo.xml"
+        monitorFile = basedir+"SESAME_%i/SESAME_%i" % (i,i) + "_bmon_histo.dat"
+        if not os.path.isfile(monitorFile):
+            #If the monitor file hasn't been written, the run isn't
+            #done yet and we shouldnt' read it
+            yield None
+        else:
+            try:
+                manifestFile = basedir+"SESAME_%i/SESAME_%i" % (i,i) + "_runinfo.xml"
+
+                text = ET.parse(manifestFile).getroot().find(".//"+XMLNS+"Notes").text
+                text = HTMLParser.HTMLParser().unescape(text)
+                manifest = json.loads(text)
+                yield i,manifest
+                i += 1
+            except ValueError:
+                yield None
+
+
+
 #+end_src
 
 
@@ -2361,7 +3737,7 @@ def mapim(imarray):
                   "MCPPowerSupplyControlVoltageCommandGain " +
                   "MCPPowerSupplyControlVoltageCommandOffset " +
                   "MCPPowerSupplyVoltageEnable " +
-                  "x1Gain x2Gain x3Gain x4Gain x5Gain x6Gain x7Gain x8Gain x9Gain x10Gain " +
+                  "x1Gain x2Gain x3Gain x4Gain x5Gain x6Gain x7Gain x8Gain x9Gain x10Gain " +
                   "y1Gain y2Gain y3Gain y4Gain y5Gain y6Gain y7Gain y8Gain y9Gain y10Gain " +
                   "strobeGain EnergyGain ThresholdGain "+
                   "ADVoltageOffset ADAOffset ADBOffset ADCOffset ADDOffset "+
@@ -2499,3 +3875,2006 @@ def mapim(imarray):
                 stop=clock()
 #+end_src
 
+** MonFile
+
+   The =MonFile= class is used to read the files produced by the SNS
+   beam monitor software.
+
+*** MonFile Skeleton
+
+    The monfile package mostly consists of the MonFile class.  There
+    are, however, a couple of notes which are non-intuitive.  First,
+    monfile imports graphframe, so it's not suited for use on a
+    headless system.  In practice, that's not a big deal, but you
+    should be aware of it.  Also, monfile is one of the oldest parts
+    of PELVis and has quite a bit of cruft.  For instance, it imports
+    pylab, but it never uses it.  (That's probably a good thing, as you
+    shouldn't use pylab.)  I'll try to comment on the cruft as I pass
+    through, but you should pay attention.
+
+#+begin_src python :tangle monfile.py :noweb tangle :padline no
+"""Classes for dealing with neutron monitor data
+
+This module contains a single class: MonFile.  This class is used to read
+the time, intensity, and spectrum information out of a file produced
+by the SNS's BMM_server
+
+"""
+
+import numpy as np
+import re
+import scipy.interpolate as ip
+import scipy.optimize as op
+import matplotlib.pyplot as pyplot
+from graphframe import GraphFrame
+import pylab as pl
+import math
+
+class MonFile:
+    """Manages a file which holds neutron monitor data."""
+    KbT = 2.0e-3
+    
+    <<monfile_init>>
+
+    <<monfile_converttime>>
+
+    def func(self, x, A, b, k, c):
+        return A*x**2 * np.exp(-(x-k)**2*b) + c
+
+    <<monfile_load>>
+#+end_src
+
+*** Initialization
+
+    The constructor has two, optional parameters.  The first is a file
+    name, which can cause that file to be loaded into memory.  The
+    second is a boolean which declares whether we want a graph of the
+    monitor spectrum to be displayed on the screen.
+
+    The constructor declares two members.  The first is =time=, which
+    is no longer used.  Under the old PAPA data collection system, the
+    monitor files were stored in ASCII format and included the run
+    time in microseconds.  This information could then be used for certain kinds
+    of background subtraction and normalization.  However, the monitor
+    files produces by the SNS software are binary arrays of floating
+    points and do not have the time information, so it is no longer
+    included.
+
+    The other member, =spec=, stores an array of the monitor counts
+    per TOF bin.  This array is the primary purpose of the class.
+
+#+name:monfile_init
+#+begin_src python
+    def __init__(self,file=None,plot=True):
+        """Creates a MonFile object"""
+        self.time = None #The amount of time that the monitor ran.
+        self.spec = None #The neutron spectrum detected on the monitor.
+        if file is not None:
+            self.load(file,plot)
+#+end_src
+
+
+*** File Loading
+
+    The SNS software saves an array of 50,000 32 bit integers
+    representing the counts in each time of flight bin.  Each bin
+    represents 1us, so the 50,000 bins give 50ms, which corresponds to
+    our 20Hz pulse rate.
+
+    The main parts of the code are at the beginning of the class.
+    numpy loads the neutron spectrum from the SNS data file with the
+    =fromfile= function.  With the exception of the last line, every
+    other part of the function is dedicated to displaying the graph
+    and has no result on the actual data analysis.
+
+    The =x= variable is used to store the wavelenghts for the neutron
+    counts in =y=.
+#+name:monfile_load
+#+begin_src python
+    def load(self,file,plot=True):
+        """Load data from the file given in the path string."""
+        self.time = -1
+        base = 0.1
+        count = 0
+        uplim = 31
+        
+        y = np.fromfile(file,np.int32,-1)
+        x = np.arange(0,50001,1,dtype=np.float32)
+        x = self.convertTime(x)
+#+end_src
+
+    The =xs= and =ys= arrays are made to rebin the data from x and y.
+    The code cycles through each data point and adds the data from =y=
+    into the corresponding bin in =ys=.  The =base= variable is used
+    to keep track of the current position in ys.
+
+    Note that this binning algorithm is incredibly slow and should
+    probably be replaced.
+
+#+name:monfile_load
+#+begin_src python
+    #
+        #f = ip.interp1d(x,y)
+        #p0 = [10., 0.0001, 10000., 2.]
+        #p1, cov = op.curve_fit(self.func, x, y, p0)
+        #print(p1)
+        #p1f = self.func(x, *p1) #Fit of neutron monitor
+        #xs = range(200)
+        #xs = np.arange(0,35,0.1)
+        #ys = np.zeros(350,dtype=np.uint32)
+
+        xs = np.arange(0,uplim,base)
+        ys = np.zeros(uplim/base,dtype=np.uint32)
+
+        for (i,j) in zip(x,y):
+            if i > base:
+                ys[int(10*base-1)]=count
+                base += 0.1
+                count = 0
+            count += j
+        base = 0.1
+        count = 0
+        uplim = 31
+#+end_src
+
+    ymean is supposed to find the background level by looking at the
+    count rate of the neutron between 25 Å and 30 Å, but it only seems
+    to be used in =ynew=, which is never used again.  In practice, the
+    noise on the neutron monitor is low enough that this really
+    shouldn't be necessary.
+
+#+name:monfile_load
+#+begin_src python            
+    #
+        ymean = np.mean(ys[250:300])
+        ynew = np.array([float(yo)-ymean*(uplim/base)/50001 for yo in y])
+#+end_src
+
+    The results are rebinned again for reasons that I honestly cannot
+    fathom at this point.
+
+#+name:monfile_load
+#+begin_src python        
+    #
+        ysnew = np.zeros(uplim/base,dtype=np.float32)
+        for (i,j) in zip(x,ynew):
+            if i > base:
+                ysnew[int(10*base-1)]=count
+                base += 0.1
+                count = 0
+            count += j
+#+end_src
+
+    Finally, the results are plotted.
+
+#+name:monfile_load
+#+begin_src python
+    #
+        if plot:
+            graph = GraphFrame(None,"Monitor")
+            graph2 = GraphFrame(None,"Monitor Adjusted")
+        #        graph.plot(np.arange(0.0,20.0,0.1),f(xs))
+        #    graph.plot(xs,ys)
+            graph2.plot(xs,ysnew)          
+#+end_src
+
+    The final, but most important step, is to store the monitor
+    spectrum in the class.  The =expand_dims= function is used to turn
+    a 1D array with fifty thousand elements into a 3d arry with
+    dimensions (1,1,50000).  The reasoning is that the time
+    information is now stored on the same array axis by both the
+    monitor file and the detector reader.
+
+#+name:monfile_load
+#+begin_src python
+    #
+        self.spec = np.expand_dims(np.expand_dims(y,axis=0),axis=0)
+
+#+end_src
+
+    The convert time function takes an array of us and returns their
+    corresponding wavelengths in Angstroms.  Most of this has already
+    been covered in the [[convertTime][similar function]] for the neutron data
+
+#+name:monfile_converttime
+#+begin_src python
+    def convertTime(self,t):
+        """Converts a numpy array of time bins into neutron wavelengths"""
+        distanceToG4 = 3.7338+2.5297
+        #The distance between the end of G4 and the Helium 3 monitor.
+        distanceToMonitor = 0.02 #FIXME
+        t -= 860
+        t *= 3.956034e-7/(distanceToMonitor+distanceToG4)/1e-10*1e-6
+        return t
+#+end_src
+
+
+
+** Combiner
+
+The =Combiner= module contains two helper functions.  These function
+are used for parsing the metadata from individual runs and combining
+them into a single run file.
+
+*** Combiner Skeleton
+
+The =XMLNS= global variable is the [[http://www.w3.org/TR/REC-xml-names/][XML Namespace]] that the SNS has
+chosen to use in their configuration files.  The good news is that
+Python's =xml.etree= module correctly handles namespaces.  The bad
+news is that every attempt to pull a tag from an XML file requires
+that the tag be prefaced with the namespace, which is a pain.
+
+#+begin_src python :tangle Combiner.py :noweb tangle :padline no
+import xml.etree.ElementTree as ET
+import HTMLParser
+import json
+import numpy as np
+import os.path
+from time import strptime,mktime
+from math import floor,sqrt
+
+XMLNS = "{http://neutrons.ornl.gov/SNS/DAS/runinfo_v4_3}"
+
+<<combiner-load>>
+<<combiner-save>>
+#+end_src
+
+
+
+*** Load
+
+The =load= function takes a list of paths to runinfo files and
+returns a dictionary with the current configurations as a key and the
+runs associated with the configuration as the value.  It also takes
+an optional =filter= parameter, which is currently ignored and should
+be removed.
+
+#+name:combiner-load
+#+begin_src python
+def load(paths,filter=None):
+    currents = set([])#List of the configurations of the instrument
+    runsets = {}#Directionary of lists of run nodes, indexed by their instrument configuration
+
+#+end_src
+
+For each run_info file, we use element tree to find the =<Notes>=
+tag.  This text is then extracted out.  The SNS software does HTML
+encoding on the text in the notes tag, despite the fact that this is
+XML and not HTML.  In any case, we use the HTMLParser module to
+remove the text encoding.  Finally, our =save= function in
+=Sesame_init.py= saves the power supply status as a [[http://www.json.org][JSON]] string,
+which we then interpret.
+
+#+name:combiner-load
+#+begin_src python
+#
+    for path in paths:
+        print(path)
+        base = os.path.dirname(path)
+        text = ET.parse(path).getroot().find(".//"+XMLNS+"Notes").text 
+        text = HTMLParser.HTMLParser().unescape(text)
+        manifest = json.loads(text)
+#+end_src
+
+The dictionary of the power supply currents is turned into a tuple.
+The tuple is a value by itself and can be put into a Set, while the
+dictionary is an object with a unique identity and doesn't mesh as
+well with Sets and uniqueness checking.  A useful improvement would
+be to turn this into a [[https://docs.python.org/2/library/collections.html][NamedTuple]], which would allow the constituents
+to be called by name, instead of location.
+
+#+name:combiner-load
+#+begin_src python
+        
+##        if ((filter is not None) and 
+##            (floor(float(manifest['triangle1'])) != filter)):
+##            continue #wrong triangle current
+        try:
+            current = (manifest['Flipper'],
+                       manifest['Guide'],
+                       manifest['Phase'],
+                       manifest['Sample'],
+                       manifest['Triangle1'],
+                       manifest['Triangle2'],
+                       manifest['Triangle3'],
+                       manifest['Triangle4'],
+                       manifest['Triangle5'],
+                       manifest['Triangle6'],
+                       manifest['Triangle7'],
+                       manifest['Triangle8'])
+        except:
+            print("Could not retrieve currents for run " + str(base[-5:]))
+            continue
+#+end_src
+
+If this combination of power supply currents hasn't been seen before,
+it's added to the dictionary.  Replacing runsets with a [[https://docs.python.org/2/library/collections.html][defaultDict]]
+could save us some effort here.
+
+Finally, the function returns the dictionary.
+
+#+name:combiner-load
+#+begin_src python
+#
+        if current in currents:
+            runsets[current].append(path)
+        else:
+            currents.add(current)
+            runsets[current]=[path]
+    return runsets
+
+#+end_src
+
+*** Save
+
+The =save= function is used to export a set of runs into a single
+file.
+
+- path :: The location where the file should be saved.  This includes
+          both the directory and the prefix for the file name.  For
+          instance, if =path= is "C:/PELVis/example", then the
+          detector data would be saved in "example_neutron_event.dat"
+          in the "C:/PELVis" directory.
+- minmon :: The minimum number of monitor counts per second that we
+            expect when the beam is on.  Runs with a count rate below
+            this will be ignored, as the assumption is that there
+            were no neutrons and the detector merely contains noise.
+- keys :: Which current sets should be included in the export
+- runsets :: The dictionary of data runs produced by =load=
+
+We begin by using the key to extract from the dictionary the paths
+for all of the runs were are interested in.
+#+name:combiner-save
+#+begin_src python
+def save(path,minmon,keys,runsets):
+    runs = [x for key in keys for x in runsets[key]]
+#+end_src
+
+The =mon= array holds out total monitor spectrum.
+
+#+name:combiner-save
+#+begin_src python
+#
+    mon = np.zeros((50001,),dtype=np.int32)
+#+end_src
+
+The =tottime= and =detcount= are just interesting statistics and
+could be dropped.
+
+#+name:combiner-save
+#+begin_src python
+#
+    tottime = 0
+    detcount=0
+#+end_src
+
+There's a weird bug in the SNS code.  I'm pretty sure that the bug is
+in their code and is not something that I did.  When a runinfo file is
+saved, it gives a malformatted timestamp for the =StartTime= and
+=StopTime=.  The format strings below allow Python to parse these strings.
+
+#+name:combiner-save
+#+begin_src python
+#
+    format1 = "%Y-%m-%dT%H:%M:%S-04:00"
+    format2 = "%Y-%m-%dT%H:%M:%S-04:00-04:00"
+#+end_src
+
+We open the final output file (outfile), and cycle through the
+monitor files (monpath) and detecto files (detpath).
+
+#+name:combiner-save
+#+begin_src python
+#
+    with open(path+"_neutron_event.dat","wb") as outfile:
+        for r in runs:
+            monpath = r[:-11] + "bmon_histo.dat"
+            detpath = r[:-11] + "neutron_event.dat"
+#+end_src
+
+We extract the starting and ending times and put the total number of
+seconds spent during the measurement into the variable =time=.
+
+#+name:combiner-save
+#+begin_src python
+#
+            starttime = strptime(ET.parse(r).getroot().find(".//"+XMLNS+"StartTime").text.strip(),format1)
+            stoptime = strptime(ET.parse(r).getroot().find(".//"+XMLNS+"StopTime").text.strip(),format2)
+
+            time = mktime(stoptime)-mktime(starttime)
+
+#+end_src
+
+The monitor spectrum for the individual run is slurped into the
+variable =montemp= with the total number of counts being stored in
+=moncount=. 
+
+#+name:combiner-save
+#+begin_src python
+#
+            with open(monpath,"r") as infile:
+                montemp = np.fromfile(infile,dtype=np.int32)
+
+            moncount = 1.*np.sum(montemp)
+            print "Run number: " + str(r[-17:-12])
+            print "Time: " + str(time)
+
+
+#+end_src
+
+We check to see if we're within 20 counts per second of the expected
+monitor count rate.  If not, then we stop processing this run.
+
+#+name:combiner-save
+#+begin_src python
+#
+            #Fixed for enabling dead run substraction 04/01/2013 done by Radian 
+            if time <= 0 or ((moncount/time < minmon-20 or \
+                              moncount/time>minmon+20) and minmon >0):
+                print ":::: SKIPPING RUN: " + str(r[-17:-12]) + " ::::\n"
+                print moncount/time
+                print time
+                continue
+
+            print "Monitor counts: " + str(moncount)
+            print "Monitor count rate: " + str(round(moncount/time,2))
+
+            mon += montemp
+            tottime += time
+
+#+end_src
+
+The contents of the detector file is loaded into dettemp.  There's
+also some code to calculate the detector count rate.  That code could
+probably be removed.
+
+#+name:combiner-save
+#+begin_src python
+#
+            with open(detpath,"rb") as infile:
+                dettemp = np.fromfile(infile,count=-1)
+                dc = 1.*len(dettemp)
+                dcr = round(dc/moncount,2)
+                dcrerr = sqrt(dc/(moncount**2) + (dc**2)/(moncount**3))
+                print "Detector counts: " + str(dc)
+                print "Detector count rate: " + str(round(dc/time,2))
+                print "Detector counts/Monitor counts: " + str(dcr) + \
+                      " +/- " + str(dcrerr) + "\n"
+                if dcr <= 0:# or dcrerr/dcr > 0.02:
+                    print "#### SKIPPING RUN: " + str(r[-17:-12]) + " ####\n"
+                    mon -= montemp
+                    continue
+
+#+end_src
+
+We increment the total detector count and add the events to our final
+run file.  We also delete the current data from memory to save some space.
+
+#+name:combiner-save
+#+begin_src python
+#
+                detcount += len(dettemp)
+                dettemp.tofile(outfile)
+                del dettemp
+
+#+end_src
+
+Finally, we dump the total monitor spectrum to a file and display the
+cumulative statistics for all of the runs.
+
+#+name:combiner-save
+#+begin_src python
+#
+    with open(path+"_bmon_histo.dat","wb") as stream:
+        mon.tofile(stream)
+    print "Total Monitor Counts = " + str(np.sum(mon))
+    print "Total Detector Counts = " + str(detcount)
+    print "Total Time = " + str(tottime)
+    if tottime > 0:
+        print "Monitor Count Rate = " + str(np.sum(mon)/tottime)
+        print "Detector Count Rate = " + str(detcount/tottime)
+
+#+end_src
+
+
+* Reduction
+
+** Reduction Skeleton
+
+#+begin_src python :tangle Reduction.py :noweb tangle :padline no
+from reader import PelFile
+from monfile import MonFile
+import matplotlib.pyplot as plt
+import Combiner
+import numpy as np
+from optparse import OptionParser
+import os
+
+basedir = "C:/userfiles/EXP011/"
+RESOLUTION = 400
+
+<<reduction_load>>
+
+<<reduction_export>>
+
+<<reduction_plot_2d_range>>
+<<reduction_get_2d_int>>
+
+<<reduction_plot_int_range>>
+
+<<reduction_plot_pol_range>>
+    
+    
+<<reduction_getIntegratedSpectra>>
+<<reduction_normalize_name>>
+
+
+<<reduction_spectrum>>
+
+<<reduction_errspectrum>>
+<<reduction_simple_spectrum>>
+
+<<reduction_fr>>
+
+<<reduction_run_int>>
+
+
+<<reduction_singleplot>>
+
+<<reduction_echoplot>>
+<<reduction_intensity>>
+    
+
+<<reduction_echofr>>
+
+<<reduction_poldrift>>
+<<reduction_echodiff>>
+
+<<reduction_twoflipper>>           
+    
+<<reduction_main>>
+#+end_src
+
+
+** Main Command
+
+   The program begins by creating an [[https://docs.python.org/2/library/optparse.html][OptionParser]] to handle the
+   numerous command line options of the application.
+
+#+name:reduction_main
+#+begin_src python
+
+if __name__=='__main__':
+
+    parser = OptionParser()
+#+end_src
+
+   The =choices= dictionary gives a simple mapping between the human
+   readable names of the power supplies and their numbering.  This
+   will be used to interpret channel selection from the user at the
+   command line.
+
+#+name:reduction_main
+#+begin_src python
+#
+
+    choices = {None:None,"flipper":0,"guides":1,"phase":2,"sample":3,"1":4,"2":5,"3":6,"4":7,"5":8,"6":9,"7":10,"8":11}
+#+end_src
+
+   The export command tells the reducer that the files need to be
+   combined before they can be plotted.  If the command has been run
+   once, then subsequent runs can plot the *same data* in different
+   way.  However, if you want to change the run number or anything
+   about the currents examined, the data needs to be exported again.
+
+   The =twoflip= option is a duplication of functionality and should
+   be removed.  It can be just as easily performed with a =sortby=
+   option without adding in duplicated code.
+
+#+name:reduction_main
+#+begin_src python
+#
+
+    parser.add_option("-e","--export", type="choice", action="store", \
+                      help="Export into pel files",
+                      choices=["flip","twoflip"])
+#+end_src
+
+   The =sortby= command is used to get flipping measurements sorted by
+   the current in another power supply.  For instance, if the unit was
+   flipping one triangle 3 and performing a tuning scan on triangle 8,
+   then =--sortby 8= would separate out all of the different tuning runs.
+
+#+name:reduction_main
+#+begin_src python
+#
+    parser.add_option("--sortby",action="store",type="choice", \
+                       help = "Which power supply is scanned",
+                       choices=choices.keys())
+#+end_src
+
+   The =filter= option is used to only examine a single state from the
+   power supply indicated by =sortby=.  For instance, if you have
+   found that the instrument was tuned at 4.5A after a tuning scan on
+   triangle 7, then =--sortby 7 --filter 4.5= would only process runs
+   where the instrument was tuned.
+
+#+name:reduction_main
+#+begin_src python
+#
+    parser.add_option("--filter",action="store",type="float", \
+                       help="Focuses the export to only a single \
+                       value in the sortby parameter")
+#+end_src
+
+   The =flip= option indicated which power supply acted as the
+   flipper.  This is necessary for splitting the spin states.
+
+#+name:reduction_main
+#+begin_src python
+#
+    parser.add_option("--flip",action="store",type="choice", \
+                       help="Which power supply runs the flipper",
+                       choices=choices.keys())
+#+end_src
+
+   The =flip2= command is used to indicate which power supply served
+   for the second flipper in a two flipper measurement.  Like the
+   =twoflip= option on =export=, this is better server by using the
+   =sortby=  command and should be removed.
+
+#+name:reduction_main
+#+begin_src python
+#
+    parser.add_option("--flip2",action="store",type="choice", \
+                       help="Which power supply runs the second flipper \
+                       in a two flipper run",
+                       choices=choices.keys())
+#+end_src
+
+   The =mon= command sets a minimum monitor value for a run.  If the
+   count rate per second on the monitor is less than this value, the
+   beam is assumed to have gone down and the run is not included.
+
+#+name:reduction_main
+#+begin_src python
+#
+    parser.add_option("--mon",action="store",default=32,type="float", \
+                       help="Minimum monitor value.  If the value \
+                       is lessthan or equal to zero, all runs are \
+                       included, regardless of monitor count.")
+#+end_src
+
+   The =(x,y)(min,max)= options give a pixel range on the detector,
+   indicating the area where the relevant signal should be expected.
+
+#+name:reduction_main
+#+begin_src python
+#
+
+    parser.add_option("--xmin",action="store",type="int",help="Minimum x value",default=0)
+    parser.add_option("--ymin",action="store",type="int",help="Minimum y value",default=0)
+    parser.add_option("--xmax",action="store",type="int",help="Maximum x value",default=16)
+    parser.add_option("--ymax",action="store",type="int",help="Maximum y value",default=128)
+#+end_src
+
+   When the =sortby= command is used, the =start=, =stop=, and =step=
+   command give the bounds of the current that should be expected, as
+   well as the step size between them.  Honestly, the program should
+   be improved so that it can find these values automatically, but
+   they need to be manually entered for now.
+
+#+name:reduction_main
+#+begin_src python
+#
+
+    parser.add_option("--start",action = "store",type="float", help="The starting current of the scan")
+    parser.add_option("--stop",action = "store", type="float", help="The ending current of the scan")
+    parser.add_option("--step",action = "store", type="float", help="The current step of the scan")
+#+end_src
+
+   The =skip= command can be used to exclude a bad run (e.g. power
+   supply failure).  Calling it multiple times allows for skipping
+   multiple runs.
+
+#+name:reduction_main
+#+begin_src python
+#
+    parser.add_option("--skip",action = "append", type="int", help="Marks that a run should NOT be included in the file export.")
+#+end_src
+
+   The =plot= option tells the program which kind of plot to make.
+
+#+name:reduction_main
+#+begin_src python
+#
+
+    parser.add_option("--plot",action="store",type="choice",
+                      help="Where to make a simple plot or perform a height diff",
+                      choices=["plot","diff","fr","echo","intensity","poldrift","int2drange","pol2drange"])
+#+end_src
+
+   The =save= option takes a file name and saves the data that would
+   be plotted into that file.
+
+#+name:reduction_main
+#+begin_src python
+#
+    parser.add_option("--save",action="store",type="string",default=None,
+                      help="A file in which to save the dataset.")
+#+end_src
+
+   The =mask= option takes the path of a binary bitmap mask, as
+   [[OnExportROI][exported by PELVis]] and uses it to examine only the signal portion of
+   the detector.
+
+#+name:reduction_main
+#+begin_src python
+#
+    parser.add_option("--mask",action="append",type="string",default=None,
+                      help="A mask file indicating which pixel to use in the analysis")
+#+end_src
+
+   This function seems to duplicate the filter command.  It should be
+   seen if both are really necessary.
+
+#+name:reduction_main
+#+begin_src python
+#
+    parser.add_option("--current",action="store",type="int",
+                      default=None,
+                      help="A triangle current to filter the results.")
+#+end_src
+
+   Again, this probably isn't necessary.
+
+#+name:reduction_main
+#+begin_src python
+#
+    parser.add_option("--watch",action="store",type="choice", \
+                      choices=choices.keys(), \
+                      help="Which coil are we watching the current of (see --current)")
+#+end_src
+
+   If there are a large number of runs which need to be removed or if
+   two measurements taken far apart in time are to be combined, then
+   the =complex= option can take the name of a text file which has the
+   list of the run numbers to be examined, with one run number per
+   line.
+#+end_src
+
+#+name:reduction_main
+#+begin_src python
+#
+    parser.add_option("--complex",action="store_true",
+                     help="Whether to load the run data from runlist.txt")
+#+end_src
+
+   Now that we've parsed the command line arguments, we can start
+   actually crunching some data.  The =runs= variable is a list of the
+   run numbers, which can either be loaded from the command line or
+   from a file.
+
+#+name:reduction_main
+#+begin_src python
+#
+
+    (options,runs) = parser.parse_args()
+
+    if options.complex:
+        runs = list(np.loadtxt("runlist.txt"))
+    else:
+        runs = range(int(runs[0]),int(runs[1])+1)
+#+end_src
+
+   We then remove any skipped runs from the list.
+
+#+name:reduction_main
+#+begin_src python
+#
+    if options.skip:
+        for item in options.skip:
+            runs.remove(item)
+#+end_src
+
+   We now combine and export the runs.  Against, the =twoflip= option
+   is unnecessary.
+
+#+name:reduction_main
+#+begin_src python
+#
+
+    if options.export=="flip":
+        export(runs, choices[options.sortby], choices[options.flip], \
+               options.mon, options.current, options.filter, options.watch)
+    if options.export=="twoflip":
+        two_flipper(runs, choices[options.flip], choices[options.flip2], \
+               options.mon, options.current, options.watch)
+#+end_src
+
+   If the user has added mask files, we now create a custom mask that
+   passes through every one of the loaded files.
+
+#+name:reduction_main
+#+begin_src python
+#
+
+    if options.mask is not None:
+        mask = np.ones((128,16),dtype=np.bool)
+        for m in options.mask:
+            if m[-3:] == "dat":
+                mask = np.logical_and(mask,np.loadtxt(m))
+            else:
+                mask = np.logical_and(mask,np.load(m))
+    else:
+        mask = None
+#+end_src
+
+   Finally, if the user hasn't chosen to plot anything, then the task
+   is complete.
+
+#+name:reduction_main
+#+begin_src python
+#
+    if options.plot is None:
+        pass
+
+#+end_src
+
+   We now need to know the names of the exported files.  If there was
+   no attempt to sort by a triangle current, then the names aren't
+   necessary.  Otherwise, we step through the currents given by
+   =start=, =stop=, and =step= and check to see if the file exists.
+   If it does, it's added to the list of files.
+
+#+name:reduction_main
+#+begin_src python
+#
+    else:
+        if options.sortby is None or options.filter is not None:
+            names = [""]
+        else:
+            count = round((options.stop-options.start)/options.step)+1
+            print(count)
+            names = [str(x) 
+                     for x in 
+                     np.linspace(
+                    options.start,
+                    options.stop,
+                    count)]
+            print(names)
+            names = [name for name in names
+                     if os.path.exists(basedir+"SESAME_%i/" % runs[-1] + 
+                                       normalize_name(name)+
+                                       "up_neutron_event.dat") 
+                     and os.path.exists(basedir+"SESAME_%i/" % runs[-1] + 
+                                        normalize_name(name)+
+                                        "down_neutron_event.dat")]
+            print(names)
+#+end_src
+
+   Finally, we pass the users options to the associated plotting function.
+
+#+name:reduction_main
+#+begin_src python
+#
+
+        if options.plot=="plot":
+            print runs
+            print names
+            singleplot(runs[-1],names[0],(options.xmin,options.ymin),(options.xmax,options.ymax))
+        elif options.plot=="fr":
+            echofr(runs[-1],names,(options.xmin,options.ymin),(options.xmax,options.ymax),outfile=options.save,mask=mask)
+        elif options.plot=="diff":
+            echodiff(runs[-1],names,187(options.xmin,options.ymin), \
+                     (options.xmax,options.ymax),options.save)
+        elif options.plot=="echo":
+            echoplot(runs[-1],names,(options.xmin,options.ymin), \
+                     (options.xmax,options.ymax),outfile=options.save)
+        elif options.plot=="intensity":
+            intensity(runs[-1],names,(options.xmin,options.ymin),(options.xmax,options.ymax),outfile=options.save)
+        elif options.plot=="poldrift":
+            poldrift(runs,(options.xmin,options.ymin),(options.xmax,options.ymax),outfile=options.save)
+        elif options.plot=="int2drange":
+            plot_int_range(runs[-1])
+        elif options.plot=="pol2drange":
+            plot_pol_range(runs[-1],mask)
+
+#+end_src
+
+
+** Export
+
+   The load function performs most of the actual file sorting.  It
+   takes a list of run numbers and an optional current for filtering.
+   It returns a dictionary.  The keys to the dictionary are the
+   various current states that were used for measurements.  The values
+   in the dictionary are the lists of runs which were performed in
+   those current states.
+
+#+name: reduction_load
+#+begin_src python
+def load(runs,current=None):
+    paths = [basedir + "SESAME_%i/SESAME_%i_runinfo.xml"
+             % (run,run) for run in runs]
+    return Combiner.load(paths,current)
+
+#+end_src
+
+   The =export= function takes several parameters to determine how to
+   properly organize the combined runs.
+
+   - runs :: A list of run numbers
+   - sortby :: An index for which element in the current tuple
+               returned by the [[Combiner]] should be used to separate the
+               measurements.
+   - flipper :: The index for the element which contains the power
+                supply used as the flipper
+   - minmon :: The minimum monitor count rate that should be used as a
+               basis for accepting or rejecting runs.
+   - watch :: A third power supply to use for filtering.  In addition
+              to setting the power supply for the flipper and for
+              tuning, we can chose a third power supply where we will
+              fix the current.  Only values with that current in the
+              power supply will be exported.  This allows us to
+              perform a polarization scan of a two dimensional space
+              with respect to the power supplies.
+   - current :: A current to be watched for in the power supply
+                selected by =watch=.
+   - filter :: A single current value to be examined at the exclusion
+               of others.  The current value is searched for in the
+               power supply specified by =sortby=.
+
+  The function begins by using [[Combiner]] to get the metadata for all of
+  the runs and place them in the data dictionary.
+
+#+name: reduction_export
+#+begin_src python
+def export(runs,sortby=None,flipper=0,minmon=8,current=None,\
+           filter=None,watch=None):
+    data = load(runs,current)
+
+    keys = data.keys()
+    print keys
+#+end_src
+
+  The =values= variable is the list of possible currents that could be
+  in the power supply that's being used for sorting.  If there's no
+  sorting, then the value isn't necessary.  If there's a filter on the
+  sorting, then only one value can occur.  Otherwise, we pull all of
+  the values from the keys.
+
+#+name: reduction_export
+#+begin_src python
+#
+
+    if sortby is None:
+        values = [""]
+    else:
+        if filter is None:
+            values = set([x[sortby] for x in keys])
+        else:
+            values = [filter]
+#+end_src
+
+  The =base= variable stores the directory where all of the data will
+  be exported.  By default, it's the data directory of the last run
+  being examined.  
+
+#+name: reduction_export
+#+begin_src python
+#
+
+    base = basedir + "SESAME_%i/" % runs[-1]
+#+end_src
+
+  We then divide up the current keys into up state runs, down state
+  runs, and "same" runs, when the flipper is turned off.  The up state
+  is defined as the flipper current being negative and the down state
+  as the flipper current being positive.  Since the bender and
+  Helium-3 analyzer require a spin flip to achieve a high count rate,
+  the negative convention was chosen.
+
+  In addition to filtering on the flipper, the list comprehensions
+  also filter on the =current= and =watch= parameters, as well as the
+  =sortby= value.
+
+#+name: reduction_export
+#+begin_src python
+#
+
+    for value in values:
+        if type(value) is not str:
+            value = normalize_name(value)
+        ups = [x for x in keys if (flipper is None or x[flipper] < 0) \
+               and (watch is None or x[choices[watch]]==current) \
+               and (sortby is None or normalize_name(x[sortby]) == value)]
+        downs = [x for x in keys if (flipper is not None and x[flipper] > 0)  \
+                and (watch is None or x[choices[watch]]==current) \
+                and (sortby is None or normalize_name(x[sortby]) == value)]
+        sames = [x for x in keys if (flipper is not None and x[flipper] == 0)  \
+                and (watch is None or x[choices[watch]]==current) \
+                and (sortby is None or normalize_name(x[sortby]) == value)]
+#+end_src
+
+  When we're only exporting a single current, we can now set the value
+  variable back to a blank, just as if there was no =sortby= parameter.
+
+#+name: reduction_export
+#+begin_src python
+#
+        if filter is not None:
+            value = "" #Don't put values on files when we're only running a single export
+#+end_src
+
+  If we used a =watch= and =current= filter, we'll want to save the
+  current in the file name so that we can run the reduction multiple
+  times with multiple currents and get multiple files.
+
+#+name: reduction_export
+#+begin_src python
+#
+        if current==None:
+            titleend=""
+        else:
+            titleend="_current="+str(current)
+#+end_src
+
+  Finally, the combined runs are saved through the [[Combiner]].  If there
+  is no spin up or spin down data, then the =sames= are saved.  Also,
+  we do not attempt to save the data if there were no measurements in
+  that particular spin state.
+
+#+name: reduction_export
+#+begin_src python
+#
+        if ups == [] and downs == []:
+            Combiner.save(base+value+"Combined"+titleend,
+                          0,
+                          sames,
+                          data)
+        if ups != []:
+            print "-------------- Up state --------------"
+            Combiner.save(base+value+"up"+titleend,
+                          minmon,
+                          ups,
+                          data)
+        if downs != []:
+            print "-------------- Down state --------------"
+            Combiner.save(base+value+"down"+titleend,
+                          minmon,
+                          downs,
+                          data)
+        
+            
+
+
+#+end_src
+
+The =twoflipper= function allows for exporting the states of a
+two-flipper measurement.  This is deprecated, since the same
+functionality can be performed by =sortby=.
+
+#+name:reduction_twoflipper
+#+begin_src python
+def two_flipper(runs, flipper1, flipper2, minmon, current, \
+                watch="2"):
+    
+    data = load(runs,current)
+    keys = data.keys()
+    values = [""]
+    base = basedir + "SESAME_%i/" % runs[-1]
+
+    for value in values:
+        if type(value) is not str:
+            value = normalize_name(value)
+        upup = [x for x in keys if x[flipper1] < 0 and x[flipper2] < 0 \
+                and x[choices[watch]]==current]
+        updown = [x for x in keys if x[flipper1] < 0 and x[flipper2] > 0 \
+                  and x[choices[watch]]==current]
+        downup = [x for x in keys if x[flipper1] > 0 and x[flipper2] < 0 \
+                  and x[choices[watch]]==current]
+        downdown = [x for x in keys if x[flipper1] > 0 and x[flipper2] > 0 \
+                    and x[choices[watch]]==current]
+        if filter is not None:
+            value = "" #Don't put values on files when we're only running a single export
+
+        if upup != []:
+            print "-------------- Up/Up state --------------"
+            Combiner.save(base+value+"upup_current=" + str(current),
+                          minmon,
+                          upup,
+                          data)
+        if updown != []:
+            print "-------------- Up/Down state --------------"
+            Combiner.save(base+value+"updown_current=" + str(current),
+                          minmon,
+                          updown,
+                          data)
+        if downup != []:
+            print "-------------- Down/Up state --------------"
+            Combiner.save(base+value+"downup_current=" + str(current),
+                          minmon,
+                          downup,
+                          data)
+        if downdown != []:
+            print "-------------- Down/Down state --------------"
+            Combiner.save(base+value+"downdown_current=" + str(current),
+                          minmon,
+                          downdown,
+                          data)
+            
+        if [upup,updown,downup,downdown]==[[],[],[],[]]:
+            print("No data to write")
+
+#+end_src
+
+
+
+** Import
+
+The =spectrum= function takes a run number directory (=run=) and a designation
+(=name=) and returns the polarization spectrum.  The remaining
+optional parameters allow the user to specify which parts of the
+detector contain the signal.
+
+#+name: reduction_spectrum
+#+begin_src python
+def spectrum(run,name,mins=(0,0),maxs=(16,128),mask=None):
+    name = normalize_name(name)
+    p = PelFile(basedir+"SESAME_%i/" % run + name+"up_neutron_event.dat")
+    mon = MonFile(basedir+"SESAME_%i/" % run + name+"up_bmon_histo.dat",False)
+    up = p.make1d(mins,maxs,mask)
+    uperr = np.sqrt(up)/np.sum(mon.spec)
+    up /= np.sum(mon.spec)
+    p = PelFile(basedir+"SESAME_%i/" % run + name+"down_neutron_event.dat")
+    mon = MonFile(basedir+"SESAME_%i/" % run + name+"down_bmon_histo.dat",False)
+    down = p.make1d(mins,maxs,mask)
+    downerr = np.sqrt(down)/np.sum(mon.spec)
+    down /= np.sum(mon.spec)
+
+    return (up-down)/(up+down)
+#+end_src
+
+The =errspectrum= function is similar to =spectrum=, except that it
+also returns the uncertainty in the polarization.
+
+#+name: reduction_errspectrum
+#+begin_src python
+def errspectrum(run,name,mins=(0,0),maxs=(16,128),mask=None):
+    name = normalize_name(name)
+    p = PelFile(basedir+"SESAME_%i/" % run + name+"up_neutron_event.dat")
+    mon = MonFile(basedir+"SESAME_%i/" % run + name+"up_bmon_histo.dat",False)
+    up = p.make1d(mins,maxs,mask)
+    uperr = np.sqrt(up)/np.sum(mon.spec)
+    up /= np.sum(mon.spec)
+    p = PelFile(basedir+"SESAME_%i/" % run + name+"down_neutron_event.dat")
+    mon = MonFile(basedir+"SESAME_%i/" % run + name+"down_bmon_histo.dat",False)
+    down = p.make1d(mins,maxs,mask)
+    downerr = np.sqrt(down)/np.sum(mon.spec)
+    down /= np.sum(mon.spec)
+
+    p = (up-down)/(up+down)
+    err = p*np.sqrt((up-down)**-2+(up+down)**-2)*np.sqrt(uperr**2+downerr**2)
+    return p,err
+#+end_src
+
+
+Most of the plotting functions rely upon =getIntegratedSpectra= to get
+the actual state counts for their results.  It returns the monitor
+normalized intensity spectrums of the spin up and spin down states,
+as well as the corresponding uncertainties.
+
+- run :: The run number for the folder containing the data
+- name :: Any additional infixed on the name of the run.  This is
+          mostly to handle sortby runs where we need to load a
+          specific power supply state.
+- mins :: The minimum x and y corrdinate on the detector to examine
+- maxs :: The maximum x and y corrdinate to examine
+- mask :: A bit mask for eliminating unwanted pixels.
+
+In theory, the =spectrum= and =errspectrum= functions can be rewritten
+as a quick wrappers around =getIntegratedSpectra=.  You should do
+this.
+
+#+name: reduction_getIntegratedSpectra
+#+begin_src python
+def getIntegratedSpectra(run,name,mins,maxs,mask):
+    name = normalize_name(name)
+    p = PelFile(basedir+"SESAME_%i/" % run + name+"up_neutron_event.dat")
+    mon = MonFile(basedir+"SESAME_%i/" % run + name+"up_bmon_histo.dat",False)
+    up = np.sum(p.make1d(mins,maxs,mask)[40:90])
+    uperr = np.sqrt(up)/np.sum(mon.spec)
+    up /= np.sum(mon.spec)
+    p = PelFile(basedir+"SESAME_%i/" % run + name+"down_neutron_event.dat")
+    mon = MonFile(basedir+"SESAME_%i/" % run + name+"down_bmon_histo.dat",False)
+    down = np.sum(p.make1d(mins,maxs,mask)[40:90])
+    downerr = np.sqrt(down)/np.sum(mon.spec)
+    down /= np.sum(mon.spec)
+
+    return (up,uperr,down,downerr)
+
+#+end_src
+
+The =reduction_fr= function is a thin wrapper around the
+getIntegratedSpectra function to provide the flipping ratio versus
+wavelength for a given run.
+
+#+name: reduction_fr
+#+begin_src python
+def fr(run,name,mins=(0,0),maxs=(16,128),mask=None):
+    up,uperr,down,downerr = getIntegratedSpectra(run,name,mins,maxs,mask)
+
+    ratio = up/down
+    rerr = ratio * np.sqrt((uperr/up)**2+(downerr/down)**2)
+
+    return (ratio,rerr)
+#+end_src
+
+Similarly, =reduction_run_int= gives the total neutron intensity
+between the spin up and spin down states.
+
+#+name:reduction_run_int
+#+begin_src python
+def run_int(run,name,mins=(0,0),maxs=(16,128),mask=None):
+    up,uperr,down,downerr = getIntegratedSpectra(run,name,mins,maxs,mask)
+
+    total = up+down
+    total_err = np.sqrt(uperr**2+downerr**2)
+
+    return (total,total_err)
+#+end_src
+
+
+The =simple_spectrum= routine is similar to =getIntegrateSpectra=,
+but it only loads a single subrun based on the run number.  It's
+largest advantage is that the data does not need to be exported for
+it to be used.
+
+#+name:reduction_simple_spectrum
+#+begin_src python
+def simple_spectrum(run,mins=(0,0),maxs=(16,128),mask=None):
+    p = PelFile(basedir+"SESAME_%i/SESAME_%i_neutron_event.dat"%(run,run))    
+    mon = MonFile(basedir+"SESAME_%i/SESAME_%i_bmon_histo.dat"%(run,run),False)    
+    data = p.make1d(mins,maxs,mask)
+    err = np.sqrt(data)/np.sum(mon.spec)
+    data /= np.sum(mon.spec)
+
+    return (data,err)
+#+end_src
+
+
+
+Some plots depend more on the 2d detector image and less on the
+wavelength spectrum.  The =get_2d_int= function returns a monitor
+normalized 2d array representing the neutron intensity per pixel.
+
+- run :: The run number for the directory where the flipping run data
+         has been exported
+- name :: The name of the data file.  This can theoretically allow
+          this function to be used to load the results of a sortby
+          operation, but, in practice, it's only ever used for just
+          up and down spin states.
+
+#+name:reduction_get_2d_int
+#+begin_src python
+def get_2d_int(run,name):
+    p = PelFile(basedir+"SESAME_%i/" % run + name+"_neutron_event.dat")
+    mon = MonFile(basedir+"SESAME_%i/" % run + name+"_bmon_histo.dat",False)
+    return np.sum(p.make3d(),axis=2) / np.sum(mon.spec)    
+#+end_src
+
+
+** Plotting
+
+The single plot command takes a single data file and plots it to the
+screen.
+
+- run :: The run number of the directory where the file is stored.
+- name :: The file name for the data file to be plotted.
+- mins :: The upper left pixel of the region of interest on the detector.
+- maxs :: The lower right pixel of the region of interest on the detector.
+
+#+name: reduction_singleplot
+#+begin_src python
+def singleplot(run,name,mins=(0,0),maxs=(16,128)):
+    data = spectrum(run,name,mins,maxs)
+    data[np.isnan(data)]=0
+    plt.plot(np.arange(RESOLUTION)*20.0/RESOLUTION,data,"r-")
+    plt.show()
+#+end_src
+
+=echofr= takes a list of runs generated by a =sortby= and plots the
+flipping ratio, integrated over all wavelengths, versus the current
+
+#+name:reduction_echofr
+#+begin_src python
+def echofr(run,names,mins=(0,0),maxs=(16,128),mask=None,outfile=None):
+#    names = [name for name in names if float(name) != 5.475]
+    print names
+    data = [fr(run,name,mins,maxs,mask) for name in names]
+    errs = np.array([x[1] for x in data])
+    data = np.array([x[0] for x in data])
+    data[np.isnan(data)]=0
+    errs[np.isnan(data)]=1
+    xs = np.array([float(x) for x in names])
+    print xs
+    plt.errorbar(xs,data,yerr=errs)
+#    if outfile is None:
+    plt.show()
+    if outfile is not None:
+        np.savetxt(outfile,np.transpose(np.vstack((xs,data,errs))))
+    #trying the fitting
+    # data = (data-1.0)/(data+1.0)
+    # print(data)
+    # data = np.log(data)
+    # fit = np.polyfit(xs,data,2)
+    # a = fit[0]
+    # b = fit[1]
+    # c = fit[2]
+    # print(fit)
+    # plt.plot(xs,np.exp(data),"b*")
+    # plt.plot(xs,np.exp(c+b*xs+a*xs**2),"r-")
+    # plt.show()
+    # print(-1*b/(2*a))
+#+end_src
+
+=echodiff= is useful for finding position sensitive differences in the
+echo polarization.  It plots a color plot versus both tuning current
+and wavelength.  The intensity in the plot is based on the difference
+in neutron precession angle, in radians, between the top and bottom of
+the detector.  The =split= variable is used to declare the dividing
+line between the "top" and the "botto".
+
+#+name:reduction_echodiff
+#+begin_src python
+def echodiff(run,names,split,mins,maxs,outfile=None):
+    data = np.vstack(tuple([np.arccos(spectrum(run,name,mins,(split,302))) - 
+                            np.arccos(spectrum(run,name,(split,223),maxs)) for name in names]))
+
+    data[np.isnan(data)]=0
+
+    xs = np.arange(RESOLUTION)*20.0/RESOLUTION
+    ys = np.array([float(x) for x in names])
+    plt.pcolor(xs,ys,data,vmin=-np.pi,vmax=np.pi)
+    if outfile is None:
+        plt.show()
+    else:
+        print name
+        plt.savefig(outfile)
+        plt.clf()
+#+end_src
+
+The =echoplot= is a full spectrum color plot of the echo tune.  The
+axes are wavelength and tuning current and the color represents the
+polarization.  This is slower =echofr= and harder to read.  However,
+it does have the advantage that it's possible to distinguish between a
+deploarized beam and a beam which is far from echo.  It's also
+possible to to tell whether a given peak is on echo or just near it.
+=echoplot= also can show if there are problems out at long
+wavelengths, which would be masked by the high counts at short
+wavelength in =echofr=.  Finally, it's much prettier than =echofr=.
+
+#+name:reduction_echoplot
+#+begin_src python
+def echoplot(run,names,mins=(0,0),maxs=(16,128),mask=None,outfile=None):
+    data = [errspectrum(run,name,mins,maxs,mask) for name in names]
+    errs = np.vstack(tuple([d[1] for d in data]))
+    data = np.vstack(tuple([d[0] for d in data]))
+    data[np.isnan(data)]=0
+    xs = np.arange(101)*0.1
+    ys = sorted([float(x) for x in names])
+    ys += [ys[-1]+ys[1]-ys[0]] #Add last element
+    ys = np.array(ys)
+    plt.pcolor(xs,ys,data,vmin=-1,vmax=1)
+    if outfile is None:
+        plt.show()
+    else:
+        print name
+        if outfile[-4:] == ".png":
+            plt.savefig(outfile)
+            plt.clf()
+        else:
+            with open(outfile,"w") as of:
+                y,x = data.shape
+                of.write("wavelength\tcurrent\tpolarization\terror\n")
+                for i in range(x):
+                    for j in range(y):
+                        print((xs[i],ys[j]))
+                        print(data[j,i])
+                        of.write("%f\t%f\t%f\t%f\n"
+                                 %(xs[i],ys[j],data[j,i],errs[j,i]))
+
+
+
+#+end_src
+
+The =intensity= plot gives the detector count, with uncertainty,
+versus current.  It doesn't come in handy very often.
+
+#+name:reduction_intensity
+#+begin_src python
+def intensity(run,names,mins=(0,0),maxs=(16,128),mask=None,outfile=None):
+    names = [name for name in names if float(name) != 5.475]
+    data = [run_int(run,name,mins,maxs,mask) for name in names]
+    errs = np.array([x[1] for x in data])
+    data = np.array([x[0] for x in data])
+    data[np.isnan(data)]=0
+    errs[np.isnan(data)]=1
+    xs = np.array([float(x) for x in names])
+    plt.errorbar(xs,data,yerr=errs)
+#    if outfile is None:
+    plt.show()
+    if outfile is not None:
+        np.savetxt(outfile,np.transpose(np.vstack((xs,data,errs))))
+
+#+end_src
+
+The =poldrift= function plots the polarization versus run number.
+This functionality has laregely been supplanted by [[beamdeath]], which
+makes runs far faster, though it does not produce errorbars.
+
+#+name:reduction_poldrift
+#+begin_src python
+def poldrift(runs,mins,maxs,outfile=None):
+    if len(runs)%2 == 1:
+        runs = runs[:-1]
+    ups = [simple_spectrum(run,mins,maxs)
+                           for run in runs[1::2]]
+    downs = [simple_spectrum(run,mins,maxs)
+                           for run in runs[0::2]]
+    uperrs = np.array([np.sqrt(np.sum(run[1]**2)) for run in ups])
+    downerrs = np.array([np.sqrt(np.sum(run[1]**2)) for run in downs])
+    ups = np.array([np.sum(run[0]) for run in ups])
+    downs = np.array([np.sum(run[0]) for run in downs])
+    p = ups/downs
+    err = p * np.sqrt((uperrs/ups)**2+(downerrs/downs)**2)
+    xs = np.array(runs[0::2])
+    plt.errorbar(xs,p,yerr=err)
+    plt.show()
+    if outfile is not None:
+        np.savetxt(outfile,np.transpose(np.vstack((xs,p,err))))
+
+#+end_src
+
+The =plot_2d_range= plot takes in a 3D data set of any sort.  It then
+finds creates a scatter plot.  The x axis of the scatter plot is a
+given pixel value.  The y axis is the number of pixel whose value is
+less than the x-coordinate.  Think of it like a cummulative histogram
+of the data.
+
+The optional =rnge= variable gives the domain of the x-axis.  If no
+domain is given, it runs over the full pixel value range of the given
+data.  The =steps= parameter can be used to chose the resolution of
+the plot along the x-axis.  Finally, =mask= can be used to pass a
+binary mask of pixels to ignore.
+
+#+name:reduction_plot_2d_range
+#+begin_src python
+def plot_2d_range(data,rnge=None,steps=100,mask=None):
+    """Takes a 2d data set and plots a plateau plot"""
+    if type(rnge) is tuple:
+        vmin,vmax=rnge
+    else:
+        vmin = np.min(data)
+        vmax = np.max(data)
+    if mask is None:
+        mask = data >= vmin
+    print(vmax,vmin,steps)
+    print((vmax-vmin))
+    print((vmax-vmin)/steps)
+    xs = np.arange(vmin,vmax,(vmax-vmin)/steps)
+    ys = [len(np.where(np.logical_and(data<x,mask))[0]) for x in xs]
+    ys = np.array(ys)
+    plt.plot(xs,ys,"r*")
+    plt.show()
+#+end_src
+
+The =plot_int_range= takes a single run number and plots a cumulative
+histogram of the wavelength integrate intensity of the pixels.  The
+x-axis is the minimum pixel intensity and the y axis is how many
+pixels meat that minimum.  The function examines both spin states for
+the run and it is assumed that reduction has already exported the up
+and down run files for that run.
+
+#+name:reduction_plot_int_range
+#+begin_src python
+def plot_int_range(run):
+    up = get_2d_int(run,"up")
+    down = get_2d_int(run,"down")
+    plot_2d_range(up+down,steps=1000)
+#+end_src
+
+The =plot_pol_range= function is similar to =plot_int_range=, except
+that it examines the polarization at each pixel, instead of the total intensity.
+
+#+name:reduction_plot_pol_range
+#+begin_src python
+def plot_pol_range(run,mask=None):
+    up = get_2d_int(run,"down")
+    down = get_2d_int(run,"up")
+    plot_2d_range((up-down)/(up+down),(-1.0,1.0),mask=mask)
+#+end_src
+
+
+=normalize_name= takes either a number or an empty string.  If it
+takes an empty string, it returns the same.  If it gets a number, it
+returns a string with that number out to three places after the
+decimal.  This is useful for naming runs, since we don't always want
+to append a current value to the file name.
+
+#+name:reduction_normalize_name
+#+begin_src python
+def normalize_name(name):
+    if name != '':
+        return "%0.3f"%float(name)
+    else:
+        return name
+#+end_src
+
+* Power Supplies
+
+  The power supplies are currently controlled via an DAC card on the
+  motor computer.  This card sends an analog voltage between -10 V and
+  10 V to each power supply, which is then used to control the
+  current.
+
+  To run the power supplies, the =ps_server.py= program must be run on
+  the Motor computer and the =Coils= class needs to be loaded into
+  PyDAS.  The =sesame_init.py= script currently loads the power supply
+  client into the variable =coils=.
+  
+** Power Supply Server
+
+*** Power Supply Class Module
+
+**** Module Skeleton
+
+#+name: power_supply_skeleton 
+#+begin_src python :tangle ps.py :noweb tangle :padline no
+import __future__
+import ctypes
+import numpy
+import struct
+import json
+
+<<power_supply_constants>>
+<<power_supply_compensate>>
+class PowerSupply:
+    
+    def __init__(self):
+        <<power_supply_init>>
+    <<power_supply_set>>
+
+    <<power_supply_triangle>>
+    <<power_supply_fields>>
+    <<power_supply_chk>>
+    <<power_supply_stop>>
+    def __del__(self):
+        self.stop()
+
+
+
+if __name__=="__main__":
+    x=PowerSupply()
+
+
+#+end_src
+
+
+**** Constants
+
+The nidaq object is a link to the DLL file which contains National
+Instrument DAQmx interface to their hardware.  It may not be quite as
+friendly as something like Measurement Studio, but it's actually a nice
+and simple API and it gets the job done.  All of the functions in the
+[[NI-DAQmx C Reference Help]] are available from this DLL.  This help
+reference is installed with the drivers and you should update the link
+to where it is install on your computer.
+
+#+name: power_supply_constants
+#+begin_src python
+
+nidaq = ctypes.windll.nicaiu #Link to nicaiu.dll
+#+end_src
+
+Since DAQmx is a C api, we do need to care about the size of our data
+types.  The [[https://docs.python.org/2/library/ctypes.html][python ctypes]] module can handle most of these conversions
+for us.  I've included some simple names to both help keeping track of
+bit size and to simplify the code.
+
+#+name: power_supply_constants
+#+begin_src python
+
+int32 = ctypes.c_long
+uInt32 = ctypes.c_ulong
+uInt64 = ctypes.c_ulonglong
+float64 = ctypes.c_double
+TaskHandle = uInt32
+#+end_src
+
+The following constants are from the C header files for DAQmx.  
+
+#+name: power_supply_constants
+#+begin_src python
+
+
+DAQmx_Val_Cfg_Default = int32(-1)
+DAQmx_Val_Volts = 10348
+DAQmx_Val_Rising = 10280
+DAQmx_Val_FiniteSamps = 10178
+DAQmx_Val_ContSamps = 10123
+DAQmx_Val_GroupByChannel = 0
+#+end_src
+
+The triangles array is no longer used and should be removed
+
+#+name: power_supply_constants
+#+begin_src python
+
+#List of which tasks control the triangles
+triangles = ["Triangle1",
+             "Triangle2",
+             "Triangle3",
+             "Triangle4",
+             "Triangle5",
+             "Triangle6",
+             "Triangle7",
+             "Triangle8"]
+#+end_src
+
+The =supplies= maps between the power supply names and the DAQmx
+channels that we intend to control.  
+
+#+name: power_supply_constants
+#+begin_src python
+
+#Dictionary of tasks which contorl small supplies
+supplies = {"flipper":"Flipper",
+            "phase":"Phase",
+            "guides":"Guides",
+            "sample":"Sample"}
+
+
+#+end_src
+
+The =compensate= function is a simple helper to scale a current with a
+slope =m= and y-intercept =b= given in a dictionary.  
+
+#+name: power_supply_compensate
+#+begin_src python
+def compensate(value,f):
+    return value*f['m']+f['b']
+
+#+end_src
+
+
+**** Initialization
+
+We need to load the DAQmx task for each control channel for each power
+supply.  The triangles are stored in a simple list, while other
+supplies can be stored in a dictionary.
+
+If you are looking for a good place to improve the program, this could
+probably be turned into a single list corresponding to the power
+supply number, which could then be access through a dictionary.  It's
+the best of both worlds.
+
+#+name: power_supply_init
+#+begin_src python
+
+
+        self.triangleHandles = []
+        self.supplyHandles = {}
+#+end_src
+
+We also create a dictionary to store the current current in each power
+supply.  As we don't have any read back function at the moment, this is
+the best we can do.
+
+#+name: power_supply_init
+#+begin_src python
+
+        self.values = {}
+#+end_src
+
+We now load the DAQmx task for each hardware channel for each power
+supply.  The tasks are referenced by a TaskHandle, which we pass as a
+pointer to the =LoadTask= function.  Note that, since we're working
+with pointers, we need to create a new task handle object each time.
+Otherwise, it'll always be the same pointer to the same object and
+each cycle through the loop will overwrite all of the previous values.
+
+#+name: power_supply_init
+#+begin_src python
+
+        for t in triangles:
+            taskHandle = TaskHandle(0)
+            print t
+            self.CHK(nidaq.DAQmxLoadTask(t,
+                              ctypes.byref( taskHandle )))
+            self.triangleHandles.append(taskHandle)
+            self.triangle
+#+end_src
+
+We perform a similar operation for the non-triangle supplies, with
+task handles being reference by name in a dictionary, instead of an
+index on a list.
+
+#+name: power_supply_init
+#+begin_src python
+        for (k,v) in supplies.items():
+            taskHandle = TaskHandle(0)
+            self.CHK(nidaq.DAQmxLoadTask(v,
+                              ctypes.byref( taskHandle )))
+            self.supplyHandles[k] = taskHandle
+            
+        print self.supplyHandles
+#+end_src
+
+The relationship between DAC voltage and power supply current is
+stored in a [[http://json.org][JSON]] file.  The file should contain an object with one
+member for each power supply.  That member should have two members of
+its own, representing the slope =m= and intercept =b=.
+
+#+name: power_supply_init
+#+begin_src python
+
+        with open("calibration.json") as configFile:
+            self.calibration = json.load(configFile)
+
+#+end_src
+
+Finally, we see all of the power supply currents to zero to start.
+
+#+name: power_supply_init
+#+begin_src python
+
+        self.values['triangles'] = [0]*8
+        for i in range(1,9):
+            self.triangle(i,0)
+        self.flipper(0)
+        self.guides(0)
+        self.phase(0)
+        self.sample(0)
+            
+
+
+#+end_src
+
+
+**** Low Level Control
+
+The set function takes a task handle and a voltage value and tell
+that task to output the given voltage
+
+#+name: power_supply_set
+#+begin_src python
+
+    def set(self,task,x):
+        """Takes a task handle and a current and sets that task to that current."""
+        self.CHK(nidaq.DAQmxWriteAnalogScalarF64( task,
+                                                  True,
+                                                  float64(1.0),
+                                                  float64(x), #Voltage
+                                                  None))
+#+end_src
+
+Since we're using the C interface to DAQmx, we don't have the benefit
+of such linguistic niceties as exceptions.  Instead, each function
+call returns an error code.  An error of zero indicates that the
+function returned properly.  A positive error code indicates that a
+warning was generated.  A negative error code indicates that the
+function failed.  The =CHK= function reads the error code and, if a
+warning or error was triggered, it raises an exception with a
+description of the problem.
+
+#+name: power_supply_chk
+#+begin_src python
+    def CHK( self, err ):
+        """a simple error checking routine"""
+        if err < 0:
+            buf_size = 100
+            buf = ctypes.create_string_buffer('\000' * buf_size)
+            nidaq.DAQmxGetErrorString(err,ctypes.byref(buf),buf_size)
+            raise RuntimeError('nidaq call failed with error %d: %s'%(err,repr(buf.value)))
+        if err > 0:
+            buf_size = 100
+            buf = ctypes.create_string_buffer('\000' * buf_size)
+            nidaq.DAQmxGetErrorString(err,ctypes.byref(buf),buf_size)
+            raise RuntimeError('nidaq generated warning %d: %s'%(err,repr(buf.value)))
+                
+#+end_src
+
+The shop function ends all of the tasks and clears the task handles.
+This is necessary to allow another application to access the tasks
+afterward.  This function is also called by the destructor of the
+class to handle the cleanup.
+
+#+name: power_supply_stop
+#+begin_src python
+    def stop( self ):
+        for task in self.triangleHandles:
+            self.set(task,0)
+            nidaq.DAQmxStopTask( task )
+            nidaq.DAQmxClearTask( task )
+        for task in self.supplyHandles:
+            self.set(task,0)
+            nidaq.DAQmxStopTask( task )
+            nidaq.DAQmxClearTask( task )
+            
+
+#+end_src
+
+
+**** High Level Control
+
+The currents through the triangles are set via the =triangle=
+function.  The current current is returned via the =getTriangle=
+function.  Each function takes a =tri= prarameter, which is the number
+of the triangle supply from 1 to 8.  We do a little arithmetic to
+account for the fact that the list index ranges from 0 to 7.
+
+#+name: power_supply_triangle
+#+begin_src python
+    def triangle(self,tri,curr):
+        self.set(self.triangleHandles[tri-1],
+                 compensate(curr,self.calibration['tri'+str(tri)]))
+        self.values['triangles'][tri-1]=curr
+        return self.getTriangle(tri)
+
+    def getTriangle(self,tri):
+        return self.values['triangles'][tri-1]
+
+#+end_src
+
+There is almost identical code for the other power supplies.  There
+should be a way to eliminate this boilerplate code.
+
+#+name: power_supply_fields
+#+begin_src python
+
+    def flipper(self,curr):
+        self.set(self.supplyHandles["flipper"],
+                 compensate(curr,self.calibration['flipper']))
+        self.values['flipper']=curr
+        return self.getFlipper()
+    def getFlipper(self):
+        return self.values['flipper']
+    
+    def guides(self,curr):
+        self.set(self.supplyHandles["guides"],
+                 compensate(curr,self.calibration['guides']))
+        self.values['guides']=curr
+        return self.getGuides()
+    def getGuides(self):
+        return self.values['guides']
+    def phase(self,curr):
+        self.set(self.supplyHandles["phase"],
+                 compensate(curr,self.calibration['phase']))
+        self.values['phase']=curr
+        return self.getPhase()
+    def getPhase(self):
+        return self.values['phase']
+    def sample(self,curr):
+        self.set(self.supplyHandles["sample"],
+                 compensate(curr,self.calibration['sample']))        
+        self.values['sample']=curr
+        return self.getSample()
+    def getSample(self):
+        return self.values['sample']
+
+
+
+#+end_src
+
+
+*** Power Supply Server
+
+The power supplies are controlled over the network by the program
+=ps_server.py=.  We use an [[http://en.wikipedia.org/wiki/XML-RPC][XML-RPC]] server to allow other computers to
+call functions.  This server is attached to a single PowerSupply
+object and allows us to call any of its member functions.  The actual
+server parts of the code are conveniently supplied by the python
+[[https://docs.python.org/2/library/simplexmlrpcserver.html][SimpleXMLRPCServer]] class.
+
+#+begin_src python :tangle ps_server.py :padline no
+from ps import PowerSupply
+from SimpleXMLRPCServer import SimpleXMLRPCServer
+from SimpleXMLRPCServer import SimpleXMLRPCRequestHandler
+
+
+# Restrict to a particular path.
+class RequestHandler(SimpleXMLRPCRequestHandler):
+    rpc_paths = ('/RPC2',)
+
+# Create server
+server = SimpleXMLRPCServer(("192.168.70.160", 7892),
+                            requestHandler=RequestHandler)
+server.register_introspection_functions()
+
+server.register_instance(PowerSupply())
+
+server.serve_forever()
+
+#+end_src
+
+
+** Power Supply Client
+
+The =Coils= module implements an XMLRPC client to go along with the
+XMLRPC server we defined in the previous section.  By inheriting from
+the [[https://docs.python.org/2/library/xmlrpclib.html][ServerProxy]] class, we can treat the object produced as though it
+were a PowerSupply object on the motor computer.
+
+The only intialization parameter is =failmethod= which is a function
+to call when the server is unreachable.  It can be used to send
+e-mails, but it's currently not used, as we've turned off most of the
+e-mail functionality in the move to PyDAS.
+
+#+begin_src python :tangle Coils.py :padline no
+"""This module handles controlling the current through the solenoids
+
+This code was written to talk with a custom labview server on the
+current control computer.  Note that, currently, the server does
+not respond with the current currents.  When you first load the
+module, you should set all of the current values to synchronize
+with the server.
+
+"""
+
+import __future__
+import xmlrpclib
+
+class Coils(xmlrpclib.ServerProxy):
+    """This object manages the connection to the current control server"""
+#    HOST = "http://192.168.70.160"#IP address for the server
+    HOST = "http://192.168.70.160"
+    PORT=7892#port number for the server
+
+    def __init__(self,failmethod):
+        """Creates the connection object"""
+        xmlrpclib.ServerProxy.__init__(self,self.HOST + ":" + str(self.PORT) + "/RPC2")
+        self.fail = failmethod
+#+end_src
+
+There's a flip function hard coded into the object.  In practice, I'd
+recommend against using it and it should probably be removed.
+
+#+begin_src python :tangle Coils.py :padline no
+#
+    def flip(self):
+        """Reverses the current through the flipping coil"""
+        self.proxy.flipper(-1*self.proxy.getFlipper())
+#+end_src
+
+We've overloaded the =__getattr__= function to allow us to
+automatically place the function in a wrapper that calls a function is
+the method fails.  In practice, we're not using this right now and it
+should also be removed.
+
+#+begin_src python :tangle Coils.py :padline no
+#
+    def __getattr__(self,name):
+        method = xmlrpclib.ServerProxy.__getattr__(self,name)
+        def wrapped(*args):
+            try:
+                return method.__call__(*args)
+            except Exception, e:
+                self.fail("SESAME Power Supply Server Down",
+                          "The SESAME beamline has lost its connection to the power supply server",
+                          "Notthepassword")
+                print("Connection Failed")
+                print(e)
+                raise e
+        return wrapped
+        
+
+if __name__=="__main__":
+    coils = Coils()
+    for i in range(1,5):
+        coils.triangle(i,i*2-1)
+    
+
+#+end_src
+#  LocalWords:  livewatch
