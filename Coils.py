@@ -11,32 +11,38 @@ with the server.
 import __future__
 import xmlrpclib
 
-class Coils():
+class Coils(xmlrpclib.ServerProxy):
     """This object manages the connection to the current control server"""
-    HOST = "http://192.168.62.160"#IP address for the server
-    PORT="7892"#port number for the server
-    P = None
+#    HOST = "http://192.168.70.160"#IP address for the server
+    HOST = "http://192.168.70.160"
+    PORT=7892#port number for the server
 
-    def __init__(self):
+    def __init__(self,failmethod):
         """Creates the connection object"""
-        self.__dict__["P"] = xmlrpclib.ServerProxy(self.HOST+":"+self.PORT, allow_none = True)
+        xmlrpclib.ServerProxy.__init__(self,self.HOST + ":" + str(self.PORT) + "/RPC2")
+        self.fail = failmethod
 
-    def Set(self,curr,coil):
-        self.P.Set(curr,coil)
-        return self.P.Read(coil)
+    def flip(self):
+        """Reverses the current through the flipping coil"""
+        self.proxy.flipper(-1*self.proxy.getFlipper())
 
-    def Read(self,coil):
-        return self.P.Read(coil)
-
-    def __getattr__(self,field):
-        print field
-        return self.Read(field)
-
-    def __setattr__(self,field,value):
-        self.Set(value,field)
-
+    def __getattr__(self,name):
+        method = xmlrpclib.ServerProxy.__getattr__(self,name)
+        def wrapped(*args):
+            try:
+                return method.__call__(*args)
+            except Exception, e:
+                self.fail("SESAME Power Supply Server Down",
+                          "The SESAME beamline has lost its connection to the power supply server",
+                          "Notthepassword")
+                print("Connection Failed")
+                print(e)
+                raise e
+        return wrapped
+        
 
 if __name__=="__main__":
     coils = Coils()
-    coils.Set(2,1)
+    for i in range(1,5):
+        coils.triangle(i,i*2-1)
     
