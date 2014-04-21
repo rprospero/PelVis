@@ -4,7 +4,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
 <title>PELVis: The PEL Visualizer</title>
-<!-- 2014-04-09 Wed 18:18 -->
+<!-- 2014-04-21 Mon 16:05 -->
 <meta  http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta  name="generator" content="Org-mode" />
 <meta  name="author" content="Adam Washington" />
@@ -217,6 +217,13 @@ for the JavaScript code in this tag.
 <li><a href="#sec-3-10-6">3.10.6. Binning</a></li>
 </ul>
 </li>
+<li><a href="#sec-3-11">3.11. Livewatch</a>
+<ul>
+<li><a href="#sec-3-11-1">3.11.1. Livewatch skeleton</a></li>
+<li><a href="#sec-3-11-2">3.11.2. Low Level Functions</a></li>
+<li><a href="#sec-3-11-3">3.11.3. Generators</a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li><a href="#sec-4">4. Utility Classes</a>
@@ -236,6 +243,13 @@ for the JavaScript code in this tag.
 <li><a href="#sec-4-2-3">4.2.3. File Loading</a></li>
 </ul>
 </li>
+<li><a href="#sec-4-3">4.3. Combiner</a>
+<ul>
+<li><a href="#sec-4-3-1">4.3.1. Combiner Skeleton</a></li>
+<li><a href="#sec-4-3-2">4.3.2. Load</a></li>
+<li><a href="#sec-4-3-3">4.3.3. Save</a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li><a href="#sec-5">5. Reduction</a>
@@ -243,6 +257,19 @@ for the JavaScript code in this tag.
 <li><a href="#sec-5-1">5.1. Reduction Skeleton</a></li>
 <li><a href="#sec-5-2">5.2. Main Command</a></li>
 <li><a href="#sec-5-3">5.3. Export</a></li>
+<li><a href="#sec-5-4">5.4. Import</a></li>
+<li><a href="#sec-5-5">5.5. Plotting</a></li>
+</ul>
+</li>
+<li><a href="#sec-6">6. Power Supplies</a>
+<ul>
+<li><a href="#sec-6-1">6.1. Power Supply Server</a>
+<ul>
+<li><a href="#sec-6-1-1">6.1.1. Power Supply Class Module</a></li>
+<li><a href="#sec-6-1-2">6.1.2. Power Supply Server</a></li>
+</ul>
+</li>
+<li><a href="#sec-6-2">6.2. Power Supply Client</a></li>
 </ul>
 </li>
 </ul>
@@ -3896,6 +3923,268 @@ be called, but it should exist for completeness.
 </li></ol>
 </div>
 </div>
+
+<div id="outline-container-sec-3-11" class="outline-3">
+<h3 id="sec-3-11"><span class="section-number-3">3.11</span> Livewatch</h3>
+<div class="outline-text-3" id="text-3-11">
+<p>
+<code>Livewatch.py</code> is a utility to display the polarization as it comes
+in.  It takes two parameters at the command line.  The first is the
+run number for the run.  The second is the current in triangle 1
+for the runs which we wish to analyze.
+</p>
+</div>
+
+<div id="outline-container-sec-3-11-1" class="outline-4">
+<h4 id="sec-3-11-1"><span class="section-number-4">3.11.1</span> Livewatch skeleton</h4>
+<div class="outline-text-4" id="text-3-11-1">
+<div class="org-src-container">
+
+<pre class="src src-python"><span style="color: #ffad29; font-weight: bold;">import</span> numpy <span style="color: #ffad29; font-weight: bold;">as</span> np
+<span style="color: #ffad29; font-weight: bold;">from</span> matplotlib <span style="color: #ffad29; font-weight: bold;">import</span> pyplot <span style="color: #ffad29; font-weight: bold;">as</span> plt
+<span style="color: #ffad29; font-weight: bold;">import</span> matplotlib <span style="color: #ffad29; font-weight: bold;">as</span> mpl
+<span style="color: #ffad29; font-weight: bold;">import</span> time
+<span style="color: #ffad29; font-weight: bold;">from</span> reader <span style="color: #ffad29; font-weight: bold;">import</span> PelFile
+<span style="color: #ffad29; font-weight: bold;">from</span> monfile <span style="color: #ffad29; font-weight: bold;">import</span> MonFile
+<span style="color: #ffad29; font-weight: bold;">import</span> sys
+<span style="color: #ffad29; font-weight: bold;">import</span> os.path
+<span style="color: #ffad29; font-weight: bold;">import</span> xml.etree.ElementTree <span style="color: #ffad29; font-weight: bold;">as</span> ET
+<span style="color: #ffad29; font-weight: bold;">import</span> HTMLParser
+<span style="color: #ffad29; font-weight: bold;">import</span> json
+
+<span style="color: #dbdb95;">RUN</span> = 32725
+<span style="color: #dbdb95;">basedir</span> = <span style="color: #e67128;">"C:/userfiles/EXP011/"</span>
+<span style="color: #dbdb95;">XMLNS</span> = <span style="color: #e67128;">"{http://neutrons.ornl.gov/SNS/DAS/runinfo_v4_3}"</span>
+<span style="color: #dbdb95;">REBIN</span> = 4
+
+plt.ion()
+
+&lt;&lt;livewatch_spectrum&gt;&gt;
+<span style="color: #dbdb95;">mpl.rcParams</span>[<span style="color: #e67128;">'interactive'</span>] = <span style="color: #008b8b;">True</span>
+
+&lt;&lt;livewatch_manifestly&gt;&gt;
+<span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">spectra</span>(gen):
+    <span style="color: #ffad29; font-weight: bold;">while</span> <span style="color: #008b8b;">True</span>:
+        <span style="color: #23d7d7;">next</span> = gen.<span style="color: #23d7d7;">next</span>()
+        <span style="color: #ffad29; font-weight: bold;">if</span> <span style="color: #23d7d7;">next</span> <span style="color: #ffad29; font-weight: bold;">is</span> <span style="color: #008b8b;">None</span>:
+            <span style="color: #ffad29; font-weight: bold;">yield</span> <span style="color: #008b8b;">None</span>
+            <span style="color: #ffad29; font-weight: bold;">continue</span>
+        <span style="color: #dbdb95;">i</span>,<span style="color: #dbdb95;">_</span>=<span style="color: #23d7d7;">next</span>
+        <span style="color: #dbdb95;">s</span> = spectrum(i)
+        <span style="color: #ffad29; font-weight: bold;">if</span> s <span style="color: #ffad29; font-weight: bold;">is</span> <span style="color: #008b8b;">None</span>:
+            <span style="color: #ffad29; font-weight: bold;">yield</span> <span style="color: #008b8b;">None</span>
+        <span style="color: #ffad29; font-weight: bold;">else</span>:
+            <span style="color: #dbdb95;">data</span>,<span style="color: #dbdb95;">counts</span>,<span style="color: #dbdb95;">manifest</span> = s
+            <span style="color: #ffad29; font-weight: bold;">yield</span> data,counts,manifest
+            <span style="color: #ffad29; font-weight: bold;">print</span> i
+            <span style="color: #ffad29; font-weight: bold;">print</span>(manifest)
+            <span style="color: #dbdb95;">i</span> += 1
+
+<span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">filter</span>(gen,f):
+    <span style="color: #23d7d7;">next</span> = gen.<span style="color: #23d7d7;">next</span>()
+    <span style="color: #ffad29; font-weight: bold;">while</span> <span style="color: #008b8b;">True</span>:
+        <span style="color: #ffad29; font-weight: bold;">if</span> <span style="color: #23d7d7;">next</span> <span style="color: #ffad29; font-weight: bold;">is</span> <span style="color: #008b8b;">None</span>:
+            <span style="color: #ffad29; font-weight: bold;">yield</span> <span style="color: #008b8b;">None</span>
+        <span style="color: #ffad29; font-weight: bold;">else</span>:
+            <span style="color: #ffad29; font-weight: bold;">if</span> f(<span style="color: #23d7d7;">next</span>):
+                <span style="color: #ffad29; font-weight: bold;">yield</span> <span style="color: #23d7d7;">next</span>
+        <span style="color: #23d7d7;">next</span> = gen.<span style="color: #23d7d7;">next</span>()
+
+<span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">integrator</span>(gen):
+    <span style="color: #dbdb95;">data</span> = np.zeros(400/REBIN)
+    <span style="color: #dbdb95;">counts</span> = 0
+    <span style="color: #ffad29; font-weight: bold;">while</span> <span style="color: #008b8b;">True</span>:
+        <span style="color: #23d7d7;">next</span> = gen.<span style="color: #23d7d7;">next</span>()
+        <span style="color: #ffad29; font-weight: bold;">if</span> <span style="color: #23d7d7;">next</span> <span style="color: #ffad29; font-weight: bold;">is</span> <span style="color: #ffad29; font-weight: bold;">not</span> <span style="color: #008b8b;">None</span>:
+            <span style="color: #dbdb95;">data</span> += rebin(<span style="color: #23d7d7;">next</span>[0],REBIN)
+            <span style="color: #dbdb95;">counts</span> += <span style="color: #23d7d7;">next</span>[1]
+        <span style="color: #ffad29; font-weight: bold;">yield</span> data/counts,np.sqrt(data)/counts
+
+
+<span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">joiner</span>(gens):
+    <span style="color: #ffad29; font-weight: bold;">while</span> <span style="color: #008b8b;">True</span>:
+        <span style="color: #dbdb95;">streams</span> = [g.<span style="color: #23d7d7;">next</span>() <span style="color: #ffad29; font-weight: bold;">for</span> g <span style="color: #ffad29; font-weight: bold;">in</span> gens]
+        <span style="color: #ffad29; font-weight: bold;">yield</span> streams
+
+<span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">plotter</span>(source,count=1):
+    <span style="color: #dbdb95;">xs</span> = np.arange(0,20,0.05*REBIN) 
+    plt.figure(<span style="color: #e67128;">"Live Update"</span>)
+    plt.ylim([-1,1])
+    <span style="color: #dbdb95;">graphs</span> = [plt.errorbar(xs,np.zeros(400/REBIN),np.zeros(400/REBIN),marker=<span style="color: #e67128;">"o"</span>) <span style="color: #ffad29; font-weight: bold;">for</span> i <span style="color: #ffad29; font-weight: bold;">in</span> <span style="color: #23d7d7;">range</span>(count)]
+    <span style="color: #ffad29; font-weight: bold;">while</span> <span style="color: #008b8b;">True</span>:
+        <span style="color: #dbdb95;">data</span>=source.<span style="color: #23d7d7;">next</span>()
+        <span style="color: #ffad29; font-weight: bold;">for</span> g,d <span style="color: #ffad29; font-weight: bold;">in</span> <span style="color: #23d7d7;">zip</span>(graphs,data):
+            <span style="color: #ffad29; font-weight: bold;">if</span> d <span style="color: #ffad29; font-weight: bold;">is</span> <span style="color: #ffad29; font-weight: bold;">not</span> <span style="color: #008b8b;">None</span>:
+                g[0].set_ydata(d)
+        plt.draw()
+        plt.pause(5)
+
+<span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">polarization</span>(up,down):
+    <span style="color: #dbdb95;">up</span> = integrator(up)
+    <span style="color: #dbdb95;">down</span> = integrator(down)
+    <span style="color: #ffad29; font-weight: bold;">while</span> <span style="color: #008b8b;">True</span>:
+        <span style="color: #dbdb95;">u</span> = up.<span style="color: #23d7d7;">next</span>()[0]
+        <span style="color: #dbdb95;">d</span> = down.<span style="color: #23d7d7;">next</span>()[0]
+        <span style="color: #ffad29; font-weight: bold;">yield</span> -1*(u-d)/(u+d)
+        <span style="color: #74af68;">#</span><span style="color: #74af68;">yield d/u</span>
+
+<span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">fullpol</span>(i,f):
+    <span style="color: #dbdb95;">upstate</span> = <span style="color: #ffad29; font-weight: bold;">lambda</span> x: x[1][<span style="color: #e67128;">'Flipper'</span>] &lt; 0
+    <span style="color: #dbdb95;">downstate</span> = <span style="color: #ffad29; font-weight: bold;">lambda</span> x: x[1][<span style="color: #e67128;">'Flipper'</span>] &gt; 0
+
+    <span style="color: #dbdb95;">ups</span> = spectra(<span style="color: #23d7d7;">filter</span>(<span style="color: #23d7d7;">filter</span>(manifestly(i),upstate),f))
+    <span style="color: #dbdb95;">downs</span> = spectra(<span style="color: #23d7d7;">filter</span>(<span style="color: #23d7d7;">filter</span>(manifestly(i),downstate),f))
+    <span style="color: #ffad29; font-weight: bold;">return</span> polarization(ups,downs)
+
+&lt;&lt;livewatch_rebin&gt;&gt;
+
+<span style="color: #ffad29; font-weight: bold;">if</span> <span style="color: #23d7d7;">__name__</span>==<span style="color: #e67128;">"__main__"</span>:
+
+    lowcur = <span style="color: #ffad29; font-weight: bold;">lambda</span> x: x[1][<span style="color: #e67128;">'Triangle1'</span>] ==3
+    midcur = <span style="color: #ffad29; font-weight: bold;">lambda</span> x: x[1][<span style="color: #e67128;">'Triangle1'</span>] ==9
+    hicur = <span style="color: #ffad29; font-weight: bold;">lambda</span> x: x[1][<span style="color: #e67128;">'Triangle1'</span>] ==15
+
+    start = <span style="color: #23d7d7;">int</span>(sys.argv[1])
+
+    filters = [<span style="color: #ffad29; font-weight: bold;">lambda</span> x: x[1][<span style="color: #e67128;">'Triangle1'</span>] == <span style="color: #23d7d7;">float</span>(i) <span style="color: #ffad29; font-weight: bold;">for</span> i <span style="color: #ffad29; font-weight: bold;">in</span> sys.argv[2:]]
+
+    polarizers = [fullpol(start,f) <span style="color: #ffad29; font-weight: bold;">for</span> f <span style="color: #ffad29; font-weight: bold;">in</span> filters]
+
+    p = plotter(joiner(polarizers),count=<span style="color: #23d7d7;">len</span>(polarizers))
+    plotter(p)
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-sec-3-11-2" class="outline-4">
+<h4 id="sec-3-11-2"><span class="section-number-4">3.11.2</span> Low Level Functions</h4>
+<div class="outline-text-4" id="text-3-11-2">
+<p>
+The livewatch<sub>spectrum</sub> function loads in the intensity spectrum and
+uncertainty of a single run from its run number.  This code was copied
+almost verbatim from <a href="#sec-5">5</a>.  The only major change is that a
+dictionary containing the current values is also returned, allowing
+for other functions to sort the data.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-python" id="livewatch_spectrum"><span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">spectrum</span>(run,mins=(0,0),maxs=(16,128),mask=<span style="color: #008b8b;">None</span>):
+    <span style="color: #dbdb95;">eventfile</span> = basedir+<span style="color: #e67128;">"SESAME_%i/SESAME_%i"</span> % (run,run) + <span style="color: #e67128;">"_neutron_event.dat"</span>
+    <span style="color: #ffad29; font-weight: bold;">if</span> <span style="color: #ffad29; font-weight: bold;">not</span> os.path.isfile(eventfile):
+        <span style="color: #ffad29; font-weight: bold;">return</span> <span style="color: #008b8b;">None</span>
+    <span style="color: #dbdb95;">p</span> = PelFile(eventfile)
+    <span style="color: #dbdb95;">mon</span> = MonFile(basedir+<span style="color: #e67128;">"SESAME_%i/SESAME_%i"</span> % (run,run) +<span style="color: #e67128;">"_bmon_histo.dat"</span>,<span style="color: #008b8b;">False</span>)
+    <span style="color: #dbdb95;">up</span> = p.make1d(mins,maxs,mask)
+
+    <span style="color: #dbdb95;">manifestFile</span> = basedir+<span style="color: #e67128;">"SESAME_%i/SESAME_%i"</span> % (run,run) + <span style="color: #e67128;">"_runinfo.xml"</span>
+
+    <span style="color: #dbdb95;">text</span> = ET.parse(manifestFile).getroot().find(<span style="color: #e67128;">".//"</span>+XMLNS+<span style="color: #e67128;">"Notes"</span>).text
+    <span style="color: #dbdb95;">text</span> = HTMLParser.HTMLParser().unescape(text)
+    <span style="color: #dbdb95;">manifest</span> = json.loads(text)
+
+    <span style="color: #ffad29; font-weight: bold;">return</span> up,np.<span style="color: #23d7d7;">sum</span>(mon.spec),manifest
+</pre>
+</div>
+
+<p>
+Livewatch has a function for rebinning numpy arrays.  It takes the
+original arrays and a number giving how many of the original array
+elements should be combined together in the new array.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-python" id="livewatch_rebin"><span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">rebin</span>(x,bins):
+    <span style="color: #dbdb95;">result</span>=np.zeros(<span style="color: #23d7d7;">len</span>(x)/bins,dtype=np.float64)
+    <span style="color: #ffad29; font-weight: bold;">for</span> b <span style="color: #ffad29; font-weight: bold;">in</span> <span style="color: #23d7d7;">range</span>(bins):
+        <span style="color: #dbdb95;">result</span> += x[b::bins]
+    <span style="color: #ffad29; font-weight: bold;">return</span> result
+</pre>
+</div>
+</div>
+</div>
+
+
+<div id="outline-container-sec-3-11-3" class="outline-4">
+<h4 id="sec-3-11-3"><span class="section-number-4">3.11.3</span> Generators</h4>
+<div class="outline-text-4" id="text-3-11-3">
+<p>
+The main structure of livewatch is based around python
+generators. Generators tend to come in three kinds
+</p>
+
+<dl class="org-dl">
+<dt> Sources </dt><dd>A generator which produces a continuously updating list
+of data.
+</dd>
+<dt> Pipes </dt><dd>A generator which reads from another generator, performs
+some transformations on the results, and yields that
+result.
+</dd>
+</dl>
+
+<p>
+There's another related kind of function that isn't a generator.
+</p>
+<dl class="org-dl">
+<dt> Sinks </dt><dd>A function that reads through a generator and performs
+actions based on the results, but doesn't perform pass data
+to any higher level generators.
+</dd>
+</dl>
+</div>
+
+<ol class="org-ol"><li>Sources<br  /><div class="outline-text-5" id="text-3-11-3-1">
+<p>
+Manifestly starts with a single run number.  It then continuously
+scans that directory, waiting for a monitor file to be written.  If
+the monitor file exists, we know that the data acquisition system has
+finished then run and we can continue.  If there is no new run, we
+signal that information up the chain with a <code>None</code>.
+</p>
+
+<p>
+Once the monitor file has been written, we read the runinfo file to
+get the current data from the <code>Notes</code> heading.  This is turned into a
+dictionary via json parsing.  The run number and manifest can then be
+passed up the chain.  Finally, we increment the run number and return
+to waiting for the new run to finish.
+</p>
+
+<p>
+I also apologize for the stupid name.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-python" id="livewatch_manifestly"><span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">manifestly</span>(start):
+    <span style="color: #dbdb95;">i</span> = start
+    <span style="color: #ffad29; font-weight: bold;">while</span> <span style="color: #008b8b;">True</span>:
+        <span style="color: #dbdb95;">manifestFile</span> = basedir+<span style="color: #e67128;">"SESAME_%i/SESAME_%i"</span> % (i,i) + <span style="color: #e67128;">"_runinfo.xml"</span>
+        <span style="color: #dbdb95;">monitorFile</span> = basedir+<span style="color: #e67128;">"SESAME_%i/SESAME_%i"</span> % (i,i) + <span style="color: #e67128;">"_bmon_histo.dat"</span>
+        <span style="color: #ffad29; font-weight: bold;">if</span> <span style="color: #ffad29; font-weight: bold;">not</span> os.path.isfile(monitorFile):
+            <span style="color: #74af68;">#</span><span style="color: #74af68;">If the monitor file hasn't been written, the run isn't</span>
+            <span style="color: #74af68;">#</span><span style="color: #74af68;">done yet and we shouldnt' read it</span>
+            <span style="color: #ffad29; font-weight: bold;">yield</span> <span style="color: #008b8b;">None</span>
+        <span style="color: #ffad29; font-weight: bold;">else</span>:
+            <span style="color: #ffad29; font-weight: bold;">try</span>:
+                <span style="color: #dbdb95;">manifestFile</span> = basedir+<span style="color: #e67128;">"SESAME_%i/SESAME_%i"</span> % (i,i) + <span style="color: #e67128;">"_runinfo.xml"</span>
+
+                <span style="color: #dbdb95;">text</span> = ET.parse(manifestFile).getroot().find(<span style="color: #e67128;">".//"</span>+XMLNS+<span style="color: #e67128;">"Notes"</span>).text
+                <span style="color: #dbdb95;">text</span> = HTMLParser.HTMLParser().unescape(text)
+                <span style="color: #dbdb95;">manifest</span> = json.loads(text)
+                <span style="color: #ffad29; font-weight: bold;">yield</span> i,manifest
+                <span style="color: #dbdb95;">i</span> += 1
+            <span style="color: #ffad29; font-weight: bold;">except</span> <span style="color: #34cae2;">ValueError</span>:
+                <span style="color: #ffad29; font-weight: bold;">yield</span> <span style="color: #008b8b;">None</span>
+</pre>
+</div>
+</div>
+</li></ol>
+</div>
+</div>
 </div>
 
 <div id="outline-container-sec-4" class="outline-2">
@@ -4391,7 +4680,7 @@ useful.  It should not be called and could probably be deleted.
                 <span style="color: #e67128;">"MCPPowerSupplyControlVoltageCommandGain "</span> +
                 <span style="color: #e67128;">"MCPPowerSupplyControlVoltageCommandOffset "</span> +
                 <span style="color: #e67128;">"MCPPowerSupplyVoltageEnable "</span> +
-                <span style="color: #e67128;">"x1Gain x2Gain x3Gain x4Gain x5Gain x6Gain x7Gain x8Gain x9Gain x10Gain "</span> +
+                <span style="color: #e67128;">"x1Gain x2Gain x3Gain x4Gain x5Gain x6Gain x7Gain x8Gain x9Gain x10Gain "</span> +
                 <span style="color: #e67128;">"y1Gain y2Gain y3Gain y4Gain y5Gain y6Gain y7Gain y8Gain y9Gain y10Gain "</span> +
                 <span style="color: #e67128;">"strobeGain EnergyGain ThresholdGain "</span>+
                 <span style="color: #e67128;">"ADVoltageOffset ADAOffset ADBOffset ADCOffset ADDOffset "</span>+
@@ -4798,6 +5087,354 @@ been covered in the <a href="#convertTime">similar function</a> for the neutron 
 </div>
 </div>
 </div>
+
+
+<div id="outline-container-sec-4-3" class="outline-3">
+<h3 id="sec-4-3"><span class="section-number-3">4.3</span> Combiner</h3>
+<div class="outline-text-3" id="text-4-3">
+<p>
+The <code>Combiner</code> module contains two helper functions.  These function
+are used for parsing the metadata from individual runs and combining
+them into a single run file.
+</p>
+</div>
+
+<div id="outline-container-sec-4-3-1" class="outline-4">
+<h4 id="sec-4-3-1"><span class="section-number-4">4.3.1</span> Combiner Skeleton</h4>
+<div class="outline-text-4" id="text-4-3-1">
+<p>
+The <code>XMLNS</code> global variable is the <a href="http://www.w3.org/TR/REC-xml-names/">XML Namespace</a> that the SNS has
+chosen to use in their configuration files.  The good news is that
+Python's <code>xml.etree</code> module correctly handles namespaces.  The bad
+news is that every attempt to pull a tag from an XML file requires
+that the tag be prefaced with the namespace, which is a pain.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-python"><span style="color: #ffad29; font-weight: bold;">import</span> xml.etree.ElementTree <span style="color: #ffad29; font-weight: bold;">as</span> ET
+<span style="color: #ffad29; font-weight: bold;">import</span> HTMLParser
+<span style="color: #ffad29; font-weight: bold;">import</span> json
+<span style="color: #ffad29; font-weight: bold;">import</span> numpy <span style="color: #ffad29; font-weight: bold;">as</span> np
+<span style="color: #ffad29; font-weight: bold;">import</span> os.path
+<span style="color: #ffad29; font-weight: bold;">from</span> time <span style="color: #ffad29; font-weight: bold;">import</span> strptime,mktime
+<span style="color: #ffad29; font-weight: bold;">from</span> math <span style="color: #ffad29; font-weight: bold;">import</span> floor,sqrt
+
+<span style="color: #dbdb95;">XMLNS</span> = <span style="color: #e67128;">"{http://neutrons.ornl.gov/SNS/DAS/runinfo_v4_3}"</span>
+
+&lt;&lt;combiner-load&gt;&gt;
+&lt;&lt;combiner-save&gt;&gt;
+</pre>
+</div>
+</div>
+</div>
+
+
+<div id="outline-container-sec-4-3-2" class="outline-4">
+<h4 id="sec-4-3-2"><span class="section-number-4">4.3.2</span> Load</h4>
+<div class="outline-text-4" id="text-4-3-2">
+<p>
+The <code>load</code> function takes a list of paths to runinfo files and
+returns a dictionary with the current configurations as a key and the
+runs associated with the configuration as the value.  It also takes
+an optional <code>filter</code> parameter, which is currently ignored and should
+be removed.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-python"><span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">load</span>(paths,<span style="color: #23d7d7;">filter</span>=<span style="color: #008b8b;">None</span>):
+    <span style="color: #dbdb95;">currents</span> = <span style="color: #23d7d7;">set</span>([])<span style="color: #74af68;">#</span><span style="color: #74af68;">List of the configurations of the instrument</span>
+    <span style="color: #dbdb95;">runsets</span> = {}<span style="color: #74af68;">#</span><span style="color: #74af68;">Directionary of lists of run nodes, indexed by their instrument configuration</span>
+</pre>
+</div>
+
+<p>
+For each run<sub>info</sub> file, we use element tree to find the <code>&lt;Notes&gt;</code>
+tag.  This text is then extracted out.  The SNS software does HTML
+encoding on the text in the notes tag, despite the fact that this is
+XML and not HTML.  In any case, we use the HTMLParser module to
+remove the text encoding.  Finally, our <code>save</code> function in
+<code>Sesame_init.py</code> saves the power supply status as a <a href="http://www.json.org">JSON</a> string,
+which we then interpret.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-python"><span style="color: #74af68;">#</span>
+    <span style="color: #ffad29; font-weight: bold;">for</span> path <span style="color: #ffad29; font-weight: bold;">in</span> paths:
+        <span style="color: #ffad29; font-weight: bold;">print</span>(path)
+        <span style="color: #dbdb95;">base</span> = os.path.dirname(path)
+        <span style="color: #dbdb95;">text</span> = ET.parse(path).getroot().find(<span style="color: #e67128;">".//"</span>+XMLNS+<span style="color: #e67128;">"Notes"</span>).text 
+        <span style="color: #dbdb95;">text</span> = HTMLParser.HTMLParser().unescape(text)
+        <span style="color: #dbdb95;">manifest</span> = json.loads(text)
+</pre>
+</div>
+
+<p>
+The dictionary of the power supply currents is turned into a tuple.
+The tuple is a value by itself and can be put into a Set, while the
+dictionary is an object with a unique identity and doesn't mesh as
+well with Sets and uniqueness checking.  A useful improvement would
+be to turn this into a <a href="https://docs.python.org/2/library/collections.html">NamedTuple</a>, which would allow the constituents
+to be called by name, instead of location.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-python"><span style="color: #74af68;">##        </span><span style="color: #74af68;">if ((filter is not None) and </span>
+<span style="color: #74af68;">##            </span><span style="color: #74af68;">(floor(float(manifest['triangle1'])) != filter)):</span>
+<span style="color: #74af68;">##            </span><span style="color: #74af68;">continue #wrong triangle current</span>
+        <span style="color: #ffad29; font-weight: bold;">try</span>:
+            <span style="color: #dbdb95;">current</span> = (manifest[<span style="color: #e67128;">'Flipper'</span>],
+                       manifest[<span style="color: #e67128;">'Guide'</span>],
+                       manifest[<span style="color: #e67128;">'Phase'</span>],
+                       manifest[<span style="color: #e67128;">'Sample'</span>],
+                       manifest[<span style="color: #e67128;">'Triangle1'</span>],
+                       manifest[<span style="color: #e67128;">'Triangle2'</span>],
+                       manifest[<span style="color: #e67128;">'Triangle3'</span>],
+                       manifest[<span style="color: #e67128;">'Triangle4'</span>],
+                       manifest[<span style="color: #e67128;">'Triangle5'</span>],
+                       manifest[<span style="color: #e67128;">'Triangle6'</span>],
+                       manifest[<span style="color: #e67128;">'Triangle7'</span>],
+                       manifest[<span style="color: #e67128;">'Triangle8'</span>])
+        <span style="color: #ffad29; font-weight: bold;">except</span>:
+            <span style="color: #ffad29; font-weight: bold;">print</span>(<span style="color: #e67128;">"Could not retrieve currents for run "</span> + <span style="color: #23d7d7;">str</span>(base[-5:]))
+            <span style="color: #ffad29; font-weight: bold;">continue</span>
+</pre>
+</div>
+
+<p>
+If this combination of power supply currents hasn't been seen before,
+it's added to the dictionary.  Replacing runsets with a <a href="https://docs.python.org/2/library/collections.html">defaultDict</a>
+could save us some effort here.
+</p>
+
+<p>
+Finally, the function returns the dictionary.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-python"><span style="color: #74af68;">#</span>
+        <span style="color: #ffad29; font-weight: bold;">if</span> current <span style="color: #ffad29; font-weight: bold;">in</span> currents:
+            runsets[current].append(path)
+        <span style="color: #ffad29; font-weight: bold;">else</span>:
+            currents.add(current)
+            <span style="color: #dbdb95;">runsets</span>[current]=[path]
+    <span style="color: #ffad29; font-weight: bold;">return</span> runsets
+</pre>
+</div>
+</div>
+</div>
+<div id="outline-container-sec-4-3-3" class="outline-4">
+<h4 id="sec-4-3-3"><span class="section-number-4">4.3.3</span> Save</h4>
+<div class="outline-text-4" id="text-4-3-3">
+<p>
+The <code>save</code> function is used to export a set of runs into a single
+file.
+</p>
+
+<dl class="org-dl">
+<dt> path </dt><dd>The location where the file should be saved.  This includes
+both the directory and the prefix for the file name.  For
+instance, if <code>path</code> is "C:/PELVis/example", then the
+detector data would be saved in "example<sub>neutron</sub><sub>event</sub>.dat"
+in the "C:/PELVis" directory.
+</dd>
+<dt> minmon </dt><dd>The minimum number of monitor counts per second that we
+expect when the beam is on.  Runs with a count rate below
+this will be ignored, as the assumption is that there
+were no neutrons and the detector merely contains noise.
+</dd>
+<dt> keys </dt><dd>Which current sets should be included in the export
+</dd>
+<dt> runsets </dt><dd>The dictionary of data runs produced by <code>load</code>
+</dd>
+</dl>
+
+<p>
+We begin by using the key to extract from the dictionary the paths
+for all of the runs were are interested in.
+</p>
+<div class="org-src-container">
+
+<pre class="src src-python"><span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">save</span>(path,minmon,keys,runsets):
+    <span style="color: #dbdb95;">runs</span> = [x <span style="color: #ffad29; font-weight: bold;">for</span> key <span style="color: #ffad29; font-weight: bold;">in</span> keys <span style="color: #ffad29; font-weight: bold;">for</span> x <span style="color: #ffad29; font-weight: bold;">in</span> runsets[key]]
+</pre>
+</div>
+
+<p>
+The <code>mon</code> array holds out total monitor spectrum.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-python"><span style="color: #74af68;">#</span>
+    <span style="color: #dbdb95;">mon</span> = np.zeros((50001,),dtype=np.int32)
+</pre>
+</div>
+
+<p>
+The <code>tottime</code> and <code>detcount</code> are just interesting statistics and
+could be dropped.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-python"><span style="color: #74af68;">#</span>
+    <span style="color: #dbdb95;">tottime</span> = 0
+    <span style="color: #dbdb95;">detcount</span>=0
+</pre>
+</div>
+
+<p>
+There's a weird bug in the SNS code.  I'm pretty sure that the bug is
+in their code and is not something that I did.  When a runinfo file is
+saved, it gives a malformatted timestamp for the <code>StartTime</code> and
+<code>StopTime</code>.  The format strings below allow Python to parse these strings.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-python"><span style="color: #74af68;">#</span>
+    <span style="color: #dbdb95;">format1</span> = <span style="color: #e67128;">"%Y-%m-%dT%H:%M:%S-04:00"</span>
+    <span style="color: #dbdb95;">format2</span> = <span style="color: #e67128;">"%Y-%m-%dT%H:%M:%S-04:00-04:00"</span>
+</pre>
+</div>
+
+<p>
+We open the final output file (outfile), and cycle through the
+monitor files (monpath) and detecto files (detpath).
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-python"><span style="color: #74af68;">#</span>
+    <span style="color: #ffad29; font-weight: bold;">with</span> <span style="color: #23d7d7;">open</span>(path+<span style="color: #e67128;">"_neutron_event.dat"</span>,<span style="color: #e67128;">"wb"</span>) <span style="color: #ffad29; font-weight: bold;">as</span> outfile:
+        <span style="color: #ffad29; font-weight: bold;">for</span> r <span style="color: #ffad29; font-weight: bold;">in</span> runs:
+            <span style="color: #dbdb95;">monpath</span> = r[:-11] + <span style="color: #e67128;">"bmon_histo.dat"</span>
+            <span style="color: #dbdb95;">detpath</span> = r[:-11] + <span style="color: #e67128;">"neutron_event.dat"</span>
+</pre>
+</div>
+
+<p>
+We extract the starting and ending times and put the total number of
+seconds spent during the measurement into the variable <code>time</code>.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-python"><span style="color: #74af68;">#</span>
+            <span style="color: #dbdb95;">starttime</span> = strptime(ET.parse(r).getroot().find(<span style="color: #e67128;">".//"</span>+XMLNS+<span style="color: #e67128;">"StartTime"</span>).text.strip(),format1)
+            <span style="color: #dbdb95;">stoptime</span> = strptime(ET.parse(r).getroot().find(<span style="color: #e67128;">".//"</span>+XMLNS+<span style="color: #e67128;">"StopTime"</span>).text.strip(),format2)
+
+            <span style="color: #dbdb95;">time</span> = mktime(stoptime)-mktime(starttime)
+</pre>
+</div>
+
+<p>
+The monitor spectrum for the individual run is slurped into the
+variable <code>montemp</code> with the total number of counts being stored in
+<code>moncount</code>. 
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-python"><span style="color: #74af68;">#</span>
+            <span style="color: #ffad29; font-weight: bold;">with</span> <span style="color: #23d7d7;">open</span>(monpath,<span style="color: #e67128;">"r"</span>) <span style="color: #ffad29; font-weight: bold;">as</span> infile:
+                <span style="color: #dbdb95;">montemp</span> = np.fromfile(infile,dtype=np.int32)
+
+            <span style="color: #dbdb95;">moncount</span> = 1.*np.<span style="color: #23d7d7;">sum</span>(montemp)
+            <span style="color: #ffad29; font-weight: bold;">print</span> <span style="color: #e67128;">"Run number: "</span> + <span style="color: #23d7d7;">str</span>(r[-17:-12])
+            <span style="color: #ffad29; font-weight: bold;">print</span> <span style="color: #e67128;">"Time: "</span> + <span style="color: #23d7d7;">str</span>(time)
+</pre>
+</div>
+
+<p>
+We check to see if we're within 20 counts per second of the expected
+monitor count rate.  If not, then we stop processing this run.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-python"><span style="color: #74af68;">#</span>
+            <span style="color: #74af68;">#</span><span style="color: #74af68;">Fixed for enabling dead run substraction 04/01/2013 done by Radian </span>
+            <span style="color: #ffad29; font-weight: bold;">if</span> time &lt;= 0 <span style="color: #ffad29; font-weight: bold;">or</span> ((moncount/time &lt; minmon-20 <span style="color: #ffad29; font-weight: bold;">or</span> \
+                              moncount/time&gt;minmon+20) <span style="color: #ffad29; font-weight: bold;">and</span> minmon &gt;0):
+                <span style="color: #ffad29; font-weight: bold;">print</span> <span style="color: #e67128;">":::: SKIPPING RUN: "</span> + <span style="color: #23d7d7;">str</span>(r[-17:-12]) + <span style="color: #e67128;">" ::::\n"</span>
+                <span style="color: #ffad29; font-weight: bold;">print</span> moncount/time
+                <span style="color: #ffad29; font-weight: bold;">print</span> time
+                <span style="color: #ffad29; font-weight: bold;">continue</span>
+
+            <span style="color: #ffad29; font-weight: bold;">print</span> <span style="color: #e67128;">"Monitor counts: "</span> + <span style="color: #23d7d7;">str</span>(moncount)
+            <span style="color: #ffad29; font-weight: bold;">print</span> <span style="color: #e67128;">"Monitor count rate: "</span> + <span style="color: #23d7d7;">str</span>(<span style="color: #23d7d7;">round</span>(moncount/time,2))
+
+            <span style="color: #dbdb95;">mon</span> += montemp
+            <span style="color: #dbdb95;">tottime</span> += time
+</pre>
+</div>
+
+<p>
+The contents of the detector file is loaded into dettemp.  There's
+also some code to calculate the detector count rate.  That code could
+probably be removed.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-python"><span style="color: #74af68;">#</span>
+            <span style="color: #ffad29; font-weight: bold;">with</span> <span style="color: #23d7d7;">open</span>(detpath,<span style="color: #e67128;">"rb"</span>) <span style="color: #ffad29; font-weight: bold;">as</span> infile:
+                <span style="color: #dbdb95;">dettemp</span> = np.fromfile(infile,count=-1)
+                <span style="color: #dbdb95;">dc</span> = 1.*<span style="color: #23d7d7;">len</span>(dettemp)
+                <span style="color: #dbdb95;">dcr</span> = <span style="color: #23d7d7;">round</span>(dc/moncount,2)
+                <span style="color: #dbdb95;">dcrerr</span> = sqrt(dc/(moncount**2) + (dc**2)/(moncount**3))
+                <span style="color: #ffad29; font-weight: bold;">print</span> <span style="color: #e67128;">"Detector counts: "</span> + <span style="color: #23d7d7;">str</span>(dc)
+                <span style="color: #ffad29; font-weight: bold;">print</span> <span style="color: #e67128;">"Detector count rate: "</span> + <span style="color: #23d7d7;">str</span>(<span style="color: #23d7d7;">round</span>(dc/time,2))
+                <span style="color: #ffad29; font-weight: bold;">print</span> <span style="color: #e67128;">"Detector counts/Monitor counts: "</span> + <span style="color: #23d7d7;">str</span>(dcr) + \
+                      <span style="color: #e67128;">" +/- "</span> + <span style="color: #23d7d7;">str</span>(dcrerr) + <span style="color: #e67128;">"\n"</span>
+                <span style="color: #ffad29; font-weight: bold;">if</span> dcr &lt;= 0:<span style="color: #74af68;"># </span><span style="color: #74af68;">or dcrerr/dcr &gt; 0.02:</span>
+                    <span style="color: #ffad29; font-weight: bold;">print</span> <span style="color: #e67128;">"#### SKIPPING RUN: "</span> + <span style="color: #23d7d7;">str</span>(r[-17:-12]) + <span style="color: #e67128;">" ####\n"</span>
+                    <span style="color: #dbdb95;">mon</span> -= montemp
+                    <span style="color: #ffad29; font-weight: bold;">continue</span>
+</pre>
+</div>
+
+<p>
+We increment the total detector count and add the events to our final
+run file.  We also delete the current data from memory to save some space.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-python"><span style="color: #74af68;">#</span>
+                <span style="color: #dbdb95;">detcount</span> += <span style="color: #23d7d7;">len</span>(dettemp)
+                dettemp.tofile(outfile)
+                <span style="color: #ffad29; font-weight: bold;">del</span> dettemp
+</pre>
+</div>
+
+<p>
+Finally, we dump the total monitor spectrum to a file and display the
+cumulative statistics for all of the runs.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-python"><span style="color: #74af68;">#</span>
+    <span style="color: #ffad29; font-weight: bold;">with</span> <span style="color: #23d7d7;">open</span>(path+<span style="color: #e67128;">"_bmon_histo.dat"</span>,<span style="color: #e67128;">"wb"</span>) <span style="color: #ffad29; font-weight: bold;">as</span> stream:
+        mon.tofile(stream)
+    <span style="color: #ffad29; font-weight: bold;">print</span> <span style="color: #e67128;">"Total Monitor Counts = "</span> + <span style="color: #23d7d7;">str</span>(np.<span style="color: #23d7d7;">sum</span>(mon))
+    <span style="color: #ffad29; font-weight: bold;">print</span> <span style="color: #e67128;">"Total Detector Counts = "</span> + <span style="color: #23d7d7;">str</span>(detcount)
+    <span style="color: #ffad29; font-weight: bold;">print</span> <span style="color: #e67128;">"Total Time = "</span> + <span style="color: #23d7d7;">str</span>(tottime)
+    <span style="color: #ffad29; font-weight: bold;">if</span> tottime &gt; 0:
+        <span style="color: #ffad29; font-weight: bold;">print</span> <span style="color: #e67128;">"Monitor Count Rate = "</span> + <span style="color: #23d7d7;">str</span>(np.<span style="color: #23d7d7;">sum</span>(mon)/tottime)
+        <span style="color: #ffad29; font-weight: bold;">print</span> <span style="color: #e67128;">"Detector Count Rate = "</span> + <span style="color: #23d7d7;">str</span>(detcount/tottime)
+</pre>
+</div>
+</div>
+</div>
+</div>
 </div>
 
 <div id="outline-container-sec-5" class="outline-2">
@@ -4822,286 +5459,41 @@ been covered in the <a href="#convertTime">similar function</a> for the neutron 
 &lt;&lt;reduction_load&gt;&gt;
 
 &lt;&lt;reduction_export&gt;&gt;
-<span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">plot_2d_range</span>(data,rnge=<span style="color: #008b8b;">None</span>,steps=100,mask=<span style="color: #008b8b;">None</span>):
-    <span style="color: #e67128;">"""Takes a 2d data set and plots a plateau plot"""</span>
-    <span style="color: #ffad29; font-weight: bold;">if</span> <span style="color: #23d7d7;">type</span>(rnge) <span style="color: #ffad29; font-weight: bold;">is</span> <span style="color: #23d7d7;">tuple</span>:
-        <span style="color: #dbdb95;">vmin</span>,<span style="color: #dbdb95;">vmax</span>=rnge
-    <span style="color: #ffad29; font-weight: bold;">else</span>:
-        <span style="color: #dbdb95;">vmin</span> = np.<span style="color: #23d7d7;">min</span>(data)
-        <span style="color: #dbdb95;">vmax</span> = np.<span style="color: #23d7d7;">max</span>(data)
-    <span style="color: #ffad29; font-weight: bold;">if</span> mask <span style="color: #ffad29; font-weight: bold;">is</span> <span style="color: #008b8b;">None</span>:
-        <span style="color: #dbdb95;">mask</span> = data &gt;= vmin
-    <span style="color: #ffad29; font-weight: bold;">print</span>(vmax,vmin,steps)
-    <span style="color: #ffad29; font-weight: bold;">print</span>((vmax-vmin))
-    <span style="color: #ffad29; font-weight: bold;">print</span>((vmax-vmin)/steps)
-    <span style="color: #dbdb95;">xs</span> = np.arange(vmin,vmax,(vmax-vmin)/steps)
-    <span style="color: #dbdb95;">ys</span> = [<span style="color: #23d7d7;">len</span>(np.where(np.logical_and(data&lt;x,mask))[0]) <span style="color: #ffad29; font-weight: bold;">for</span> x <span style="color: #ffad29; font-weight: bold;">in</span> xs]
-    <span style="color: #dbdb95;">ys</span> = np.array(ys)
-    plt.plot(xs,ys,<span style="color: #e67128;">"r*"</span>)
-    plt.show()
 
-<span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">get_2d_int</span>(run,name):
-    <span style="color: #dbdb95;">p</span> = PelFile(basedir+<span style="color: #e67128;">"SESAME_%i/"</span> % run + name+<span style="color: #e67128;">"_neutron_event.dat"</span>)
-    <span style="color: #dbdb95;">mon</span> = MonFile(basedir+<span style="color: #e67128;">"SESAME_%i/"</span> % run + name+<span style="color: #e67128;">"_bmon_histo.dat"</span>,<span style="color: #008b8b;">False</span>)
-    <span style="color: #ffad29; font-weight: bold;">return</span> np.<span style="color: #23d7d7;">sum</span>(p.make3d(),axis=2) / np.<span style="color: #23d7d7;">sum</span>(mon.spec)    
+&lt;&lt;reduction_plot_2d_range&gt;&gt;
+&lt;&lt;reduction_get_2d_int&gt;&gt;
 
-<span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">plot_int_range</span>(run):
-    <span style="color: #dbdb95;">up</span> = get_2d_int(run,<span style="color: #e67128;">"up"</span>)
-    <span style="color: #dbdb95;">down</span> = get_2d_int(run,<span style="color: #e67128;">"down"</span>)
-    plot_2d_range(up+down,steps=1000)
+&lt;&lt;reduction_plot_int_range&gt;&gt;
 
-<span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">plot_pol_range</span>(run,mask=<span style="color: #008b8b;">None</span>):
-    <span style="color: #dbdb95;">up</span> = get_2d_int(run,<span style="color: #e67128;">"down"</span>)
-    <span style="color: #dbdb95;">down</span> = get_2d_int(run,<span style="color: #e67128;">"up"</span>)
-    plot_2d_range((up-down)/(up+down),(-1.0,1.0),mask=mask)
+&lt;&lt;reduction_plot_pol_range&gt;&gt;
 
 
-
-<span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">getIntegratedSpectra</span>(run,name,mins,maxs,mask):
-    <span style="color: #dbdb95;">name</span> = normalize_name(name)
-    <span style="color: #dbdb95;">p</span> = PelFile(basedir+<span style="color: #e67128;">"SESAME_%i/"</span> % run + name+<span style="color: #e67128;">"up_neutron_event.dat"</span>)
-    <span style="color: #dbdb95;">mon</span> = MonFile(basedir+<span style="color: #e67128;">"SESAME_%i/"</span> % run + name+<span style="color: #e67128;">"up_bmon_histo.dat"</span>,<span style="color: #008b8b;">False</span>)
-    <span style="color: #dbdb95;">up</span> = np.<span style="color: #23d7d7;">sum</span>(p.make1d(mins,maxs,mask)[40:90])
-    <span style="color: #dbdb95;">uperr</span> = np.sqrt(up)/np.<span style="color: #23d7d7;">sum</span>(mon.spec)
-    <span style="color: #dbdb95;">up</span> /= np.<span style="color: #23d7d7;">sum</span>(mon.spec)
-    <span style="color: #dbdb95;">p</span> = PelFile(basedir+<span style="color: #e67128;">"SESAME_%i/"</span> % run + name+<span style="color: #e67128;">"down_neutron_event.dat"</span>)
-    <span style="color: #dbdb95;">mon</span> = MonFile(basedir+<span style="color: #e67128;">"SESAME_%i/"</span> % run + name+<span style="color: #e67128;">"down_bmon_histo.dat"</span>,<span style="color: #008b8b;">False</span>)
-    <span style="color: #dbdb95;">down</span> = np.<span style="color: #23d7d7;">sum</span>(p.make1d(mins,maxs,mask)[40:90])
-    <span style="color: #dbdb95;">downerr</span> = np.sqrt(down)/np.<span style="color: #23d7d7;">sum</span>(mon.spec)
-    <span style="color: #dbdb95;">down</span> /= np.<span style="color: #23d7d7;">sum</span>(mon.spec)
-
-    <span style="color: #ffad29; font-weight: bold;">return</span> (up,uperr,down,downerr)
-
-<span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">normalize_name</span>(name):
-    <span style="color: #ffad29; font-weight: bold;">if</span> name != <span style="color: #e67128;">''</span>:
-        <span style="color: #ffad29; font-weight: bold;">return</span> <span style="color: #e67128;">"%0.3f"</span>%<span style="color: #23d7d7;">float</span>(name)
-    <span style="color: #ffad29; font-weight: bold;">else</span>:
-        <span style="color: #ffad29; font-weight: bold;">return</span> name
+&lt;&lt;reduction_getIntegratedSpectra&gt;&gt;
+&lt;&lt;reduction_normalize_name&gt;&gt;
 
 
-<span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">spectrum</span>(run,name,mins=(0,0),maxs=(16,128),mask=<span style="color: #008b8b;">None</span>):
-    <span style="color: #dbdb95;">name</span> = normalize_name(name)
-    <span style="color: #dbdb95;">p</span> = PelFile(basedir+<span style="color: #e67128;">"SESAME_%i/"</span> % run + name+<span style="color: #e67128;">"up_neutron_event.dat"</span>)
-    <span style="color: #dbdb95;">mon</span> = MonFile(basedir+<span style="color: #e67128;">"SESAME_%i/"</span> % run + name+<span style="color: #e67128;">"up_bmon_histo.dat"</span>,<span style="color: #008b8b;">False</span>)
-    <span style="color: #dbdb95;">up</span> = p.make1d(mins,maxs,mask)
-    <span style="color: #dbdb95;">uperr</span> = np.sqrt(up)/np.<span style="color: #23d7d7;">sum</span>(mon.spec)
-    <span style="color: #dbdb95;">up</span> /= np.<span style="color: #23d7d7;">sum</span>(mon.spec)
-    <span style="color: #dbdb95;">p</span> = PelFile(basedir+<span style="color: #e67128;">"SESAME_%i/"</span> % run + name+<span style="color: #e67128;">"down_neutron_event.dat"</span>)
-    <span style="color: #dbdb95;">mon</span> = MonFile(basedir+<span style="color: #e67128;">"SESAME_%i/"</span> % run + name+<span style="color: #e67128;">"down_bmon_histo.dat"</span>,<span style="color: #008b8b;">False</span>)
-    <span style="color: #dbdb95;">down</span> = p.make1d(mins,maxs,mask)
-    <span style="color: #dbdb95;">downerr</span> = np.sqrt(down)/np.<span style="color: #23d7d7;">sum</span>(mon.spec)
-    <span style="color: #dbdb95;">down</span> /= np.<span style="color: #23d7d7;">sum</span>(mon.spec)
+&lt;&lt;reduction_spectrum&gt;&gt;
 
-    <span style="color: #ffad29; font-weight: bold;">return</span> (up-down)/(up+down)
+&lt;&lt;reduction_errspectrum&gt;&gt;
+&lt;&lt;reduction_simple_spectrum&gt;&gt;
 
-<span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">errspectrum</span>(run,name,mins=(0,0),maxs=(16,128),mask=<span style="color: #008b8b;">None</span>):
-    <span style="color: #dbdb95;">name</span> = normalize_name(name)
-    <span style="color: #dbdb95;">p</span> = PelFile(basedir+<span style="color: #e67128;">"SESAME_%i/"</span> % run + name+<span style="color: #e67128;">"up_neutron_event.dat"</span>)
-    <span style="color: #dbdb95;">mon</span> = MonFile(basedir+<span style="color: #e67128;">"SESAME_%i/"</span> % run + name+<span style="color: #e67128;">"up_bmon_histo.dat"</span>,<span style="color: #008b8b;">False</span>)
-    <span style="color: #dbdb95;">up</span> = p.make1d(mins,maxs,mask)
-    <span style="color: #dbdb95;">uperr</span> = np.sqrt(up)/np.<span style="color: #23d7d7;">sum</span>(mon.spec)
-    <span style="color: #dbdb95;">up</span> /= np.<span style="color: #23d7d7;">sum</span>(mon.spec)
-    <span style="color: #dbdb95;">p</span> = PelFile(basedir+<span style="color: #e67128;">"SESAME_%i/"</span> % run + name+<span style="color: #e67128;">"down_neutron_event.dat"</span>)
-    <span style="color: #dbdb95;">mon</span> = MonFile(basedir+<span style="color: #e67128;">"SESAME_%i/"</span> % run + name+<span style="color: #e67128;">"down_bmon_histo.dat"</span>,<span style="color: #008b8b;">False</span>)
-    <span style="color: #dbdb95;">down</span> = p.make1d(mins,maxs,mask)
-    <span style="color: #dbdb95;">downerr</span> = np.sqrt(down)/np.<span style="color: #23d7d7;">sum</span>(mon.spec)
-    <span style="color: #dbdb95;">down</span> /= np.<span style="color: #23d7d7;">sum</span>(mon.spec)
+&lt;&lt;reduction_fr&gt;&gt;
 
-    <span style="color: #dbdb95;">p</span> = (up-down)/(up+down)
-    <span style="color: #dbdb95;">err</span> = p*np.sqrt((up-down)**-2+(up+down)**-2)*np.sqrt(uperr**2+downerr**2)
-    <span style="color: #ffad29; font-weight: bold;">return</span> p,err
-
-<span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">simple_spectrum</span>(run,mins=(0,0),maxs=(16,128),mask=<span style="color: #008b8b;">None</span>):
-    <span style="color: #dbdb95;">p</span> = PelFile(basedir+<span style="color: #e67128;">"SESAME_%i/SESAME_%i_neutron_event.dat"</span>%(run,run))    
-    <span style="color: #dbdb95;">mon</span> = MonFile(basedir+<span style="color: #e67128;">"SESAME_%i/SESAME_%i_bmon_histo.dat"</span>%(run,run),<span style="color: #008b8b;">False</span>)    
-    <span style="color: #dbdb95;">data</span> = p.make1d(mins,maxs,mask)
-    <span style="color: #dbdb95;">err</span> = np.sqrt(data)/np.<span style="color: #23d7d7;">sum</span>(mon.spec)
-    <span style="color: #dbdb95;">data</span> /= np.<span style="color: #23d7d7;">sum</span>(mon.spec)
-
-    <span style="color: #ffad29; font-weight: bold;">return</span> (data,err)
-
-<span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">fr</span>(run,name,mins=(0,0),maxs=(16,128),mask=<span style="color: #008b8b;">None</span>):
-    <span style="color: #dbdb95;">up</span>,<span style="color: #dbdb95;">uperr</span>,<span style="color: #dbdb95;">down</span>,<span style="color: #dbdb95;">downerr</span> = getIntegratedSpectra(run,name,mins,maxs,mask)
-
-    <span style="color: #dbdb95;">ratio</span> = up/down
-    <span style="color: #dbdb95;">rerr</span> = ratio * np.sqrt((uperr/up)**2+(downerr/down)**2)
-
-    <span style="color: #ffad29; font-weight: bold;">return</span> (ratio,rerr)
-
-<span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">run_int</span>(run,name,mins=(0,0),maxs=(16,128),mask=<span style="color: #008b8b;">None</span>):
-    <span style="color: #dbdb95;">up</span>,<span style="color: #dbdb95;">uperr</span>,<span style="color: #dbdb95;">down</span>,<span style="color: #dbdb95;">downerr</span> = getIntegratedSpectra(run,name,mins,maxs,mask)
-
-    <span style="color: #dbdb95;">total</span> = up+down
-    <span style="color: #dbdb95;">total_err</span> = np.sqrt(uperr**2+downerr**2)
-
-    <span style="color: #ffad29; font-weight: bold;">return</span> (total,total_err)
+&lt;&lt;reduction_run_int&gt;&gt;
 
 
-<span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">singleplot</span>(run,name,mins=(0,0),maxs=(16,128)):
-    <span style="color: #dbdb95;">data</span> = spectrum(run,name,mins,maxs)
-    <span style="color: #dbdb95;">data</span>[np.isnan(data)]=0
-    plt.plot(np.arange(RESOLUTION)*20.0/RESOLUTION,data,<span style="color: #e67128;">"r-"</span>)
-    plt.show()
+&lt;&lt;reduction_singleplot&gt;&gt;
 
-<span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">echoplot</span>(run,names,mins=(0,0),maxs=(16,128),mask=<span style="color: #008b8b;">None</span>,outfile=<span style="color: #008b8b;">None</span>):
-    <span style="color: #dbdb95;">data</span> = [errspectrum(run,name,mins,maxs,mask) <span style="color: #ffad29; font-weight: bold;">for</span> name <span style="color: #ffad29; font-weight: bold;">in</span> names]
-    <span style="color: #dbdb95;">errs</span> = np.vstack(<span style="color: #23d7d7;">tuple</span>([d[1] <span style="color: #ffad29; font-weight: bold;">for</span> d <span style="color: #ffad29; font-weight: bold;">in</span> data]))
-    <span style="color: #dbdb95;">data</span> = np.vstack(<span style="color: #23d7d7;">tuple</span>([d[0] <span style="color: #ffad29; font-weight: bold;">for</span> d <span style="color: #ffad29; font-weight: bold;">in</span> data]))
-    <span style="color: #dbdb95;">data</span>[np.isnan(data)]=0
-    <span style="color: #dbdb95;">xs</span> = np.arange(101)*0.1
-    <span style="color: #dbdb95;">ys</span> = <span style="color: #23d7d7;">sorted</span>([<span style="color: #23d7d7;">float</span>(x) <span style="color: #ffad29; font-weight: bold;">for</span> x <span style="color: #ffad29; font-weight: bold;">in</span> names])
-    <span style="color: #dbdb95;">ys</span> += [ys[-1]+ys[1]-ys[0]] <span style="color: #74af68;">#</span><span style="color: #74af68;">Add last element</span>
-    <span style="color: #dbdb95;">ys</span> = np.array(ys)
-    plt.pcolor(xs,ys,data,vmin=-1,vmax=1)
-    <span style="color: #ffad29; font-weight: bold;">if</span> outfile <span style="color: #ffad29; font-weight: bold;">is</span> <span style="color: #008b8b;">None</span>:
-        plt.show()
-    <span style="color: #ffad29; font-weight: bold;">else</span>:
-        <span style="color: #ffad29; font-weight: bold;">print</span> name
-        <span style="color: #ffad29; font-weight: bold;">if</span> outfile[-4:] == <span style="color: #e67128;">".png"</span>:
-            plt.savefig(outfile)
-            plt.clf()
-        <span style="color: #ffad29; font-weight: bold;">else</span>:
-            <span style="color: #ffad29; font-weight: bold;">with</span> <span style="color: #23d7d7;">open</span>(outfile,<span style="color: #e67128;">"w"</span>) <span style="color: #ffad29; font-weight: bold;">as</span> of:
-                <span style="color: #dbdb95;">y</span>,x = data.shape
-                of.write(<span style="color: #e67128;">"wavelength\tcurrent\tpolarization\terror\n"</span>)
-                <span style="color: #ffad29; font-weight: bold;">for</span> i <span style="color: #ffad29; font-weight: bold;">in</span> <span style="color: #23d7d7;">range</span>(x):
-                    <span style="color: #ffad29; font-weight: bold;">for</span> j <span style="color: #ffad29; font-weight: bold;">in</span> <span style="color: #23d7d7;">range</span>(y):
-                        <span style="color: #ffad29; font-weight: bold;">print</span>((xs[i],ys[j]))
-                        <span style="color: #ffad29; font-weight: bold;">print</span>(data[j,i])
-                        of.write(<span style="color: #e67128;">"%f\t%f\t%f\t%f\n"</span>
-                                 %(xs[i],ys[j],data[j,i],errs[j,i]))
+&lt;&lt;reduction_echoplot&gt;&gt;
+&lt;&lt;reduction_intensity&gt;&gt;
 
 
-<span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">intensity</span>(run,names,mins=(0,0),maxs=(16,128),mask=<span style="color: #008b8b;">None</span>,outfile=<span style="color: #008b8b;">None</span>):
-    names = [name <span style="color: #ffad29; font-weight: bold;">for</span> name <span style="color: #ffad29; font-weight: bold;">in</span> names <span style="color: #ffad29; font-weight: bold;">if</span> <span style="color: #23d7d7;">float</span>(name) != 5.475]
-    data = [run_int(run,name,mins,maxs,mask) <span style="color: #ffad29; font-weight: bold;">for</span> name <span style="color: #ffad29; font-weight: bold;">in</span> names]
-    errs = np.array([x[1] <span style="color: #ffad29; font-weight: bold;">for</span> x <span style="color: #ffad29; font-weight: bold;">in</span> data])
-    data = np.array([x[0] <span style="color: #ffad29; font-weight: bold;">for</span> x <span style="color: #ffad29; font-weight: bold;">in</span> data])
-    data[np.isnan(data)]=0
-    errs[np.isnan(data)]=1
-    xs = np.array([<span style="color: #23d7d7;">float</span>(x) <span style="color: #ffad29; font-weight: bold;">for</span> x <span style="color: #ffad29; font-weight: bold;">in</span> names])
-    plt.errorbar(xs,data,yerr=errs)
-<span style="color: #74af68;">#    </span><span style="color: #74af68;">if outfile is None:</span>
-    plt.show()
-    <span style="color: #ffad29; font-weight: bold;">if</span> outfile <span style="color: #ffad29; font-weight: bold;">is</span> <span style="color: #ffad29; font-weight: bold;">not</span> <span style="color: #008b8b;">None</span>:
-        np.savetxt(outfile,np.transpose(np.vstack((xs,data,errs))))
+&lt;&lt;reduction_echofr&gt;&gt;
 
+&lt;&lt;reduction_poldrift&gt;&gt;
+&lt;&lt;reduction_echodiff&gt;&gt;
 
-
-<span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">echofr</span>(run,names,mins=(0,0),maxs=(16,128),mask=<span style="color: #008b8b;">None</span>,outfile=<span style="color: #008b8b;">None</span>):
-<span style="color: #74af68;">#    </span><span style="color: #74af68;">names = [name for name in names if float(name) != 5.475]</span>
-    <span style="color: #ffad29; font-weight: bold;">print</span> names
-    data = [fr(run,name,mins,maxs,mask) <span style="color: #ffad29; font-weight: bold;">for</span> name <span style="color: #ffad29; font-weight: bold;">in</span> names]
-    errs = np.array([x[1] <span style="color: #ffad29; font-weight: bold;">for</span> x <span style="color: #ffad29; font-weight: bold;">in</span> data])
-    data = np.array([x[0] <span style="color: #ffad29; font-weight: bold;">for</span> x <span style="color: #ffad29; font-weight: bold;">in</span> data])
-    data[np.isnan(data)]=0
-    errs[np.isnan(data)]=1
-    xs = np.array([<span style="color: #23d7d7;">float</span>(x) <span style="color: #ffad29; font-weight: bold;">for</span> x <span style="color: #ffad29; font-weight: bold;">in</span> names])
-    <span style="color: #ffad29; font-weight: bold;">print</span> xs
-    plt.errorbar(xs,data,yerr=errs)
-<span style="color: #74af68;">#    </span><span style="color: #74af68;">if outfile is None:</span>
-    plt.show()
-    <span style="color: #ffad29; font-weight: bold;">if</span> outfile <span style="color: #ffad29; font-weight: bold;">is</span> <span style="color: #ffad29; font-weight: bold;">not</span> <span style="color: #008b8b;">None</span>:
-        np.savetxt(outfile,np.transpose(np.vstack((xs,data,errs))))
-    <span style="color: #74af68;">#</span><span style="color: #74af68;">trying the fitting</span>
-    <span style="color: #74af68;"># </span><span style="color: #74af68;">data = (data-1.0)/(data+1.0)</span>
-    <span style="color: #74af68;"># </span><span style="color: #74af68;">print(data)</span>
-    <span style="color: #74af68;"># </span><span style="color: #74af68;">data = np.log(data)</span>
-    <span style="color: #74af68;"># </span><span style="color: #74af68;">fit = np.polyfit(xs,data,2)</span>
-    <span style="color: #74af68;"># </span><span style="color: #74af68;">a = fit[0]</span>
-    <span style="color: #74af68;"># </span><span style="color: #74af68;">b = fit[1]</span>
-    <span style="color: #74af68;"># </span><span style="color: #74af68;">c = fit[2]</span>
-    <span style="color: #74af68;"># </span><span style="color: #74af68;">print(fit)</span>
-    <span style="color: #74af68;"># </span><span style="color: #74af68;">plt.plot(xs,np.exp(data),"b*")</span>
-    <span style="color: #74af68;"># </span><span style="color: #74af68;">plt.plot(xs,np.exp(c+b*xs+a*xs**2),"r-")</span>
-    <span style="color: #74af68;"># </span><span style="color: #74af68;">plt.show()</span>
-    <span style="color: #74af68;"># </span><span style="color: #74af68;">print(-1*b/(2*a))</span>
-
-<span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">poldrift</span>(runs,mins,maxs,outfile=<span style="color: #008b8b;">None</span>):
-    <span style="color: #ffad29; font-weight: bold;">if</span> <span style="color: #23d7d7;">len</span>(runs)%2 == 1:
-        runs = runs[:-1]
-    ups = [simple_spectrum(run,mins,maxs)
-                           <span style="color: #ffad29; font-weight: bold;">for</span> run <span style="color: #ffad29; font-weight: bold;">in</span> runs[1::2]]
-    downs = [simple_spectrum(run,mins,maxs)
-                           <span style="color: #ffad29; font-weight: bold;">for</span> run <span style="color: #ffad29; font-weight: bold;">in</span> runs[0::2]]
-    uperrs = np.array([np.sqrt(np.<span style="color: #23d7d7;">sum</span>(run[1]**2)) <span style="color: #ffad29; font-weight: bold;">for</span> run <span style="color: #ffad29; font-weight: bold;">in</span> ups])
-    downerrs = np.array([np.sqrt(np.<span style="color: #23d7d7;">sum</span>(run[1]**2)) <span style="color: #ffad29; font-weight: bold;">for</span> run <span style="color: #ffad29; font-weight: bold;">in</span> downs])
-    ups = np.array([np.<span style="color: #23d7d7;">sum</span>(run[0]) <span style="color: #ffad29; font-weight: bold;">for</span> run <span style="color: #ffad29; font-weight: bold;">in</span> ups])
-    downs = np.array([np.<span style="color: #23d7d7;">sum</span>(run[0]) <span style="color: #ffad29; font-weight: bold;">for</span> run <span style="color: #ffad29; font-weight: bold;">in</span> downs])
-    p = ups/downs
-    err = p * np.sqrt((uperrs/ups)**2+(downerrs/downs)**2)
-    xs = np.array(runs[0::2])
-    plt.errorbar(xs,p,yerr=err)
-    plt.show()
-    <span style="color: #ffad29; font-weight: bold;">if</span> outfile <span style="color: #ffad29; font-weight: bold;">is</span> <span style="color: #ffad29; font-weight: bold;">not</span> <span style="color: #008b8b;">None</span>:
-        np.savetxt(outfile,np.transpose(np.vstack((xs,p,err))))
-
-<span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">echodiff</span>(run,names,split,mins,maxs,outfile=<span style="color: #008b8b;">None</span>):
-    data = np.vstack(<span style="color: #23d7d7;">tuple</span>([np.arccos(spectrum(run,name,mins,(split,302))) - 
-                            np.arccos(spectrum(run,name,(split,223),maxs)) <span style="color: #ffad29; font-weight: bold;">for</span> name <span style="color: #ffad29; font-weight: bold;">in</span> names]))
-
-    data[np.isnan(data)]=0
-
-    xs = np.arange(RESOLUTION)*20.0/RESOLUTION
-    ys = np.array([<span style="color: #23d7d7;">float</span>(x) <span style="color: #ffad29; font-weight: bold;">for</span> x <span style="color: #ffad29; font-weight: bold;">in</span> names])
-    plt.pcolor(xs,ys,data,vmin=-np.pi,vmax=np.pi)
-    <span style="color: #ffad29; font-weight: bold;">if</span> outfile <span style="color: #ffad29; font-weight: bold;">is</span> <span style="color: #008b8b;">None</span>:
-        plt.show()
-    <span style="color: #ffad29; font-weight: bold;">else</span>:
-        <span style="color: #ffad29; font-weight: bold;">print</span> name
-        plt.savefig(outfile)
-        plt.clf()
-
-<span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">two_flipper</span>(runs, flipper1, flipper2, minmon, current, \
-                watch=<span style="color: #e67128;">"2"</span>):
-
-    data = load(runs,current)
-    keys = data.keys()
-    values = [<span style="color: #e67128;">""</span>]
-    base = basedir + <span style="color: #e67128;">"SESAME_%i/"</span> % runs[-1]
-
-    <span style="color: #ffad29; font-weight: bold;">for</span> value <span style="color: #ffad29; font-weight: bold;">in</span> values:
-        <span style="color: #ffad29; font-weight: bold;">if</span> <span style="color: #23d7d7;">type</span>(value) <span style="color: #ffad29; font-weight: bold;">is</span> <span style="color: #ffad29; font-weight: bold;">not</span> <span style="color: #23d7d7;">str</span>:
-            value = normalize_name(value)
-        upup = [x <span style="color: #ffad29; font-weight: bold;">for</span> x <span style="color: #ffad29; font-weight: bold;">in</span> keys <span style="color: #ffad29; font-weight: bold;">if</span> x[flipper1] &lt; 0 <span style="color: #ffad29; font-weight: bold;">and</span> x[flipper2] &lt; 0 \
-                <span style="color: #ffad29; font-weight: bold;">and</span> x[choices[watch]]==current]
-        updown = [x <span style="color: #ffad29; font-weight: bold;">for</span> x <span style="color: #ffad29; font-weight: bold;">in</span> keys <span style="color: #ffad29; font-weight: bold;">if</span> x[flipper1] &lt; 0 <span style="color: #ffad29; font-weight: bold;">and</span> x[flipper2] &gt; 0 \
-                  <span style="color: #ffad29; font-weight: bold;">and</span> x[choices[watch]]==current]
-        downup = [x <span style="color: #ffad29; font-weight: bold;">for</span> x <span style="color: #ffad29; font-weight: bold;">in</span> keys <span style="color: #ffad29; font-weight: bold;">if</span> x[flipper1] &gt; 0 <span style="color: #ffad29; font-weight: bold;">and</span> x[flipper2] &lt; 0 \
-                  <span style="color: #ffad29; font-weight: bold;">and</span> x[choices[watch]]==current]
-        downdown = [x <span style="color: #ffad29; font-weight: bold;">for</span> x <span style="color: #ffad29; font-weight: bold;">in</span> keys <span style="color: #ffad29; font-weight: bold;">if</span> x[flipper1] &gt; 0 <span style="color: #ffad29; font-weight: bold;">and</span> x[flipper2] &gt; 0 \
-                    <span style="color: #ffad29; font-weight: bold;">and</span> x[choices[watch]]==current]
-        <span style="color: #ffad29; font-weight: bold;">if</span> <span style="color: #23d7d7;">filter</span> <span style="color: #ffad29; font-weight: bold;">is</span> <span style="color: #ffad29; font-weight: bold;">not</span> <span style="color: #008b8b;">None</span>:
-            value = <span style="color: #e67128;">""</span> <span style="color: #74af68;">#</span><span style="color: #74af68;">Don't put values on files when we're only running a single export</span>
-
-        <span style="color: #ffad29; font-weight: bold;">if</span> upup != []:
-            <span style="color: #ffad29; font-weight: bold;">print</span> <span style="color: #e67128;">"-------------- Up/Up state --------------"</span>
-            Combiner.save(base+value+<span style="color: #e67128;">"upup_current="</span> + <span style="color: #23d7d7;">str</span>(current),
-                          minmon,
-                          upup,
-                          data)
-        <span style="color: #ffad29; font-weight: bold;">if</span> updown != []:
-            <span style="color: #ffad29; font-weight: bold;">print</span> <span style="color: #e67128;">"-------------- Up/Down state --------------"</span>
-            Combiner.save(base+value+<span style="color: #e67128;">"updown_current="</span> + <span style="color: #23d7d7;">str</span>(current),
-                          minmon,
-                          updown,
-                          data)
-        <span style="color: #ffad29; font-weight: bold;">if</span> downup != []:
-            <span style="color: #ffad29; font-weight: bold;">print</span> <span style="color: #e67128;">"-------------- Down/Up state --------------"</span>
-            Combiner.save(base+value+<span style="color: #e67128;">"downup_current="</span> + <span style="color: #23d7d7;">str</span>(current),
-                          minmon,
-                          downup,
-                          data)
-        <span style="color: #ffad29; font-weight: bold;">if</span> downdown != []:
-            <span style="color: #ffad29; font-weight: bold;">print</span> <span style="color: #e67128;">"-------------- Down/Down state --------------"</span>
-            Combiner.save(base+value+<span style="color: #e67128;">"downdown_current="</span> + <span style="color: #23d7d7;">str</span>(current),
-                          minmon,
-                          downdown,
-                          data)
-
-        <span style="color: #ffad29; font-weight: bold;">if</span> [upup,updown,downup,downdown]==[[],[],[],[]]:
-            <span style="color: #ffad29; font-weight: bold;">print</span>(<span style="color: #e67128;">"No data to write"</span>)
-
+&lt;&lt;reduction_twoflipper&gt;&gt;           
 
 &lt;&lt;reduction_main&gt;&gt;
 </pre>
@@ -5559,7 +5951,7 @@ properly organize the combined runs.
 <dt> runs </dt><dd>A list of run numbers
 </dd>
 <dt> sortby </dt><dd>An index for which element in the current tuple
-returned by the <i>Combiner</i> should be used to separate the
+returned by the <a href="#sec-4-3">4.3</a> should be used to separate the
 measurements.
 </dd>
 <dt> flipper </dt><dd>The index for the element which contains the power
@@ -5586,7 +5978,7 @@ power supply specified by <code>sortby</code>.
 </dl>
 
 <p>
-The function begins by using <i>Combiner</i> to get the metadata for all of
+The function begins by using <a href="#sec-4-3">4.3</a> to get the metadata for all of
 the runs and place them in the data dictionary.
 </p>
 
@@ -5701,7 +6093,7 @@ times with multiple currents and get multiple files.
 </div>
 
 <p>
-Finally, the combined runs are saved through the <i>Combiner</i>.  If there
+Finally, the combined runs are saved through the <a href="#sec-4-3">4.3</a>.  If there
 is no spin up or spin down data, then the <code>sames</code> are saved.  Also,
 we do not attempt to save the data if there were no measurements in
 that particular spin state.
@@ -5729,13 +6121,1066 @@ that particular spin state.
                           data)
 </pre>
 </div>
+
+<p>
+The <code>twoflipper</code> function allows for exporting the states of a
+two-flipper measurement.  This is deprecated, since the same
+functionality can be performed by <code>sortby</code>.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-python"><span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">two_flipper</span>(runs, flipper1, flipper2, minmon, current, \
+                watch=<span style="color: #e67128;">"2"</span>):
+
+    <span style="color: #dbdb95;">data</span> = load(runs,current)
+    <span style="color: #dbdb95;">keys</span> = data.keys()
+    <span style="color: #dbdb95;">values</span> = [<span style="color: #e67128;">""</span>]
+    <span style="color: #dbdb95;">base</span> = basedir + <span style="color: #e67128;">"SESAME_%i/"</span> % runs[-1]
+
+    <span style="color: #ffad29; font-weight: bold;">for</span> value <span style="color: #ffad29; font-weight: bold;">in</span> values:
+        <span style="color: #ffad29; font-weight: bold;">if</span> <span style="color: #23d7d7;">type</span>(value) <span style="color: #ffad29; font-weight: bold;">is</span> <span style="color: #ffad29; font-weight: bold;">not</span> <span style="color: #23d7d7;">str</span>:
+            <span style="color: #dbdb95;">value</span> = normalize_name(value)
+        <span style="color: #dbdb95;">upup</span> = [x <span style="color: #ffad29; font-weight: bold;">for</span> x <span style="color: #ffad29; font-weight: bold;">in</span> keys <span style="color: #ffad29; font-weight: bold;">if</span> x[flipper1] &lt; 0 <span style="color: #ffad29; font-weight: bold;">and</span> x[flipper2] &lt; 0 \
+                <span style="color: #ffad29; font-weight: bold;">and</span> x[choices[watch]]==current]
+        <span style="color: #dbdb95;">updown</span> = [x <span style="color: #ffad29; font-weight: bold;">for</span> x <span style="color: #ffad29; font-weight: bold;">in</span> keys <span style="color: #ffad29; font-weight: bold;">if</span> x[flipper1] &lt; 0 <span style="color: #ffad29; font-weight: bold;">and</span> x[flipper2] &gt; 0 \
+                  <span style="color: #ffad29; font-weight: bold;">and</span> x[choices[watch]]==current]
+        <span style="color: #dbdb95;">downup</span> = [x <span style="color: #ffad29; font-weight: bold;">for</span> x <span style="color: #ffad29; font-weight: bold;">in</span> keys <span style="color: #ffad29; font-weight: bold;">if</span> x[flipper1] &gt; 0 <span style="color: #ffad29; font-weight: bold;">and</span> x[flipper2] &lt; 0 \
+                  <span style="color: #ffad29; font-weight: bold;">and</span> x[choices[watch]]==current]
+        <span style="color: #dbdb95;">downdown</span> = [x <span style="color: #ffad29; font-weight: bold;">for</span> x <span style="color: #ffad29; font-weight: bold;">in</span> keys <span style="color: #ffad29; font-weight: bold;">if</span> x[flipper1] &gt; 0 <span style="color: #ffad29; font-weight: bold;">and</span> x[flipper2] &gt; 0 \
+                    <span style="color: #ffad29; font-weight: bold;">and</span> x[choices[watch]]==current]
+        <span style="color: #ffad29; font-weight: bold;">if</span> <span style="color: #23d7d7;">filter</span> <span style="color: #ffad29; font-weight: bold;">is</span> <span style="color: #ffad29; font-weight: bold;">not</span> <span style="color: #008b8b;">None</span>:
+            <span style="color: #dbdb95;">value</span> = <span style="color: #e67128;">""</span> <span style="color: #74af68;">#</span><span style="color: #74af68;">Don't put values on files when we're only running a single export</span>
+
+        <span style="color: #ffad29; font-weight: bold;">if</span> upup != []:
+            <span style="color: #ffad29; font-weight: bold;">print</span> <span style="color: #e67128;">"-------------- Up/Up state --------------"</span>
+            Combiner.save(base+value+<span style="color: #e67128;">"upup_current="</span> + <span style="color: #23d7d7;">str</span>(current),
+                          minmon,
+                          upup,
+                          data)
+        <span style="color: #ffad29; font-weight: bold;">if</span> updown != []:
+            <span style="color: #ffad29; font-weight: bold;">print</span> <span style="color: #e67128;">"-------------- Up/Down state --------------"</span>
+            Combiner.save(base+value+<span style="color: #e67128;">"updown_current="</span> + <span style="color: #23d7d7;">str</span>(current),
+                          minmon,
+                          updown,
+                          data)
+        <span style="color: #ffad29; font-weight: bold;">if</span> downup != []:
+            <span style="color: #ffad29; font-weight: bold;">print</span> <span style="color: #e67128;">"-------------- Down/Up state --------------"</span>
+            Combiner.save(base+value+<span style="color: #e67128;">"downup_current="</span> + <span style="color: #23d7d7;">str</span>(current),
+                          minmon,
+                          downup,
+                          data)
+        <span style="color: #ffad29; font-weight: bold;">if</span> downdown != []:
+            <span style="color: #ffad29; font-weight: bold;">print</span> <span style="color: #e67128;">"-------------- Down/Down state --------------"</span>
+            Combiner.save(base+value+<span style="color: #e67128;">"downdown_current="</span> + <span style="color: #23d7d7;">str</span>(current),
+                          minmon,
+                          downdown,
+                          data)
+
+        <span style="color: #ffad29; font-weight: bold;">if</span> [upup,updown,downup,downdown]==[[],[],[],[]]:
+            <span style="color: #ffad29; font-weight: bold;">print</span>(<span style="color: #e67128;">"No data to write"</span>)
+</pre>
+</div>
+</div>
+</div>
+
+
+<div id="outline-container-sec-5-4" class="outline-3">
+<h3 id="sec-5-4"><span class="section-number-3">5.4</span> Import</h3>
+<div class="outline-text-3" id="text-5-4">
+<p>
+The <code>spectrum</code> function takes a run number directory (<code>run</code>) and a designation
+(<code>name</code>) and returns the polarization spectrum.  The remaining
+optional parameters allow the user to specify which parts of the
+detector contain the signal.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-python" id="reduction_spectrum"><span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">spectrum</span>(run,name,mins=(0,0),maxs=(16,128),mask=<span style="color: #008b8b;">None</span>):
+    <span style="color: #dbdb95;">name</span> = normalize_name(name)
+    <span style="color: #dbdb95;">p</span> = PelFile(basedir+<span style="color: #e67128;">"SESAME_%i/"</span> % run + name+<span style="color: #e67128;">"up_neutron_event.dat"</span>)
+    <span style="color: #dbdb95;">mon</span> = MonFile(basedir+<span style="color: #e67128;">"SESAME_%i/"</span> % run + name+<span style="color: #e67128;">"up_bmon_histo.dat"</span>,<span style="color: #008b8b;">False</span>)
+    <span style="color: #dbdb95;">up</span> = p.make1d(mins,maxs,mask)
+    <span style="color: #dbdb95;">uperr</span> = np.sqrt(up)/np.<span style="color: #23d7d7;">sum</span>(mon.spec)
+    <span style="color: #dbdb95;">up</span> /= np.<span style="color: #23d7d7;">sum</span>(mon.spec)
+    <span style="color: #dbdb95;">p</span> = PelFile(basedir+<span style="color: #e67128;">"SESAME_%i/"</span> % run + name+<span style="color: #e67128;">"down_neutron_event.dat"</span>)
+    <span style="color: #dbdb95;">mon</span> = MonFile(basedir+<span style="color: #e67128;">"SESAME_%i/"</span> % run + name+<span style="color: #e67128;">"down_bmon_histo.dat"</span>,<span style="color: #008b8b;">False</span>)
+    <span style="color: #dbdb95;">down</span> = p.make1d(mins,maxs,mask)
+    <span style="color: #dbdb95;">downerr</span> = np.sqrt(down)/np.<span style="color: #23d7d7;">sum</span>(mon.spec)
+    <span style="color: #dbdb95;">down</span> /= np.<span style="color: #23d7d7;">sum</span>(mon.spec)
+
+    <span style="color: #ffad29; font-weight: bold;">return</span> (up-down)/(up+down)
+</pre>
+</div>
+
+<p>
+The <code>errspectrum</code> function is similar to <code>spectrum</code>, except that it
+also returns the uncertainty in the polarization.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-python" id="reduction_errspectrum"><span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">errspectrum</span>(run,name,mins=(0,0),maxs=(16,128),mask=<span style="color: #008b8b;">None</span>):
+    <span style="color: #dbdb95;">name</span> = normalize_name(name)
+    <span style="color: #dbdb95;">p</span> = PelFile(basedir+<span style="color: #e67128;">"SESAME_%i/"</span> % run + name+<span style="color: #e67128;">"up_neutron_event.dat"</span>)
+    <span style="color: #dbdb95;">mon</span> = MonFile(basedir+<span style="color: #e67128;">"SESAME_%i/"</span> % run + name+<span style="color: #e67128;">"up_bmon_histo.dat"</span>,<span style="color: #008b8b;">False</span>)
+    <span style="color: #dbdb95;">up</span> = p.make1d(mins,maxs,mask)
+    <span style="color: #dbdb95;">uperr</span> = np.sqrt(up)/np.<span style="color: #23d7d7;">sum</span>(mon.spec)
+    <span style="color: #dbdb95;">up</span> /= np.<span style="color: #23d7d7;">sum</span>(mon.spec)
+    <span style="color: #dbdb95;">p</span> = PelFile(basedir+<span style="color: #e67128;">"SESAME_%i/"</span> % run + name+<span style="color: #e67128;">"down_neutron_event.dat"</span>)
+    <span style="color: #dbdb95;">mon</span> = MonFile(basedir+<span style="color: #e67128;">"SESAME_%i/"</span> % run + name+<span style="color: #e67128;">"down_bmon_histo.dat"</span>,<span style="color: #008b8b;">False</span>)
+    <span style="color: #dbdb95;">down</span> = p.make1d(mins,maxs,mask)
+    <span style="color: #dbdb95;">downerr</span> = np.sqrt(down)/np.<span style="color: #23d7d7;">sum</span>(mon.spec)
+    <span style="color: #dbdb95;">down</span> /= np.<span style="color: #23d7d7;">sum</span>(mon.spec)
+
+    <span style="color: #dbdb95;">p</span> = (up-down)/(up+down)
+    <span style="color: #dbdb95;">err</span> = p*np.sqrt((up-down)**-2+(up+down)**-2)*np.sqrt(uperr**2+downerr**2)
+    <span style="color: #ffad29; font-weight: bold;">return</span> p,err
+</pre>
+</div>
+
+
+<p>
+Most of the plotting functions rely upon <code>getIntegratedSpectra</code> to get
+the actual state counts for their results.  It returns the monitor
+normalized intensity spectrums of the spin up and spin down states,
+as well as the corresponding uncertainties.
+</p>
+
+<dl class="org-dl">
+<dt> run </dt><dd>The run number for the folder containing the data
+</dd>
+<dt> name </dt><dd>Any additional infixed on the name of the run.  This is
+mostly to handle sortby runs where we need to load a
+specific power supply state.
+</dd>
+<dt> mins </dt><dd>The minimum x and y corrdinate on the detector to examine
+</dd>
+<dt> maxs </dt><dd>The maximum x and y corrdinate to examine
+</dd>
+<dt> mask </dt><dd>A bit mask for eliminating unwanted pixels.
+</dd>
+</dl>
+
+<p>
+In theory, the <code>spectrum</code> and <code>errspectrum</code> functions can be rewritten
+as a quick wrappers around <code>getIntegratedSpectra</code>.  You should do
+this.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-python" id="reduction_getIntegratedSpectra"><span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">getIntegratedSpectra</span>(run,name,mins,maxs,mask):
+    <span style="color: #dbdb95;">name</span> = normalize_name(name)
+    <span style="color: #dbdb95;">p</span> = PelFile(basedir+<span style="color: #e67128;">"SESAME_%i/"</span> % run + name+<span style="color: #e67128;">"up_neutron_event.dat"</span>)
+    <span style="color: #dbdb95;">mon</span> = MonFile(basedir+<span style="color: #e67128;">"SESAME_%i/"</span> % run + name+<span style="color: #e67128;">"up_bmon_histo.dat"</span>,<span style="color: #008b8b;">False</span>)
+    <span style="color: #dbdb95;">up</span> = np.<span style="color: #23d7d7;">sum</span>(p.make1d(mins,maxs,mask)[40:90])
+    <span style="color: #dbdb95;">uperr</span> = np.sqrt(up)/np.<span style="color: #23d7d7;">sum</span>(mon.spec)
+    <span style="color: #dbdb95;">up</span> /= np.<span style="color: #23d7d7;">sum</span>(mon.spec)
+    <span style="color: #dbdb95;">p</span> = PelFile(basedir+<span style="color: #e67128;">"SESAME_%i/"</span> % run + name+<span style="color: #e67128;">"down_neutron_event.dat"</span>)
+    <span style="color: #dbdb95;">mon</span> = MonFile(basedir+<span style="color: #e67128;">"SESAME_%i/"</span> % run + name+<span style="color: #e67128;">"down_bmon_histo.dat"</span>,<span style="color: #008b8b;">False</span>)
+    <span style="color: #dbdb95;">down</span> = np.<span style="color: #23d7d7;">sum</span>(p.make1d(mins,maxs,mask)[40:90])
+    <span style="color: #dbdb95;">downerr</span> = np.sqrt(down)/np.<span style="color: #23d7d7;">sum</span>(mon.spec)
+    <span style="color: #dbdb95;">down</span> /= np.<span style="color: #23d7d7;">sum</span>(mon.spec)
+
+    <span style="color: #ffad29; font-weight: bold;">return</span> (up,uperr,down,downerr)
+</pre>
+</div>
+
+<p>
+The <code>reduction_fr</code> function is a thin wrapper around the
+getIntegratedSpectra function to provide the flipping ratio versus
+wavelength for a given run.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-python" id="reduction_fr"><span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">fr</span>(run,name,mins=(0,0),maxs=(16,128),mask=<span style="color: #008b8b;">None</span>):
+    <span style="color: #dbdb95;">up</span>,<span style="color: #dbdb95;">uperr</span>,<span style="color: #dbdb95;">down</span>,<span style="color: #dbdb95;">downerr</span> = getIntegratedSpectra(run,name,mins,maxs,mask)
+
+    <span style="color: #dbdb95;">ratio</span> = up/down
+    <span style="color: #dbdb95;">rerr</span> = ratio * np.sqrt((uperr/up)**2+(downerr/down)**2)
+
+    <span style="color: #ffad29; font-weight: bold;">return</span> (ratio,rerr)
+</pre>
+</div>
+
+<p>
+Similarly, <code>reduction_run_int</code> gives the total neutron intensity
+between the spin up and spin down states.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-python"><span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">run_int</span>(run,name,mins=(0,0),maxs=(16,128),mask=<span style="color: #008b8b;">None</span>):
+    <span style="color: #dbdb95;">up</span>,<span style="color: #dbdb95;">uperr</span>,<span style="color: #dbdb95;">down</span>,<span style="color: #dbdb95;">downerr</span> = getIntegratedSpectra(run,name,mins,maxs,mask)
+
+    <span style="color: #dbdb95;">total</span> = up+down
+    <span style="color: #dbdb95;">total_err</span> = np.sqrt(uperr**2+downerr**2)
+
+    <span style="color: #ffad29; font-weight: bold;">return</span> (total,total_err)
+</pre>
+</div>
+
+
+<p>
+The <code>simple_spectrum</code> routine is similar to <code>getIntegrateSpectra</code>,
+but it only loads a single subrun based on the run number.  It's
+largest advantage is that the data does not need to be exported for
+it to be used.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-python"><span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">simple_spectrum</span>(run,mins=(0,0),maxs=(16,128),mask=<span style="color: #008b8b;">None</span>):
+    <span style="color: #dbdb95;">p</span> = PelFile(basedir+<span style="color: #e67128;">"SESAME_%i/SESAME_%i_neutron_event.dat"</span>%(run,run))    
+    <span style="color: #dbdb95;">mon</span> = MonFile(basedir+<span style="color: #e67128;">"SESAME_%i/SESAME_%i_bmon_histo.dat"</span>%(run,run),<span style="color: #008b8b;">False</span>)    
+    <span style="color: #dbdb95;">data</span> = p.make1d(mins,maxs,mask)
+    <span style="color: #dbdb95;">err</span> = np.sqrt(data)/np.<span style="color: #23d7d7;">sum</span>(mon.spec)
+    <span style="color: #dbdb95;">data</span> /= np.<span style="color: #23d7d7;">sum</span>(mon.spec)
+
+    <span style="color: #ffad29; font-weight: bold;">return</span> (data,err)
+</pre>
+</div>
+
+
+
+<p>
+Some plots depend more on the 2d detector image and less on the
+wavelength spectrum.  The <code>get_2d_int</code> function returns a monitor
+normalized 2d array representing the neutron intensity per pixel.
+</p>
+
+<dl class="org-dl">
+<dt> run </dt><dd>The run number for the directory where the flipping run data
+has been exported
+</dd>
+<dt> name </dt><dd>The name of the data file.  This can theoretically allow
+this function to be used to load the results of a sortby
+operation, but, in practice, it's only ever used for just
+up and down spin states.
+</dd>
+</dl>
+
+<div class="org-src-container">
+
+<pre class="src src-python"><span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">get_2d_int</span>(run,name):
+    <span style="color: #dbdb95;">p</span> = PelFile(basedir+<span style="color: #e67128;">"SESAME_%i/"</span> % run + name+<span style="color: #e67128;">"_neutron_event.dat"</span>)
+    <span style="color: #dbdb95;">mon</span> = MonFile(basedir+<span style="color: #e67128;">"SESAME_%i/"</span> % run + name+<span style="color: #e67128;">"_bmon_histo.dat"</span>,<span style="color: #008b8b;">False</span>)
+    <span style="color: #ffad29; font-weight: bold;">return</span> np.<span style="color: #23d7d7;">sum</span>(p.make3d(),axis=2) / np.<span style="color: #23d7d7;">sum</span>(mon.spec)
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-sec-5-5" class="outline-3">
+<h3 id="sec-5-5"><span class="section-number-3">5.5</span> Plotting</h3>
+<div class="outline-text-3" id="text-5-5">
+<p>
+The single plot command takes a single data file and plots it to the
+screen.
+</p>
+
+<dl class="org-dl">
+<dt> run </dt><dd>The run number of the directory where the file is stored.
+</dd>
+<dt> name </dt><dd>The file name for the data file to be plotted.
+</dd>
+<dt> mins </dt><dd>The upper left pixel of the region of interest on the detector.
+</dd>
+<dt> maxs </dt><dd>The lower right pixel of the region of interest on the detector.
+</dd>
+</dl>
+
+<div class="org-src-container">
+
+<pre class="src src-python" id="reduction_singleplot"><span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">singleplot</span>(run,name,mins=(0,0),maxs=(16,128)):
+    <span style="color: #dbdb95;">data</span> = spectrum(run,name,mins,maxs)
+    <span style="color: #dbdb95;">data</span>[np.isnan(data)]=0
+    plt.plot(np.arange(RESOLUTION)*20.0/RESOLUTION,data,<span style="color: #e67128;">"r-"</span>)
+    plt.show()
+</pre>
+</div>
+
+<p>
+<code>echofr</code> takes a list of runs generated by a <code>sortby</code> and plots the
+flipping ratio, integrated over all wavelengths, versus the current
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-python"><span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">echofr</span>(run,names,mins=(0,0),maxs=(16,128),mask=<span style="color: #008b8b;">None</span>,outfile=<span style="color: #008b8b;">None</span>):
+<span style="color: #74af68;">#    </span><span style="color: #74af68;">names = [name for name in names if float(name) != 5.475]</span>
+    <span style="color: #ffad29; font-weight: bold;">print</span> names
+    <span style="color: #dbdb95;">data</span> = [fr(run,name,mins,maxs,mask) <span style="color: #ffad29; font-weight: bold;">for</span> name <span style="color: #ffad29; font-weight: bold;">in</span> names]
+    <span style="color: #dbdb95;">errs</span> = np.array([x[1] <span style="color: #ffad29; font-weight: bold;">for</span> x <span style="color: #ffad29; font-weight: bold;">in</span> data])
+    <span style="color: #dbdb95;">data</span> = np.array([x[0] <span style="color: #ffad29; font-weight: bold;">for</span> x <span style="color: #ffad29; font-weight: bold;">in</span> data])
+    <span style="color: #dbdb95;">data</span>[np.isnan(data)]=0
+    <span style="color: #dbdb95;">errs</span>[np.isnan(data)]=1
+    <span style="color: #dbdb95;">xs</span> = np.array([<span style="color: #23d7d7;">float</span>(x) <span style="color: #ffad29; font-weight: bold;">for</span> x <span style="color: #ffad29; font-weight: bold;">in</span> names])
+    <span style="color: #ffad29; font-weight: bold;">print</span> xs
+    plt.errorbar(xs,data,yerr=errs)
+<span style="color: #74af68;">#    </span><span style="color: #74af68;">if outfile is None:</span>
+    plt.show()
+    <span style="color: #ffad29; font-weight: bold;">if</span> outfile <span style="color: #ffad29; font-weight: bold;">is</span> <span style="color: #ffad29; font-weight: bold;">not</span> <span style="color: #008b8b;">None</span>:
+        np.savetxt(outfile,np.transpose(np.vstack((xs,data,errs))))
+    <span style="color: #74af68;">#</span><span style="color: #74af68;">trying the fitting</span>
+    <span style="color: #74af68;"># </span><span style="color: #74af68;">data = (data-1.0)/(data+1.0)</span>
+    <span style="color: #74af68;"># </span><span style="color: #74af68;">print(data)</span>
+    <span style="color: #74af68;"># </span><span style="color: #74af68;">data = np.log(data)</span>
+    <span style="color: #74af68;"># </span><span style="color: #74af68;">fit = np.polyfit(xs,data,2)</span>
+    <span style="color: #74af68;"># </span><span style="color: #74af68;">a = fit[0]</span>
+    <span style="color: #74af68;"># </span><span style="color: #74af68;">b = fit[1]</span>
+    <span style="color: #74af68;"># </span><span style="color: #74af68;">c = fit[2]</span>
+    <span style="color: #74af68;"># </span><span style="color: #74af68;">print(fit)</span>
+    <span style="color: #74af68;"># </span><span style="color: #74af68;">plt.plot(xs,np.exp(data),"b*")</span>
+    <span style="color: #74af68;"># </span><span style="color: #74af68;">plt.plot(xs,np.exp(c+b*xs+a*xs**2),"r-")</span>
+    <span style="color: #74af68;"># </span><span style="color: #74af68;">plt.show()</span>
+    <span style="color: #74af68;"># </span><span style="color: #74af68;">print(-1*b/(2*a))</span>
+</pre>
+</div>
+
+<p>
+<code>echodiff</code> is useful for finding position sensitive differences in the
+echo polarization.  It plots a color plot versus both tuning current
+and wavelength.  The intensity in the plot is based on the difference
+in neutron precession angle, in radians, between the top and bottom of
+the detector.  The <code>split</code> variable is used to declare the dividing
+line between the "top" and the "botto".
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-python"><span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">echodiff</span>(run,names,split,mins,maxs,outfile=<span style="color: #008b8b;">None</span>):
+    <span style="color: #dbdb95;">data</span> = np.vstack(<span style="color: #23d7d7;">tuple</span>([np.arccos(spectrum(run,name,mins,(split,302))) - 
+                            np.arccos(spectrum(run,name,(split,223),maxs)) <span style="color: #ffad29; font-weight: bold;">for</span> name <span style="color: #ffad29; font-weight: bold;">in</span> names]))
+
+    <span style="color: #dbdb95;">data</span>[np.isnan(data)]=0
+
+    <span style="color: #dbdb95;">xs</span> = np.arange(RESOLUTION)*20.0/RESOLUTION
+    <span style="color: #dbdb95;">ys</span> = np.array([<span style="color: #23d7d7;">float</span>(x) <span style="color: #ffad29; font-weight: bold;">for</span> x <span style="color: #ffad29; font-weight: bold;">in</span> names])
+    plt.pcolor(xs,ys,data,vmin=-np.pi,vmax=np.pi)
+    <span style="color: #ffad29; font-weight: bold;">if</span> outfile <span style="color: #ffad29; font-weight: bold;">is</span> <span style="color: #008b8b;">None</span>:
+        plt.show()
+    <span style="color: #ffad29; font-weight: bold;">else</span>:
+        <span style="color: #ffad29; font-weight: bold;">print</span> name
+        plt.savefig(outfile)
+        plt.clf()
+</pre>
+</div>
+
+<p>
+The <code>echoplot</code> is a full spectrum color plot of the echo tune.  The
+axes are wavelength and tuning current and the color represents the
+polarization.  This is slower <code>echofr</code> and harder to read.  However,
+it does have the advantage that it's possible to distinguish between a
+deploarized beam and a beam which is far from echo.  It's also
+possible to to tell whether a given peak is on echo or just near it.
+<code>echoplot</code> also can show if there are problems out at long
+wavelengths, which would be masked by the high counts at short
+wavelength in <code>echofr</code>.  Finally, it's much prettier than <code>echofr</code>.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-python"><span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">echoplot</span>(run,names,mins=(0,0),maxs=(16,128),mask=<span style="color: #008b8b;">None</span>,outfile=<span style="color: #008b8b;">None</span>):
+    <span style="color: #dbdb95;">data</span> = [errspectrum(run,name,mins,maxs,mask) <span style="color: #ffad29; font-weight: bold;">for</span> name <span style="color: #ffad29; font-weight: bold;">in</span> names]
+    <span style="color: #dbdb95;">errs</span> = np.vstack(<span style="color: #23d7d7;">tuple</span>([d[1] <span style="color: #ffad29; font-weight: bold;">for</span> d <span style="color: #ffad29; font-weight: bold;">in</span> data]))
+    <span style="color: #dbdb95;">data</span> = np.vstack(<span style="color: #23d7d7;">tuple</span>([d[0] <span style="color: #ffad29; font-weight: bold;">for</span> d <span style="color: #ffad29; font-weight: bold;">in</span> data]))
+    <span style="color: #dbdb95;">data</span>[np.isnan(data)]=0
+    <span style="color: #dbdb95;">xs</span> = np.arange(101)*0.1
+    <span style="color: #dbdb95;">ys</span> = <span style="color: #23d7d7;">sorted</span>([<span style="color: #23d7d7;">float</span>(x) <span style="color: #ffad29; font-weight: bold;">for</span> x <span style="color: #ffad29; font-weight: bold;">in</span> names])
+    <span style="color: #dbdb95;">ys</span> += [ys[-1]+ys[1]-ys[0]] <span style="color: #74af68;">#</span><span style="color: #74af68;">Add last element</span>
+    <span style="color: #dbdb95;">ys</span> = np.array(ys)
+    plt.pcolor(xs,ys,data,vmin=-1,vmax=1)
+    <span style="color: #ffad29; font-weight: bold;">if</span> outfile <span style="color: #ffad29; font-weight: bold;">is</span> <span style="color: #008b8b;">None</span>:
+        plt.show()
+    <span style="color: #ffad29; font-weight: bold;">else</span>:
+        <span style="color: #ffad29; font-weight: bold;">print</span> name
+        <span style="color: #ffad29; font-weight: bold;">if</span> outfile[-4:] == <span style="color: #e67128;">".png"</span>:
+            plt.savefig(outfile)
+            plt.clf()
+        <span style="color: #ffad29; font-weight: bold;">else</span>:
+            <span style="color: #ffad29; font-weight: bold;">with</span> <span style="color: #23d7d7;">open</span>(outfile,<span style="color: #e67128;">"w"</span>) <span style="color: #ffad29; font-weight: bold;">as</span> of:
+                <span style="color: #dbdb95;">y</span>,x = data.shape
+                of.write(<span style="color: #e67128;">"wavelength\tcurrent\tpolarization\terror\n"</span>)
+                <span style="color: #ffad29; font-weight: bold;">for</span> i <span style="color: #ffad29; font-weight: bold;">in</span> <span style="color: #23d7d7;">range</span>(x):
+                    <span style="color: #ffad29; font-weight: bold;">for</span> j <span style="color: #ffad29; font-weight: bold;">in</span> <span style="color: #23d7d7;">range</span>(y):
+                        <span style="color: #ffad29; font-weight: bold;">print</span>((xs[i],ys[j]))
+                        <span style="color: #ffad29; font-weight: bold;">print</span>(data[j,i])
+                        of.write(<span style="color: #e67128;">"%f\t%f\t%f\t%f\n"</span>
+                                 %(xs[i],ys[j],data[j,i],errs[j,i]))
+</pre>
+</div>
+
+<p>
+The <code>intensity</code> plot gives the detector count, with uncertainty,
+versus current.  It doesn't come in handy very often.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-python"><span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">intensity</span>(run,names,mins=(0,0),maxs=(16,128),mask=<span style="color: #008b8b;">None</span>,outfile=<span style="color: #008b8b;">None</span>):
+    <span style="color: #dbdb95;">names</span> = [name <span style="color: #ffad29; font-weight: bold;">for</span> name <span style="color: #ffad29; font-weight: bold;">in</span> names <span style="color: #ffad29; font-weight: bold;">if</span> <span style="color: #23d7d7;">float</span>(name) != 5.475]
+    <span style="color: #dbdb95;">data</span> = [run_int(run,name,mins,maxs,mask) <span style="color: #ffad29; font-weight: bold;">for</span> name <span style="color: #ffad29; font-weight: bold;">in</span> names]
+    <span style="color: #dbdb95;">errs</span> = np.array([x[1] <span style="color: #ffad29; font-weight: bold;">for</span> x <span style="color: #ffad29; font-weight: bold;">in</span> data])
+    <span style="color: #dbdb95;">data</span> = np.array([x[0] <span style="color: #ffad29; font-weight: bold;">for</span> x <span style="color: #ffad29; font-weight: bold;">in</span> data])
+    <span style="color: #dbdb95;">data</span>[np.isnan(data)]=0
+    <span style="color: #dbdb95;">errs</span>[np.isnan(data)]=1
+    <span style="color: #dbdb95;">xs</span> = np.array([<span style="color: #23d7d7;">float</span>(x) <span style="color: #ffad29; font-weight: bold;">for</span> x <span style="color: #ffad29; font-weight: bold;">in</span> names])
+    plt.errorbar(xs,data,yerr=errs)
+<span style="color: #74af68;">#    </span><span style="color: #74af68;">if outfile is None:</span>
+    plt.show()
+    <span style="color: #ffad29; font-weight: bold;">if</span> outfile <span style="color: #ffad29; font-weight: bold;">is</span> <span style="color: #ffad29; font-weight: bold;">not</span> <span style="color: #008b8b;">None</span>:
+        np.savetxt(outfile,np.transpose(np.vstack((xs,data,errs))))
+</pre>
+</div>
+
+<p>
+The <code>poldrift</code> function plots the polarization versus run number.
+This functionality has laregely been supplanted by <i>beamdeath</i>, which
+makes runs far faster, though it does not produce errorbars.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-python"><span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">poldrift</span>(runs,mins,maxs,outfile=<span style="color: #008b8b;">None</span>):
+    <span style="color: #ffad29; font-weight: bold;">if</span> <span style="color: #23d7d7;">len</span>(runs)%2 == 1:
+        runs = runs[:-1]
+    ups = [simple_spectrum(run,mins,maxs)
+                           <span style="color: #ffad29; font-weight: bold;">for</span> run <span style="color: #ffad29; font-weight: bold;">in</span> runs[1::2]]
+    downs = [simple_spectrum(run,mins,maxs)
+                           <span style="color: #ffad29; font-weight: bold;">for</span> run <span style="color: #ffad29; font-weight: bold;">in</span> runs[0::2]]
+    uperrs = np.array([np.sqrt(np.<span style="color: #23d7d7;">sum</span>(run[1]**2)) <span style="color: #ffad29; font-weight: bold;">for</span> run <span style="color: #ffad29; font-weight: bold;">in</span> ups])
+    downerrs = np.array([np.sqrt(np.<span style="color: #23d7d7;">sum</span>(run[1]**2)) <span style="color: #ffad29; font-weight: bold;">for</span> run <span style="color: #ffad29; font-weight: bold;">in</span> downs])
+    ups = np.array([np.<span style="color: #23d7d7;">sum</span>(run[0]) <span style="color: #ffad29; font-weight: bold;">for</span> run <span style="color: #ffad29; font-weight: bold;">in</span> ups])
+    downs = np.array([np.<span style="color: #23d7d7;">sum</span>(run[0]) <span style="color: #ffad29; font-weight: bold;">for</span> run <span style="color: #ffad29; font-weight: bold;">in</span> downs])
+    p = ups/downs
+    err = p * np.sqrt((uperrs/ups)**2+(downerrs/downs)**2)
+    xs = np.array(runs[0::2])
+    plt.errorbar(xs,p,yerr=err)
+    plt.show()
+    <span style="color: #ffad29; font-weight: bold;">if</span> outfile <span style="color: #ffad29; font-weight: bold;">is</span> <span style="color: #ffad29; font-weight: bold;">not</span> <span style="color: #008b8b;">None</span>:
+        np.savetxt(outfile,np.transpose(np.vstack((xs,p,err))))
+</pre>
+</div>
+
+<p>
+The <code>plot_2d_range</code> plot takes in a 3D data set of any sort.  It then
+finds creates a scatter plot.  The x axis of the scatter plot is a
+given pixel value.  The y axis is the number of pixel whose value is
+less than the x-coordinate.  Think of it like a cummulative histogram
+of the data.
+</p>
+
+<p>
+The optional <code>rnge</code> variable gives the domain of the x-axis.  If no
+domain is given, it runs over the full pixel value range of the given
+data.  The <code>steps</code> parameter can be used to chose the resolution of
+the plot along the x-axis.  Finally, <code>mask</code> can be used to pass a
+binary mask of pixels to ignore.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-python"><span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">plot_2d_range</span>(data,rnge=<span style="color: #008b8b;">None</span>,steps=100,mask=<span style="color: #008b8b;">None</span>):
+    <span style="color: #e67128;">"""Takes a 2d data set and plots a plateau plot"""</span>
+    <span style="color: #ffad29; font-weight: bold;">if</span> <span style="color: #23d7d7;">type</span>(rnge) <span style="color: #ffad29; font-weight: bold;">is</span> <span style="color: #23d7d7;">tuple</span>:
+        <span style="color: #dbdb95;">vmin</span>,<span style="color: #dbdb95;">vmax</span>=rnge
+    <span style="color: #ffad29; font-weight: bold;">else</span>:
+        <span style="color: #dbdb95;">vmin</span> = np.<span style="color: #23d7d7;">min</span>(data)
+        <span style="color: #dbdb95;">vmax</span> = np.<span style="color: #23d7d7;">max</span>(data)
+    <span style="color: #ffad29; font-weight: bold;">if</span> mask <span style="color: #ffad29; font-weight: bold;">is</span> <span style="color: #008b8b;">None</span>:
+        <span style="color: #dbdb95;">mask</span> = data &gt;= vmin
+    <span style="color: #ffad29; font-weight: bold;">print</span>(vmax,vmin,steps)
+    <span style="color: #ffad29; font-weight: bold;">print</span>((vmax-vmin))
+    <span style="color: #ffad29; font-weight: bold;">print</span>((vmax-vmin)/steps)
+    <span style="color: #dbdb95;">xs</span> = np.arange(vmin,vmax,(vmax-vmin)/steps)
+    <span style="color: #dbdb95;">ys</span> = [<span style="color: #23d7d7;">len</span>(np.where(np.logical_and(data&lt;x,mask))[0]) <span style="color: #ffad29; font-weight: bold;">for</span> x <span style="color: #ffad29; font-weight: bold;">in</span> xs]
+    <span style="color: #dbdb95;">ys</span> = np.array(ys)
+    plt.plot(xs,ys,<span style="color: #e67128;">"r*"</span>)
+    plt.show()
+</pre>
+</div>
+
+<p>
+The <code>plot_int_range</code> takes a single run number and plots a cumulative
+histogram of the wavelength integrate intensity of the pixels.  The
+x-axis is the minimum pixel intensity and the y axis is how many
+pixels meat that minimum.  The function examines both spin states for
+the run and it is assumed that reduction has already exported the up
+and down run files for that run.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-python"><span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">plot_int_range</span>(run):
+    <span style="color: #dbdb95;">up</span> = get_2d_int(run,<span style="color: #e67128;">"up"</span>)
+    <span style="color: #dbdb95;">down</span> = get_2d_int(run,<span style="color: #e67128;">"down"</span>)
+    plot_2d_range(up+down,steps=1000)
+</pre>
+</div>
+
+<p>
+The <code>plot_pol_range</code> function is similar to <code>plot_int_range</code>, except
+that it examines the polarization at each pixel, instead of the total intensity.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-python"><span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">plot_pol_range</span>(run,mask=<span style="color: #008b8b;">None</span>):
+    <span style="color: #dbdb95;">up</span> = get_2d_int(run,<span style="color: #e67128;">"down"</span>)
+    <span style="color: #dbdb95;">down</span> = get_2d_int(run,<span style="color: #e67128;">"up"</span>)
+    plot_2d_range((up-down)/(up+down),(-1.0,1.0),mask=mask)
+</pre>
+</div>
+
+
+<p>
+<code>normalize_name</code> takes either a number or an empty string.  If it
+takes an empty string, it returns the same.  If it gets a number, it
+returns a string with that number out to three places after the
+decimal.  This is useful for naming runs, since we don't always want
+to append a current value to the file name.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-python"><span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">normalize_name</span>(name):
+    <span style="color: #ffad29; font-weight: bold;">if</span> name != <span style="color: #e67128;">''</span>:
+        <span style="color: #ffad29; font-weight: bold;">return</span> <span style="color: #e67128;">"%0.3f"</span>%<span style="color: #23d7d7;">float</span>(name)
+    <span style="color: #ffad29; font-weight: bold;">else</span>:
+        <span style="color: #ffad29; font-weight: bold;">return</span> name
+</pre>
+</div>
+</div>
+</div>
+</div>
+<div id="outline-container-sec-6" class="outline-2">
+<h2 id="sec-6"><span class="section-number-2">6</span> Power Supplies</h2>
+<div class="outline-text-2" id="text-6">
+<p>
+The power supplies are currently controlled via an DAC card on the
+motor computer.  This card sends an analog voltage between -10 V and
+10 V to each power supply, which is then used to control the
+current.
+</p>
+
+<p>
+To run the power supplies, the <code>ps_server.py</code> program must be run on
+the Motor computer and the <code>Coils</code> class needs to be loaded into
+PyDAS.  The <code>sesame_init.py</code> script currently loads the power supply
+client into the variable <code>coils</code>.
+</p>
+</div>
+
+<div id="outline-container-sec-6-1" class="outline-3">
+<h3 id="sec-6-1"><span class="section-number-3">6.1</span> Power Supply Server</h3>
+<div class="outline-text-3" id="text-6-1">
+</div><div id="outline-container-sec-6-1-1" class="outline-4">
+<h4 id="sec-6-1-1"><span class="section-number-4">6.1.1</span> Power Supply Class Module</h4>
+<div class="outline-text-4" id="text-6-1-1">
+</div><ol class="org-ol"><li>Module Skeleton<br  /><div class="outline-text-5" id="text-6-1-1-1">
+<div class="org-src-container">
+
+<pre class="src src-python" id="power_supply_skeleton"><span style="color: #ffad29; font-weight: bold;">import</span> __future__
+<span style="color: #ffad29; font-weight: bold;">import</span> ctypes
+<span style="color: #ffad29; font-weight: bold;">import</span> numpy
+<span style="color: #ffad29; font-weight: bold;">import</span> struct
+<span style="color: #ffad29; font-weight: bold;">import</span> json
+
+&lt;&lt;power_supply_constants&gt;&gt;
+&lt;&lt;power_supply_compensate&gt;&gt;
+<span style="color: #ffad29; font-weight: bold;">class</span> <span style="color: #34cae2;">PowerSupply</span>:
+
+    <span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">__init__</span>(<span style="color: #ffad29; font-weight: bold;">self</span>):
+        &lt;&lt;power_supply_init&gt;&gt;
+    &lt;&lt;power_supply_set&gt;&gt;
+
+    &lt;&lt;power_supply_triangle&gt;&gt;
+    &lt;&lt;power_supply_fields&gt;&gt;
+    &lt;&lt;power_supply_chk&gt;&gt;
+    &lt;&lt;power_supply_stop&gt;&gt;
+    <span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">__del__</span>(<span style="color: #ffad29; font-weight: bold;">self</span>):
+        <span style="color: #ffad29; font-weight: bold;">self</span>.stop()
+
+
+
+<span style="color: #ffad29; font-weight: bold;">if</span> <span style="color: #23d7d7;">__name__</span>==<span style="color: #e67128;">"__main__"</span>:
+    x=PowerSupply()
+</pre>
+</div>
+</div>
+</li>
+
+<li>Constants<br  /><div class="outline-text-5" id="text-6-1-1-2">
+<p>
+The nidaq object is a link to the DLL file which contains National
+Instrument DAQmx interface to their hardware.  It may not be quite as
+friendly as something like Measurement Studio, but it's actually a nice
+and simple API and it gets the job done.  All of the functions in the
+<i>NI-DAQmx C Reference Help</i> are available from this DLL.  This help
+reference is installed with the drivers and you should update the link
+to where it is install on your computer.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-python" id="power_supply_constants"><span style="color: #dbdb95;">nidaq</span> = ctypes.windll.nicaiu <span style="color: #74af68;">#</span><span style="color: #74af68;">Link to nicaiu.dll</span>
+</pre>
+</div>
+
+<p>
+Since DAQmx is a C api, we do need to care about the size of our data
+types.  The <a href="https://docs.python.org/2/library/ctypes.html">python ctypes</a> module can handle most of these conversions
+for us.  I've included some simple names to both help keeping track of
+bit size and to simplify the code.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-python" id="power_supply_constants"><span style="color: #dbdb95;">int32</span> = ctypes.c_long
+<span style="color: #dbdb95;">uInt32</span> = ctypes.c_ulong
+<span style="color: #dbdb95;">uInt64</span> = ctypes.c_ulonglong
+<span style="color: #dbdb95;">float64</span> = ctypes.c_double
+<span style="color: #dbdb95;">TaskHandle</span> = uInt32
+</pre>
+</div>
+
+<p>
+The following constants are from the C header files for DAQmx.  
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-python" id="power_supply_constants"><span style="color: #dbdb95;">DAQmx_Val_Cfg_Default</span> = int32(-1)
+<span style="color: #dbdb95;">DAQmx_Val_Volts</span> = 10348
+<span style="color: #dbdb95;">DAQmx_Val_Rising</span> = 10280
+<span style="color: #dbdb95;">DAQmx_Val_FiniteSamps</span> = 10178
+<span style="color: #dbdb95;">DAQmx_Val_ContSamps</span> = 10123
+<span style="color: #dbdb95;">DAQmx_Val_GroupByChannel</span> = 0
+</pre>
+</div>
+
+<p>
+The triangles array is no longer used and should be removed
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-python" id="power_supply_constants"><span style="color: #74af68;">#</span><span style="color: #74af68;">List of which tasks control the triangles</span>
+<span style="color: #dbdb95;">triangles</span> = [<span style="color: #e67128;">"Triangle1"</span>,
+             <span style="color: #e67128;">"Triangle2"</span>,
+             <span style="color: #e67128;">"Triangle3"</span>,
+             <span style="color: #e67128;">"Triangle4"</span>,
+             <span style="color: #e67128;">"Triangle5"</span>,
+             <span style="color: #e67128;">"Triangle6"</span>,
+             <span style="color: #e67128;">"Triangle7"</span>,
+             <span style="color: #e67128;">"Triangle8"</span>]
+</pre>
+</div>
+
+<p>
+The <code>supplies</code> maps between the power supply names and the DAQmx
+channels that we intend to control.  
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-python" id="power_supply_constants"><span style="color: #74af68;">#</span><span style="color: #74af68;">Dictionary of tasks which contorl small supplies</span>
+<span style="color: #dbdb95;">supplies</span> = {<span style="color: #e67128;">"flipper"</span>:<span style="color: #e67128;">"Flipper"</span>,
+            <span style="color: #e67128;">"phase"</span>:<span style="color: #e67128;">"Phase"</span>,
+            <span style="color: #e67128;">"guides"</span>:<span style="color: #e67128;">"Guides"</span>,
+            <span style="color: #e67128;">"sample"</span>:<span style="color: #e67128;">"Sample"</span>}
+</pre>
+</div>
+
+<p>
+The <code>compensate</code> function is a simple helper to scale a current with a
+slope <code>m</code> and y-intercept <code>b</code> given in a dictionary.  
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-python" id="power_supply_compensate"><span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">compensate</span>(value,f):
+    <span style="color: #ffad29; font-weight: bold;">return</span> value*f[<span style="color: #e67128;">'m'</span>]+f[<span style="color: #e67128;">'b'</span>]
+</pre>
+</div>
+</div>
+</li>
+
+<li>Initialization<br  /><div class="outline-text-5" id="text-6-1-1-3">
+<p>
+We need to load the DAQmx task for each control channel for each power
+supply.  The triangles are stored in a simple list, while other
+supplies can be stored in a dictionary.
+</p>
+
+<p>
+If you are looking for a good place to improve the program, this could
+probably be turned into a single list corresponding to the power
+supply number, which could then be access through a dictionary.  It's
+the best of both worlds.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-python" id="power_supply_init"><span style="color: #ffad29; font-weight: bold;">self</span>.triangleHandles = []
+<span style="color: #ffad29; font-weight: bold;">self</span>.supplyHandles = {}
+</pre>
+</div>
+
+<p>
+We also create a dictionary to store the current current in each power
+supply.  As we don't have any read back function at the moment, this is
+the best we can do.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-python" id="power_supply_init"><span style="color: #ffad29; font-weight: bold;">self</span>.values = {}
+</pre>
+</div>
+
+<p>
+We now load the DAQmx task for each hardware channel for each power
+supply.  The tasks are referenced by a TaskHandle, which we pass as a
+pointer to the <code>LoadTask</code> function.  Note that, since we're working
+with pointers, we need to create a new task handle object each time.
+Otherwise, it'll always be the same pointer to the same object and
+each cycle through the loop will overwrite all of the previous values.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-python" id="power_supply_init"><span style="color: #ffad29; font-weight: bold;">for</span> t <span style="color: #ffad29; font-weight: bold;">in</span> triangles:
+    <span style="color: #dbdb95;">taskHandle</span> = TaskHandle(0)
+    <span style="color: #ffad29; font-weight: bold;">print</span> t
+    <span style="color: #ffad29; font-weight: bold;">self</span>.CHK(nidaq.DAQmxLoadTask(t,
+                      ctypes.byref( taskHandle )))
+    <span style="color: #ffad29; font-weight: bold;">self</span>.triangleHandles.append(taskHandle)
+    <span style="color: #ffad29; font-weight: bold;">self</span>.triangle
+</pre>
+</div>
+
+<p>
+We perform a similar operation for the non-triangle supplies, with
+task handles being reference by name in a dictionary, instead of an
+index on a list.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-python" id="power_supply_init"><span style="color: #ffad29; font-weight: bold;">for</span> (k,v) <span style="color: #ffad29; font-weight: bold;">in</span> supplies.items():
+    <span style="color: #dbdb95;">taskHandle</span> = TaskHandle(0)
+    <span style="color: #ffad29; font-weight: bold;">self</span>.CHK(nidaq.DAQmxLoadTask(v,
+                      ctypes.byref( taskHandle )))
+    <span style="color: #ffad29; font-weight: bold;">self</span>.supplyHandles[k] = taskHandle
+
+<span style="color: #ffad29; font-weight: bold;">print</span> <span style="color: #ffad29; font-weight: bold;">self</span>.supplyHandles
+</pre>
+</div>
+
+<p>
+The relationship between DAC voltage and power supply current is
+stored in a <a href="http://json.org">JSON</a> file.  The file should contain an object with one
+member for each power supply.  That member should have two members of
+its own, representing the slope <code>m</code> and intercept <code>b</code>.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-python" id="power_supply_init"><span style="color: #ffad29; font-weight: bold;">with</span> <span style="color: #23d7d7;">open</span>(<span style="color: #e67128;">"calibration.json"</span>) <span style="color: #ffad29; font-weight: bold;">as</span> configFile:
+    <span style="color: #ffad29; font-weight: bold;">self</span>.calibration = json.load(configFile)
+</pre>
+</div>
+
+<p>
+Finally, we see all of the power supply currents to zero to start.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-python" id="power_supply_init"><span style="color: #ffad29; font-weight: bold;">self</span>.values[<span style="color: #e67128;">'triangles'</span>] = [0]*8
+<span style="color: #ffad29; font-weight: bold;">for</span> i <span style="color: #ffad29; font-weight: bold;">in</span> <span style="color: #23d7d7;">range</span>(1,9):
+    <span style="color: #ffad29; font-weight: bold;">self</span>.triangle(i,0)
+<span style="color: #ffad29; font-weight: bold;">self</span>.flipper(0)
+<span style="color: #ffad29; font-weight: bold;">self</span>.guides(0)
+<span style="color: #ffad29; font-weight: bold;">self</span>.phase(0)
+<span style="color: #ffad29; font-weight: bold;">self</span>.sample(0)
+</pre>
+</div>
+</div>
+</li>
+
+<li>Low Level Control<br  /><div class="outline-text-5" id="text-6-1-1-4">
+<p>
+The set function takes a task handle and a voltage value and tell
+that task to output the given voltage
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-python" id="power_supply_set"><span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">set</span>(<span style="color: #ffad29; font-weight: bold;">self</span>,task,x):
+    <span style="color: #e67128;">"""Takes a task handle and a current and sets that task to that current."""</span>
+    <span style="color: #ffad29; font-weight: bold;">self</span>.CHK(nidaq.DAQmxWriteAnalogScalarF64( task,
+                                              <span style="color: #008b8b;">True</span>,
+                                              float64(1.0),
+                                              float64(x), <span style="color: #74af68;">#</span><span style="color: #74af68;">Voltage</span>
+                                              <span style="color: #008b8b;">None</span>))
+</pre>
+</div>
+
+<p>
+Since we're using the C interface to DAQmx, we don't have the benefit
+of such linguistic niceties as exceptions.  Instead, each function
+call returns an error code.  An error of zero indicates that the
+function returned properly.  A positive error code indicates that a
+warning was generated.  A negative error code indicates that the
+function failed.  The <code>CHK</code> function reads the error code and, if a
+warning or error was triggered, it raises an exception with a
+description of the problem.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-python" id="power_supply_chk"><span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">CHK</span>( <span style="color: #ffad29; font-weight: bold;">self</span>, err ):
+    <span style="color: #e67128;">"""a simple error checking routine"""</span>
+    <span style="color: #ffad29; font-weight: bold;">if</span> err &lt; 0:
+        <span style="color: #dbdb95;">buf_size</span> = 100
+        <span style="color: #dbdb95;">buf</span> = ctypes.create_string_buffer(<span style="color: #e67128;">'\000'</span> * buf_size)
+        nidaq.DAQmxGetErrorString(err,ctypes.byref(buf),buf_size)
+        <span style="color: #ffad29; font-weight: bold;">raise</span> <span style="color: #34cae2;">RuntimeError</span>(<span style="color: #e67128;">'nidaq call failed with error %d: %s'</span>%(err,<span style="color: #23d7d7;">repr</span>(buf.value)))
+    <span style="color: #ffad29; font-weight: bold;">if</span> err &gt; 0:
+        <span style="color: #dbdb95;">buf_size</span> = 100
+        <span style="color: #dbdb95;">buf</span> = ctypes.create_string_buffer(<span style="color: #e67128;">'\000'</span> * buf_size)
+        nidaq.DAQmxGetErrorString(err,ctypes.byref(buf),buf_size)
+        <span style="color: #ffad29; font-weight: bold;">raise</span> <span style="color: #34cae2;">RuntimeError</span>(<span style="color: #e67128;">'nidaq generated warning %d: %s'</span>%(err,<span style="color: #23d7d7;">repr</span>(buf.value)))
+</pre>
+</div>
+
+<p>
+The shop function ends all of the tasks and clears the task handles.
+This is necessary to allow another application to access the tasks
+afterward.  This function is also called by the destructor of the
+class to handle the cleanup.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-python" id="power_supply_stop"><span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">stop</span>( <span style="color: #ffad29; font-weight: bold;">self</span> ):
+    <span style="color: #ffad29; font-weight: bold;">for</span> task <span style="color: #ffad29; font-weight: bold;">in</span> <span style="color: #ffad29; font-weight: bold;">self</span>.triangleHandles:
+        <span style="color: #ffad29; font-weight: bold;">self</span>.<span style="color: #23d7d7;">set</span>(task,0)
+        nidaq.DAQmxStopTask( task )
+        nidaq.DAQmxClearTask( task )
+    <span style="color: #ffad29; font-weight: bold;">for</span> task <span style="color: #ffad29; font-weight: bold;">in</span> <span style="color: #ffad29; font-weight: bold;">self</span>.supplyHandles:
+        <span style="color: #ffad29; font-weight: bold;">self</span>.<span style="color: #23d7d7;">set</span>(task,0)
+        nidaq.DAQmxStopTask( task )
+        nidaq.DAQmxClearTask( task )
+</pre>
+</div>
+</div>
+</li>
+
+<li>High Level Control<br  /><div class="outline-text-5" id="text-6-1-1-5">
+<p>
+The currents through the triangles are set via the <code>triangle</code>
+function.  The current current is returned via the <code>getTriangle</code>
+function.  Each function takes a <code>tri</code> prarameter, which is the number
+of the triangle supply from 1 to 8.  We do a little arithmetic to
+account for the fact that the list index ranges from 0 to 7.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-python" id="power_supply_triangle"><span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">triangle</span>(<span style="color: #ffad29; font-weight: bold;">self</span>,tri,curr):
+    <span style="color: #ffad29; font-weight: bold;">self</span>.<span style="color: #23d7d7;">set</span>(<span style="color: #ffad29; font-weight: bold;">self</span>.triangleHandles[tri-1],
+             compensate(curr,<span style="color: #ffad29; font-weight: bold;">self</span>.calibration[<span style="color: #e67128;">'tri'</span>+<span style="color: #23d7d7;">str</span>(tri)]))
+    <span style="color: #ffad29; font-weight: bold;">self</span>.values[<span style="color: #e67128;">'triangles'</span>][tri-1]=curr
+    <span style="color: #ffad29; font-weight: bold;">return</span> <span style="color: #ffad29; font-weight: bold;">self</span>.getTriangle(tri)
+
+<span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">getTriangle</span>(<span style="color: #ffad29; font-weight: bold;">self</span>,tri):
+    <span style="color: #ffad29; font-weight: bold;">return</span> <span style="color: #ffad29; font-weight: bold;">self</span>.values[<span style="color: #e67128;">'triangles'</span>][tri-1]
+</pre>
+</div>
+
+<p>
+There is almost identical code for the other power supplies.  There
+should be a way to eliminate this boilerplate code.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-python" id="power_supply_fields"><span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">flipper</span>(<span style="color: #ffad29; font-weight: bold;">self</span>,curr):
+    <span style="color: #ffad29; font-weight: bold;">self</span>.<span style="color: #23d7d7;">set</span>(<span style="color: #ffad29; font-weight: bold;">self</span>.supplyHandles[<span style="color: #e67128;">"flipper"</span>],
+             compensate(curr,<span style="color: #ffad29; font-weight: bold;">self</span>.calibration[<span style="color: #e67128;">'flipper'</span>]))
+    <span style="color: #ffad29; font-weight: bold;">self</span>.values[<span style="color: #e67128;">'flipper'</span>]=curr
+    <span style="color: #ffad29; font-weight: bold;">return</span> <span style="color: #ffad29; font-weight: bold;">self</span>.getFlipper()
+<span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">getFlipper</span>(<span style="color: #ffad29; font-weight: bold;">self</span>):
+    <span style="color: #ffad29; font-weight: bold;">return</span> <span style="color: #ffad29; font-weight: bold;">self</span>.values[<span style="color: #e67128;">'flipper'</span>]
+
+<span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">guides</span>(<span style="color: #ffad29; font-weight: bold;">self</span>,curr):
+    <span style="color: #ffad29; font-weight: bold;">self</span>.<span style="color: #23d7d7;">set</span>(<span style="color: #ffad29; font-weight: bold;">self</span>.supplyHandles[<span style="color: #e67128;">"guides"</span>],
+             compensate(curr,<span style="color: #ffad29; font-weight: bold;">self</span>.calibration[<span style="color: #e67128;">'guides'</span>]))
+    <span style="color: #ffad29; font-weight: bold;">self</span>.values[<span style="color: #e67128;">'guides'</span>]=curr
+    <span style="color: #ffad29; font-weight: bold;">return</span> <span style="color: #ffad29; font-weight: bold;">self</span>.getGuides()
+<span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">getGuides</span>(<span style="color: #ffad29; font-weight: bold;">self</span>):
+    <span style="color: #ffad29; font-weight: bold;">return</span> <span style="color: #ffad29; font-weight: bold;">self</span>.values[<span style="color: #e67128;">'guides'</span>]
+<span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">phase</span>(<span style="color: #ffad29; font-weight: bold;">self</span>,curr):
+    <span style="color: #ffad29; font-weight: bold;">self</span>.<span style="color: #23d7d7;">set</span>(<span style="color: #ffad29; font-weight: bold;">self</span>.supplyHandles[<span style="color: #e67128;">"phase"</span>],
+             compensate(curr,<span style="color: #ffad29; font-weight: bold;">self</span>.calibration[<span style="color: #e67128;">'phase'</span>]))
+    <span style="color: #ffad29; font-weight: bold;">self</span>.values[<span style="color: #e67128;">'phase'</span>]=curr
+    <span style="color: #ffad29; font-weight: bold;">return</span> <span style="color: #ffad29; font-weight: bold;">self</span>.getPhase()
+<span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">getPhase</span>(<span style="color: #ffad29; font-weight: bold;">self</span>):
+    <span style="color: #ffad29; font-weight: bold;">return</span> <span style="color: #ffad29; font-weight: bold;">self</span>.values[<span style="color: #e67128;">'phase'</span>]
+<span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">sample</span>(<span style="color: #ffad29; font-weight: bold;">self</span>,curr):
+    <span style="color: #ffad29; font-weight: bold;">self</span>.<span style="color: #23d7d7;">set</span>(<span style="color: #ffad29; font-weight: bold;">self</span>.supplyHandles[<span style="color: #e67128;">"sample"</span>],
+             compensate(curr,<span style="color: #ffad29; font-weight: bold;">self</span>.calibration[<span style="color: #e67128;">'sample'</span>]))        
+    <span style="color: #ffad29; font-weight: bold;">self</span>.values[<span style="color: #e67128;">'sample'</span>]=curr
+    <span style="color: #ffad29; font-weight: bold;">return</span> <span style="color: #ffad29; font-weight: bold;">self</span>.getSample()
+<span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">getSample</span>(<span style="color: #ffad29; font-weight: bold;">self</span>):
+    <span style="color: #ffad29; font-weight: bold;">return</span> <span style="color: #ffad29; font-weight: bold;">self</span>.values[<span style="color: #e67128;">'sample'</span>]
+</pre>
+</div>
+</div>
+</li></ol>
+</div>
+
+<div id="outline-container-sec-6-1-2" class="outline-4">
+<h4 id="sec-6-1-2"><span class="section-number-4">6.1.2</span> Power Supply Server</h4>
+<div class="outline-text-4" id="text-6-1-2">
+<p>
+The power supplies are controlled over the network by the program
+<code>ps_server.py</code>.  We use an <a href="http://en.wikipedia.org/wiki/XML-RPC">XML-RPC</a> server to allow other computers to
+call functions.  This server is attached to a single PowerSupply
+object and allows us to call any of its member functions.  The actual
+server parts of the code are conveniently supplied by the python
+<a href="https://docs.python.org/2/library/simplexmlrpcserver.html">SimpleXMLRPCServer</a> class.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-python"><span style="color: #ffad29; font-weight: bold;">from</span> ps <span style="color: #ffad29; font-weight: bold;">import</span> PowerSupply
+<span style="color: #ffad29; font-weight: bold;">from</span> SimpleXMLRPCServer <span style="color: #ffad29; font-weight: bold;">import</span> SimpleXMLRPCServer
+<span style="color: #ffad29; font-weight: bold;">from</span> SimpleXMLRPCServer <span style="color: #ffad29; font-weight: bold;">import</span> SimpleXMLRPCRequestHandler
+
+
+<span style="color: #74af68;"># </span><span style="color: #74af68;">Restrict to a particular path.</span>
+<span style="color: #ffad29; font-weight: bold;">class</span> <span style="color: #34cae2;">RequestHandler</span>(SimpleXMLRPCRequestHandler):
+    <span style="color: #dbdb95;">rpc_paths</span> = (<span style="color: #e67128;">'/RPC2'</span>,)
+
+<span style="color: #74af68;"># </span><span style="color: #74af68;">Create server</span>
+<span style="color: #dbdb95;">server</span> = SimpleXMLRPCServer((<span style="color: #e67128;">"192.168.70.160"</span>, 7892),
+                            requestHandler=RequestHandler)
+server.register_introspection_functions()
+
+server.register_instance(PowerSupply())
+
+server.serve_forever()
+</pre>
+</div>
+</div>
+</div>
+</div>
+
+<div id="outline-container-sec-6-2" class="outline-3">
+<h3 id="sec-6-2"><span class="section-number-3">6.2</span> Power Supply Client</h3>
+<div class="outline-text-3" id="text-6-2">
+<p>
+The <code>Coils</code> module implements an XMLRPC client to go along with the
+XMLRPC server we defined in the previous section.  By inheriting from
+the <a href="https://docs.python.org/2/library/xmlrpclib.html">ServerProxy</a> class, we can treat the object produced as though it
+were a PowerSupply object on the motor computer.
+</p>
+
+<p>
+The only intialization parameter is <code>failmethod</code> which is a function
+to call when the server is unreachable.  It can be used to send
+e-mails, but it's currently not used, as we've turned off most of the
+e-mail functionality in the move to PyDAS.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-python"><span style="color: #e67128;">"""This module handles controlling the current through the solenoids</span>
+
+<span style="color: #e67128;">This code was written to talk with a custom labview server on the</span>
+<span style="color: #e67128;">current control computer.  Note that, currently, the server does</span>
+<span style="color: #e67128;">not respond with the current currents.  When you first load the</span>
+<span style="color: #e67128;">module, you should set all of the current values to synchronize</span>
+<span style="color: #e67128;">with the server.</span>
+
+<span style="color: #e67128;">"""</span>
+
+<span style="color: #ffad29; font-weight: bold;">import</span> __future__
+<span style="color: #ffad29; font-weight: bold;">import</span> xmlrpclib
+
+<span style="color: #ffad29; font-weight: bold;">class</span> <span style="color: #34cae2;">Coils</span>(xmlrpclib.ServerProxy):
+    <span style="color: #e67128;">"""This object manages the connection to the current control server"""</span>
+<span style="color: #74af68;">#    </span><span style="color: #74af68;">HOST = "http://192.168.70.160"#IP address for the server</span>
+    <span style="color: #dbdb95;">HOST</span> = <span style="color: #e67128;">"http://192.168.70.160"</span>
+    <span style="color: #dbdb95;">PORT</span>=7892<span style="color: #74af68;">#</span><span style="color: #74af68;">port number for the server</span>
+
+    <span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">__init__</span>(<span style="color: #ffad29; font-weight: bold;">self</span>,failmethod):
+        <span style="color: #e67128;">"""Creates the connection object"""</span>
+        xmlrpclib.ServerProxy.__init__(<span style="color: #ffad29; font-weight: bold;">self</span>,<span style="color: #ffad29; font-weight: bold;">self</span>.HOST + <span style="color: #e67128;">":"</span> + <span style="color: #23d7d7;">str</span>(<span style="color: #ffad29; font-weight: bold;">self</span>.PORT) + <span style="color: #e67128;">"/RPC2"</span>)
+        <span style="color: #ffad29; font-weight: bold;">self</span>.fail = failmethod
+</pre>
+</div>
+
+<p>
+There's a flip function hard coded into the object.  In practice, I'd
+recommend against using it and it should probably be removed.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-python"><span style="color: #74af68;">#</span>
+    <span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">flip</span>(<span style="color: #ffad29; font-weight: bold;">self</span>):
+        <span style="color: #e67128;">"""Reverses the current through the flipping coil"""</span>
+        <span style="color: #ffad29; font-weight: bold;">self</span>.proxy.flipper(-1*<span style="color: #ffad29; font-weight: bold;">self</span>.proxy.getFlipper())
+</pre>
+</div>
+
+<p>
+We've overloaded the <code>__getattr__</code> function to allow us to
+automatically place the function in a wrapper that calls a function is
+the method fails.  In practice, we're not using this right now and it
+should also be removed.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-python"><span style="color: #74af68;">#</span>
+    <span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">__getattr__</span>(<span style="color: #ffad29; font-weight: bold;">self</span>,name):
+        <span style="color: #dbdb95;">method</span> = xmlrpclib.ServerProxy.__getattr__(<span style="color: #ffad29; font-weight: bold;">self</span>,name)
+        <span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">wrapped</span>(*args):
+            <span style="color: #ffad29; font-weight: bold;">try</span>:
+                <span style="color: #ffad29; font-weight: bold;">return</span> method.__call__(*args)
+            <span style="color: #ffad29; font-weight: bold;">except</span> <span style="color: #34cae2;">Exception</span>, e:
+                <span style="color: #ffad29; font-weight: bold;">self</span>.fail(<span style="color: #e67128;">"SESAME Power Supply Server Down"</span>,
+                          <span style="color: #e67128;">"The SESAME beamline has lost its connection to the power supply server"</span>,
+                          <span style="color: #e67128;">"Notthepassword"</span>)
+                <span style="color: #ffad29; font-weight: bold;">print</span>(<span style="color: #e67128;">"Connection Failed"</span>)
+                <span style="color: #ffad29; font-weight: bold;">print</span>(e)
+                <span style="color: #ffad29; font-weight: bold;">raise</span> e
+        <span style="color: #ffad29; font-weight: bold;">return</span> wrapped
+
+
+<span style="color: #ffad29; font-weight: bold;">if</span> <span style="color: #23d7d7;">__name__</span>==<span style="color: #e67128;">"__main__"</span>:
+    coils = Coils()
+    <span style="color: #ffad29; font-weight: bold;">for</span> i <span style="color: #ffad29; font-weight: bold;">in</span> <span style="color: #23d7d7;">range</span>(1,5):
+        coils.triangle(i,i*2-1)
+</pre>
+</div>
 </div>
 </div>
 </div>
 </div>
 <div id="postamble" class="status">
 <p class="author">Author: Adam Washington</p>
-<p class="date">Created: 2014-04-09 Wed 18:18</p>
+<p class="date">Created: 2014-04-21 Mon 16:05</p>
 <p class="creator"><a href="http://www.gnu.org/software/emacs/">Emacs</a> 24.3.1 (<a href="http://orgmode.org">Org</a> mode 8.2.5h)</p>
 <p class="validation"><a href="http://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>
