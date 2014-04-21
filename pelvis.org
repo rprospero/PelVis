@@ -1556,7 +1556,7 @@ Finally, we need to do the standard GUI layout code.
           self.options["yMax"].SetValue(str(y))
 #+end_src
 
-#  LocalWords:  wxWidget SNS numpy
+#  LocalWords:  wxWidget SNS numpy DAQmx DAC XMLRPC PowerSupply
 
 
 ** Graph Panel
@@ -3507,7 +3507,7 @@ def mapim(imarray):
                   "MCPPowerSupplyControlVoltageCommandGain " +
                   "MCPPowerSupplyControlVoltageCommandOffset " +
                   "MCPPowerSupplyVoltageEnable " +
-                  "x1Gain x2Gain x3Gain x4Gain x5Gain x6Gain x7Gain x8Gain x9Gain x10Gain " +
+                  "x1Gain x2Gain x3Gain x4Gain x5Gain x6Gain x7Gain x8Gain x9Gain x10Gain " +
                   "y1Gain y2Gain y3Gain y4Gain y5Gain y6Gain y7Gain y8Gain y9Gain y10Gain " +
                   "strobeGain EnergyGain ThresholdGain "+
                   "ADVoltageOffset ADAOffset ADBOffset ADCOffset ADDOffset "+
@@ -5169,4 +5169,470 @@ def normalize_name(name):
         return "%0.3f"%float(name)
     else:
         return name
+#+end_src
+
+* Power Supplies
+
+  The power supplies are currently controlled via an DAC card on the
+  motor computer.  This card sends an analog voltage between -10 V and
+  10 V to each power supply, which is then used to control the
+  current.
+
+  To run the power supplies, the =ps_server.py= program must be run on
+  the Motor computer and the =Coils= class needs to be loaded into
+  PyDAS.  The =sesame_init.py= script currently loads the power supply
+  client into the variable =coils=.
+
+** Power Supply Server
+
+*** Power Supply Class Module
+
+**** Module Skeleton
+
+#+name: power_supply_skeleton 
+#+begin_src python :tangle ps.py :noweb tangle :padline no
+import __future__
+import ctypes
+import numpy
+import struct
+import json
+
+<<power_supply_constants>>
+<<power_supply_compensate>>
+class PowerSupply:
+    
+    def __init__(self):
+        <<power_supply_init>>
+    <<power_supply_set>>
+
+    <<power_supply_triangle>>
+    <<power_supply_fields>>
+    <<power_supply_chk>>
+    <<power_supply_stop>>
+    def __del__(self):
+        self.stop()
+
+
+
+if __name__=="__main__":
+    x=PowerSupply()
+
+
+#+end_src
+
+
+**** Constants
+
+The nidaq object is a link to the DLL file which contains National
+Instrument DAQmx interface to their hardware.  It may not be quite as
+friendly as something like Measurement Studio, but it's actually a nice
+and simple API and it gets the job done.  All of the functions in the
+[[NI-DAQmx C Reference Help]] are available from this DLL.  This help
+reference is installed with the drivers and you should update the link
+to where it is install on your computer.
+
+#+name: power_supply_constants
+#+begin_src python
+
+nidaq = ctypes.windll.nicaiu #Link to nicaiu.dll
+#+end_src
+
+Since DAQmx is a C api, we do need to care about the size of our data
+types.  The [[https://docs.python.org/2/library/ctypes.html][python ctypes]] module can handle most of these conversions
+for us.  I've included some simple names to both help keeping track of
+bit size and to simplify the code.
+
+#+name: power_supply_constants
+#+begin_src python
+
+int32 = ctypes.c_long
+uInt32 = ctypes.c_ulong
+uInt64 = ctypes.c_ulonglong
+float64 = ctypes.c_double
+TaskHandle = uInt32
+#+end_src
+
+The following constants are from the C header files for DAQmx.  
+
+#+name: power_supply_constants
+#+begin_src python
+
+
+DAQmx_Val_Cfg_Default = int32(-1)
+DAQmx_Val_Volts = 10348
+DAQmx_Val_Rising = 10280
+DAQmx_Val_FiniteSamps = 10178
+DAQmx_Val_ContSamps = 10123
+DAQmx_Val_GroupByChannel = 0
+#+end_src
+
+The triangles array is no longer used and should be removed
+
+#+name: power_supply_constants
+#+begin_src python
+
+#List of which tasks control the triangles
+triangles = ["Triangle1",
+             "Triangle2",
+             "Triangle3",
+             "Triangle4",
+             "Triangle5",
+             "Triangle6",
+             "Triangle7",
+             "Triangle8"]
+#+end_src
+
+The =supplies= maps between the power supply names and the DAQmx
+channels that we intend to control.  
+
+#+name: power_supply_constants
+#+begin_src python
+
+#Dictionary of tasks which contorl small supplies
+supplies = {"flipper":"Flipper",
+            "phase":"Phase",
+            "guides":"Guides",
+            "sample":"Sample"}
+
+
+#+end_src
+
+The =compensate= function is a simple helper to scale a current with a
+slope =m= and y-intercept =b= given in a dictionary.  
+
+#+name: power_supply_compensate
+#+begin_src python
+def compensate(value,f):
+    return value*f['m']+f['b']
+
+#+end_src
+
+
+**** Initialization
+
+We need to load the DAQmx task for each control channel for each power
+supply.  The triangles are stored in a simple list, while other
+supplies can be stored in a dictionary.
+
+If you are looking for a good place to improve the program, this could
+probably be turned into a single list corresponding to the power
+supply number, which could then be access through a dictionary.  It's
+the best of both worlds.
+
+#+name: power_supply_init
+#+begin_src python
+
+
+        self.triangleHandles = []
+        self.supplyHandles = {}
+#+end_src
+
+We also create a dictionary to store the current current in each power
+supply.  As we don't have any read back function at the moment, this is
+the best we can do.
+
+#+name: power_supply_init
+#+begin_src python
+
+        self.values = {}
+#+end_src
+
+We now load the DAQmx task for each hardware channel for each power
+supply.  The tasks are referenced by a TaskHandle, which we pass as a
+pointer to the =LoadTask= function.  Note that, since we're working
+with pointers, we need to create a new task handle object each time.
+Otherwise, it'll always be the same pointer to the same object and
+each cycle through the loop will overwrite all of the previous values.
+
+#+name: power_supply_init
+#+begin_src python
+
+        for t in triangles:
+            taskHandle = TaskHandle(0)
+            print t
+            self.CHK(nidaq.DAQmxLoadTask(t,
+                              ctypes.byref( taskHandle )))
+            self.triangleHandles.append(taskHandle)
+            self.triangle
+#+end_src
+
+We perform a similar operation for the non-triangle supplies, with
+task handles being reference by name in a dictionary, instead of an
+index on a list.
+
+#+name: power_supply_init
+#+begin_src python
+        for (k,v) in supplies.items():
+            taskHandle = TaskHandle(0)
+            self.CHK(nidaq.DAQmxLoadTask(v,
+                              ctypes.byref( taskHandle )))
+            self.supplyHandles[k] = taskHandle
+            
+        print self.supplyHandles
+#+end_src
+
+The relationship between DAC voltage and power supply current is
+stored in a [[http://json.org][JSON]] file.  The file should contain an object with one
+member for each power supply.  That member should have two members of
+its own, representing the slope =m= and intercept =b=.
+
+#+name: power_supply_init
+#+begin_src python
+
+        with open("calibration.json") as configFile:
+            self.calibration = json.load(configFile)
+
+#+end_src
+
+Finally, we see all of the power supply currents to zero to start.
+
+#+name: power_supply_init
+#+begin_src python
+
+        self.values['triangles'] = [0]*8
+        for i in range(1,9):
+            self.triangle(i,0)
+        self.flipper(0)
+        self.guides(0)
+        self.phase(0)
+        self.sample(0)
+            
+
+
+#+end_src
+
+
+**** Low Level Control
+
+The set function takes a task handle and a voltage value and tell
+that task to output the given voltage
+
+#+name: power_supply_set
+#+begin_src python
+
+    def set(self,task,x):
+        """Takes a task handle and a current and sets that task to that current."""
+        self.CHK(nidaq.DAQmxWriteAnalogScalarF64( task,
+                                                  True,
+                                                  float64(1.0),
+                                                  float64(x), #Voltage
+                                                  None))
+#+end_src
+
+Since we're using the C interface to DAQmx, we don't have the benefit
+of such linguistic niceties as exceptions.  Instead, each function
+call returns an error code.  An error of zero indicates that the
+function returned properly.  A positive error code indicates that a
+warning was generated.  A negative error code indicates that the
+function failed.  The =CHK= function reads the error code and, if a
+warning or error was triggered, it raises an exception with a
+description of the problem.
+
+#+name: power_supply_chk
+#+begin_src python
+    def CHK( self, err ):
+        """a simple error checking routine"""
+        if err < 0:
+            buf_size = 100
+            buf = ctypes.create_string_buffer('\000' * buf_size)
+            nidaq.DAQmxGetErrorString(err,ctypes.byref(buf),buf_size)
+            raise RuntimeError('nidaq call failed with error %d: %s'%(err,repr(buf.value)))
+        if err > 0:
+            buf_size = 100
+            buf = ctypes.create_string_buffer('\000' * buf_size)
+            nidaq.DAQmxGetErrorString(err,ctypes.byref(buf),buf_size)
+            raise RuntimeError('nidaq generated warning %d: %s'%(err,repr(buf.value)))
+                
+#+end_src
+
+The shop function ends all of the tasks and clears the task handles.
+This is necessary to allow another application to access the tasks
+afterward.  This function is also called by the destructor of the
+class to handle the cleanup.
+
+#+name: power_supply_stop
+#+begin_src python
+    def stop( self ):
+        for task in self.triangleHandles:
+            self.set(task,0)
+            nidaq.DAQmxStopTask( task )
+            nidaq.DAQmxClearTask( task )
+        for task in self.supplyHandles:
+            self.set(task,0)
+            nidaq.DAQmxStopTask( task )
+            nidaq.DAQmxClearTask( task )
+            
+
+#+end_src
+
+
+**** High Level Control
+
+The currents through the triangles are set via the =triangle=
+function.  The current current is returned via the =getTriangle=
+function.  Each function takes a =tri= prarameter, which is the number
+of the triangle supply from 1 to 8.  We do a little arithmetic to
+account for the fact that the list index ranges from 0 to 7.
+
+#+name: power_supply_triangle
+#+begin_src python
+    def triangle(self,tri,curr):
+        self.set(self.triangleHandles[tri-1],
+                 compensate(curr,self.calibration['tri'+str(tri)]))
+        self.values['triangles'][tri-1]=curr
+        return self.getTriangle(tri)
+
+    def getTriangle(self,tri):
+        return self.values['triangles'][tri-1]
+
+#+end_src
+
+There is almost identical code for the other power supplies.  There
+should be a way to eliminate this boilerplate code.
+
+#+name: power_supply_fields
+#+begin_src python
+
+    def flipper(self,curr):
+        self.set(self.supplyHandles["flipper"],
+                 compensate(curr,self.calibration['flipper']))
+        self.values['flipper']=curr
+        return self.getFlipper()
+    def getFlipper(self):
+        return self.values['flipper']
+    
+    def guides(self,curr):
+        self.set(self.supplyHandles["guides"],
+                 compensate(curr,self.calibration['guides']))
+        self.values['guides']=curr
+        return self.getGuides()
+    def getGuides(self):
+        return self.values['guides']
+    def phase(self,curr):
+        self.set(self.supplyHandles["phase"],
+                 compensate(curr,self.calibration['phase']))
+        self.values['phase']=curr
+        return self.getPhase()
+    def getPhase(self):
+        return self.values['phase']
+    def sample(self,curr):
+        self.set(self.supplyHandles["sample"],
+                 compensate(curr,self.calibration['sample']))        
+        self.values['sample']=curr
+        return self.getSample()
+    def getSample(self):
+        return self.values['sample']
+
+
+
+#+end_src
+
+
+*** Power Supply Server
+
+The power supplies are controlled over the network by the program
+=ps_server.py=.  We use an [[http://en.wikipedia.org/wiki/XML-RPC][XML-RPC]] server to allow other computers to
+call functions.  This server is attached to a single PowerSupply
+object and allows us to call any of its member functions.  The actual
+server parts of the code are conveniently supplied by the python
+[[https://docs.python.org/2/library/simplexmlrpcserver.html][SimpleXMLRPCServer]] class.
+
+#+begin_src python :tangle ps_server.py :padline no
+from ps import PowerSupply
+from SimpleXMLRPCServer import SimpleXMLRPCServer
+from SimpleXMLRPCServer import SimpleXMLRPCRequestHandler
+
+
+# Restrict to a particular path.
+class RequestHandler(SimpleXMLRPCRequestHandler):
+    rpc_paths = ('/RPC2',)
+
+# Create server
+server = SimpleXMLRPCServer(("192.168.70.160", 7892),
+                            requestHandler=RequestHandler)
+server.register_introspection_functions()
+
+server.register_instance(PowerSupply())
+
+server.serve_forever()
+
+#+end_src
+
+
+** Power Supply Client
+
+The =Coils= module implements an XMLRPC client to go along with the
+XMLRPC server we defined in the previous section.  By inheriting from
+the [[https://docs.python.org/2/library/xmlrpclib.html][ServerProxy]] class, we can treat the object produced as though it
+were a PowerSupply object on the motor computer.
+
+The only intialization parameter is =failmethod= which is a function
+to call when the server is unreachable.  It can be used to send
+e-mails, but it's currently not used, as we've turned off most of the
+e-mail functionality in the move to PyDAS.
+
+#+begin_src python :tangle Coils.py :padline no
+"""This module handles controlling the current through the solenoids
+
+This code was written to talk with a custom labview server on the
+current control computer.  Note that, currently, the server does
+not respond with the current currents.  When you first load the
+module, you should set all of the current values to synchronize
+with the server.
+
+"""
+
+import __future__
+import xmlrpclib
+
+class Coils(xmlrpclib.ServerProxy):
+    """This object manages the connection to the current control server"""
+#    HOST = "http://192.168.70.160"#IP address for the server
+    HOST = "http://192.168.70.160"
+    PORT=7892#port number for the server
+
+    def __init__(self,failmethod):
+        """Creates the connection object"""
+        xmlrpclib.ServerProxy.__init__(self,self.HOST + ":" + str(self.PORT) + "/RPC2")
+        self.fail = failmethod
+#+end_src
+
+There's a flip function hard coded into the object.  In practice, I'd
+recommend against using it and it should probably be removed.
+
+#+begin_src python :tangle Coils.py :padline no
+#
+    def flip(self):
+        """Reverses the current through the flipping coil"""
+        self.proxy.flipper(-1*self.proxy.getFlipper())
+#+end_src
+
+We've overloaded the =__getattr__= function to allow us to
+automatically place the function in a wrapper that calls a function is
+the method fails.  In practice, we're not using this right now and it
+should also be removed.
+
+#+begin_src python :tangle Coils.py :padline no
+#
+    def __getattr__(self,name):
+        method = xmlrpclib.ServerProxy.__getattr__(self,name)
+        def wrapped(*args):
+            try:
+                return method.__call__(*args)
+            except Exception, e:
+                self.fail("SESAME Power Supply Server Down",
+                          "The SESAME beamline has lost its connection to the power supply server",
+                          "Notthepassword")
+                print("Connection Failed")
+                print(e)
+                raise e
+        return wrapped
+        
+
+if __name__=="__main__":
+    coils = Coils()
+    for i in range(1,5):
+        coils.triangle(i,i*2-1)
+    
+
 #+end_src
