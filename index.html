@@ -4,7 +4,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
 <title>PELVis: The PEL Visualizer</title>
-<!-- 2014-04-21 Mon 16:15 -->
+<!-- 2014-04-23 Wed 13:53 -->
 <meta  http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta  name="generator" content="Org-mode" />
 <meta  name="author" content="Adam Washington" />
@@ -149,7 +149,7 @@ for the JavaScript code in this tag.
 <li><a href="#sec-2-2">2.2. Imports</a></li>
 </ul>
 </li>
-<li><a href="#sec-3">3. GUI Controls</a>
+<li><a href="#sec-3">3. <span class="todo TODO">TODO</span> GUI Controls</a>
 <ul>
 <li><a href="#sec-3-1">3.1. Pelvis Frame</a>
 <ul>
@@ -217,7 +217,7 @@ for the JavaScript code in this tag.
 <li><a href="#sec-3-10-6">3.10.6. Binning</a></li>
 </ul>
 </li>
-<li><a href="#sec-3-11">3.11. Livewatch</a>
+<li><a href="#sec-3-11">3.11. <span class="todo TODO">TODO</span> Livewatch</a>
 <ul>
 <li><a href="#sec-3-11-1">3.11.1. Livewatch skeleton</a></li>
 <li><a href="#sec-3-11-2">3.11.2. Low Level Functions</a></li>
@@ -270,6 +270,25 @@ for the JavaScript code in this tag.
 </ul>
 </li>
 <li><a href="#sec-6-2">6.2. Power Supply Client</a></li>
+</ul>
+</li>
+<li><a href="#sec-7">7. Motors</a>
+<ul>
+<li><a href="#sec-7-1">7.1. Motor Skeleton</a></li>
+<li><a href="#sec-7-2">7.2. Motor Class</a></li>
+<li><a href="#sec-7-3">7.3. Controller Class</a>
+<ul>
+<li><a href="#sec-7-3-1">7.3.1. Controller Skeleton</a></li>
+<li><a href="#sec-7-3-2">7.3.2. Low Level Control</a></li>
+<li><a href="#sec-7-3-3">7.3.3. High Level Control</a></li>
+</ul>
+</li>
+<li><a href="#sec-7-4">7.4. MotorFacade Class</a>
+<ul>
+<li><a href="#sec-7-4-1">7.4.1. MotorFacade Skeleton</a></li>
+<li><a href="#sec-7-4-2">7.4.2. MotorFacade Init</a></li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>
@@ -513,7 +532,7 @@ controlling the display of the 2D detector data.
 </div>
 
 <div id="outline-container-sec-3" class="outline-2">
-<h2 id="sec-3"><span class="section-number-2">3</span> GUI Controls</h2>
+<h2 id="sec-3"><span class="section-number-2">3</span> <span class="todo TODO">TODO</span> GUI Controls</h2>
 <div class="outline-text-2" id="text-3">
 <p>
 We're using <a href="https://www.wxwidgets.org/">wxWidgets</a> as our GUI toolkit through the <a href="http://www.wxpython.org">wxPython</a>
@@ -3925,7 +3944,7 @@ be called, but it should exist for completeness.
 </div>
 
 <div id="outline-container-sec-3-11" class="outline-3">
-<h3 id="sec-3-11"><span class="section-number-3">3.11</span> Livewatch</h3>
+<h3 id="sec-3-11"><span class="section-number-3">3.11</span> <span class="todo TODO">TODO</span> Livewatch</h3>
 <div class="outline-text-3" id="text-3-11">
 <p>
 <code>Livewatch.py</code> is a utility to display the polarization as it comes
@@ -7177,10 +7196,478 @@ should also be removed.
 </div>
 </div>
 </div>
+<div id="outline-container-sec-7" class="outline-2">
+<h2 id="sec-7"><span class="section-number-2">7</span> Motors</h2>
+<div class="outline-text-2" id="text-7">
+<p>
+A python server to control the parker motor system was hastily
+implemented before the dark field experiments. The system
+communicates over RS232 cables to the <a href="http://www.parkermotion.com/products/Controllers__1745__30_32_80_567_29.html">Parker 6k8</a> motor controls,
+which subsequently run the drivers which power the motors.
+</p>
+
+<p>
+At the time of this writing, the two slits had been implemented, as
+had been the rotations of the sample stage.
+</p>
+</div>
+
+<div id="outline-container-sec-7-1" class="outline-3">
+<h3 id="sec-7-1"><span class="section-number-3">7.1</span> Motor Skeleton</h3>
+<div class="outline-text-3" id="text-7-1">
+<div class="org-src-container">
+
+<pre class="src src-python"><span style="color: #ffad29; font-weight: bold;">import</span> serial
+<span style="color: #ffad29; font-weight: bold;">import</span> json
+<span style="color: #ffad29; font-weight: bold;">import</span> time
+<span style="color: #ffad29; font-weight: bold;">import</span> sys
+
+<span style="color: #ffad29; font-weight: bold;">import</span> logging
+logging.basicConfig(level=logging.DEBUG,
+                    <span style="color: #23d7d7;">format</span>=<span style="color: #e67128;">"%(asctime)s %(name)-12s %(levelname)-8s %(message)s"</span>,
+                    datefmt=<span style="color: #e67128;">"%m-%d %H:%M"</span>,
+                    filename=<span style="color: #e67128;">"C:/MotorSoftware/motorlog.txt"</span>,
+                    filemode=<span style="color: #e67128;">"a"</span>)
+<span style="color: #dbdb95;">console</span> = logging.StreamHandler(sys.stdout)
+console.setLevel(logging.WARN)
+<span style="color: #dbdb95;">formatter</span> = logging.Formatter(<span style="color: #e67128;">"%(message)s"</span>)<span style="color: #74af68;">#</span><span style="color: #74af68;">The console just needs the message</span>
+console.setFormatter(formatter)
+logging.getLogger(<span style="color: #e67128;">""</span>).addHandler(console)
+
+&lt;&lt;motor_motor_class&gt;&gt;
+
+<span style="color: #dbdb95;">topconfigs</span> = [<span style="color: #e67128;">"slit1bottom.json"</span>,
+              <span style="color: #e67128;">"slit1top.json"</span>,
+              <span style="color: #e67128;">"slit1left.json"</span>,
+              <span style="color: #e67128;">"slit1right.json"</span>,
+              <span style="color: #e67128;">"slit2bottom.json"</span>,
+              <span style="color: #e67128;">"slit2top.json"</span>,
+              <span style="color: #e67128;">"slit2left.json"</span>,
+              <span style="color: #e67128;">"slit2right.json"</span>]
+
+<span style="color: #dbdb95;">middleconfigs</span> = [<span style="color: #e67128;">"dummy.json"</span>,
+                 <span style="color: #e67128;">"dummy.json"</span>,
+                 <span style="color: #e67128;">"dummy.json"</span>,
+                 <span style="color: #e67128;">"rotation.json"</span>,
+                 <span style="color: #e67128;">"goniox.json"</span>,
+                 <span style="color: #e67128;">"gonioy.json"</span>,
+                 <span style="color: #e67128;">"dummy.json"</span>,
+                 <span style="color: #e67128;">"dummy.json"</span>]
+
+&lt;&lt;motor_controller_class&gt;&gt;
+
+&lt;&lt;motor_motorFacade&gt;&gt;
+
+<span style="color: #ffad29; font-weight: bold;">from</span> SimpleXMLRPCServer <span style="color: #ffad29; font-weight: bold;">import</span> SimpleXMLRPCServer
+<span style="color: #ffad29; font-weight: bold;">from</span> SimpleXMLRPCServer <span style="color: #ffad29; font-weight: bold;">import</span> SimpleXMLRPCRequestHandler
+
+<span style="color: #dbdb95;">PORT</span> = 7894
+
+<span style="color: #74af68;"># </span><span style="color: #74af68;">Restrict to a particular path.</span>
+<span style="color: #ffad29; font-weight: bold;">class</span> <span style="color: #34cae2;">RequestHandler</span>(SimpleXMLRPCRequestHandler):
+    <span style="color: #dbdb95;">rpc_paths</span> = (<span style="color: #e67128;">'/RPC2'</span>,)
+
+<span style="color: #74af68;"># </span><span style="color: #74af68;">Create server</span>
+<span style="color: #dbdb95;">server</span> = SimpleXMLRPCServer((<span style="color: #e67128;">"192.168.70.160"</span>, PORT),
+                            requestHandler=RequestHandler)
+server.register_introspection_functions()
+
+server.register_instance(MotorFacade())
+<span style="color: #ffad29; font-weight: bold;">print</span>(<span style="color: #e67128;">"Registered"</span>)
+server.serve_forever()
+</pre>
+</div>
+</div>
+</div>
+<div id="outline-container-sec-7-2" class="outline-3">
+<h3 id="sec-7-2"><span class="section-number-3">7.2</span> Motor Class</h3>
+<div class="outline-text-3" id="text-7-2">
+<p>
+The <code>Motor</code> class handles individual drives for the motors.  For
+instance, the top blade on a slit is one motor and would need a
+corresponding <code>Motor</code> object to move it.  The class itself is
+mostly converned with storing the relevant information about the
+motor's configuation.  The actual motion is handled through the
+controller.
+</p>
+
+<p>
+When a motor object is created, it expects the path of a
+configuration file which contains the motor's parameters in json
+format.  The parameters are as follows:
+</p>
+
+<dl class="org-dl">
+<dt> a </dt><dd>The desired maximum acceleration of the motor.
+</dd>
+<dt> aa </dt><dd>The desired average acceleration of the motor.  This can be
+used to scale up the acceleration to its maximum and
+prevent jerking.  In practice, I don't think that we use it.
+</dd>
+<dt> ad </dt><dd>The desired maximum deceleration.
+</dd>
+<dt> ada </dt><dd>The desired average deceleration.
+</dd>
+<dt> v </dt><dd>The desired maximum velocity
+</dd>
+<dt> loc </dt><dd>The motor's current position
+</dd>
+</dl>
+
+<p>
+The <code>Motor</code> class has two additional parameters.  <code>d</code> is the
+displacement of the motor
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-python" id="motor_motor_class"><span style="color: #ffad29; font-weight: bold;">class</span> <span style="color: #34cae2;">Motor</span>:
+    <span style="color: #e67128;">"""This class handles the movement of a single motor"""</span>
+    <span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">__init__</span>(<span style="color: #ffad29; font-weight: bold;">self</span>,config):
+        <span style="color: #ffad29; font-weight: bold;">self</span>.config = config
+        <span style="color: #ffad29; font-weight: bold;">with</span> <span style="color: #23d7d7;">open</span>(config,<span style="color: #e67128;">"r"</span>) <span style="color: #ffad29; font-weight: bold;">as</span> infile:
+            <span style="color: #dbdb95;">data</span> = json.load(infile)
+
+            <span style="color: #ffad29; font-weight: bold;">self</span>.a = <span style="color: #23d7d7;">float</span>(data[<span style="color: #e67128;">"a"</span>]) <span style="color: #74af68;">#</span><span style="color: #74af68;">Acceleration</span>
+            <span style="color: #ffad29; font-weight: bold;">self</span>.aa = <span style="color: #23d7d7;">float</span>(data[<span style="color: #e67128;">"aa"</span>]) <span style="color: #74af68;">#</span><span style="color: #74af68;">Average Acceleration</span>
+            <span style="color: #ffad29; font-weight: bold;">self</span>.ad = <span style="color: #23d7d7;">float</span>(data[<span style="color: #e67128;">"ad"</span>]) <span style="color: #74af68;">#</span><span style="color: #74af68;">Deceleration</span>
+            <span style="color: #ffad29; font-weight: bold;">self</span>.ada = <span style="color: #23d7d7;">float</span>(data[<span style="color: #e67128;">"ada"</span>]) <span style="color: #74af68;">#</span><span style="color: #74af68;">Average Deceleration</span>
+            <span style="color: #ffad29; font-weight: bold;">self</span>.v = <span style="color: #23d7d7;">float</span>(data[<span style="color: #e67128;">"v"</span>]) <span style="color: #74af68;">#</span><span style="color: #74af68;">Velocity</span>
+            <span style="color: #ffad29; font-weight: bold;">self</span>.d = 0 <span style="color: #74af68;">#</span><span style="color: #74af68;">Displacement</span>
+            <span style="color: #ffad29; font-weight: bold;">self</span>.loc = <span style="color: #23d7d7;">float</span>(data[<span style="color: #e67128;">"loc"</span>]) <span style="color: #74af68;">#</span><span style="color: #74af68;">Location</span>
+            <span style="color: #ffad29; font-weight: bold;">self</span>.active=<span style="color: #008b8b;">False</span>
+</pre>
+</div>
+
+<p>
+The <code>save</code> method tells the motor to dump its current parameters back
+out to the json file.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-python" id="motor_motor_class"><span style="color: #74af68;">#</span>
+    <span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">save</span>(<span style="color: #ffad29; font-weight: bold;">self</span>):
+        <span style="color: #dbdb95;">status</span> = {<span style="color: #e67128;">"a"</span>: <span style="color: #ffad29; font-weight: bold;">self</span>.a,
+                  <span style="color: #e67128;">"aa"</span>: <span style="color: #ffad29; font-weight: bold;">self</span>.aa,
+                  <span style="color: #e67128;">"ad"</span>: <span style="color: #ffad29; font-weight: bold;">self</span>.ad,
+                  <span style="color: #e67128;">"ada"</span>: <span style="color: #ffad29; font-weight: bold;">self</span>.ada,
+                  <span style="color: #e67128;">"v"</span>: <span style="color: #ffad29; font-weight: bold;">self</span>.v,
+                  <span style="color: #e67128;">"loc"</span>: <span style="color: #ffad29; font-weight: bold;">self</span>.loc}
+        <span style="color: #ffad29; font-weight: bold;">with</span> <span style="color: #23d7d7;">open</span>(<span style="color: #ffad29; font-weight: bold;">self</span>.config,<span style="color: #e67128;">"w"</span>) <span style="color: #ffad29; font-weight: bold;">as</span> outfile:
+            json.dump(status,outfile)
+</pre>
+</div>
+
+<p>
+Finally, we need a destructor to ensure that the class always saves
+before the program ends.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-python" id="motor_motor_class"><span style="color: #74af68;">#</span>
+    <span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">__del__</span>(<span style="color: #ffad29; font-weight: bold;">self</span>):
+        <span style="color: #ffad29; font-weight: bold;">self</span>.save()
+</pre>
+</div>
+</div>
+</div>
+<div id="outline-container-sec-7-3" class="outline-3">
+<h3 id="sec-7-3"><span class="section-number-3">7.3</span> Controller Class</h3>
+<div class="outline-text-3" id="text-7-3">
+<p>
+The <code>Controller</code> class talks to a single Parker 6k8 motor controller.
+It has <code>Motor</code> instances for each attached motor and handles all of
+the communication and motor motion.
+</p>
+</div>
+
+<div id="outline-container-sec-7-3-1" class="outline-4">
+<h4 id="sec-7-3-1"><span class="section-number-4">7.3.1</span> Controller Skeleton</h4>
+<div class="outline-text-4" id="text-7-3-1">
+<div class="org-src-container">
+
+<pre class="src src-python" id="motor_controller_class"><span style="color: #ffad29; font-weight: bold;">class</span> <span style="color: #34cae2;">Controller</span>:
+    <span style="color: #e67128;">"""This class handles the motor controller, which can contrain up to eight motors"""</span>
+    &lt;&lt;controller_init&gt;&gt;
+    &lt;&lt;controller_go&gt;&gt;
+    &lt;&lt;controller_write&gt;&gt;
+    &lt;&lt;controller_writefile&gt;&gt;
+    &lt;&lt;controller_parseEncoder&gt;&gt;
+</pre>
+</div>
+</div>
+</div>
+<div id="outline-container-sec-7-3-2" class="outline-4">
+<h4 id="sec-7-3-2"><span class="section-number-4">7.3.2</span> Low Level Control</h4>
+<div class="outline-text-4" id="text-7-3-2">
+<p>
+When the <code>Controller</code> is initialized, we start by sendings a <code>TLIM</code>
+command, which reports the status of the limits.  This is mostly to
+eliminate any other commands still sitting in the buffer on the
+controller and give us a fresh entry point.  We check for two newlines
+being returned to confirm that we have communication.  Finally, we
+load the motor configurations from the file and set the motor
+positions on the controller to the values in the config file (They are
+zero by default when the controller is turned on).
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-python" id="controller_init"><span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">__init__</span>(<span style="color: #ffad29; font-weight: bold;">self</span>,port,configs,timeout=0.25):
+    <span style="color: #ffad29; font-weight: bold;">self</span>.ser = serial.Serial(port,timeout=timeout)
+    <span style="color: #ffad29; font-weight: bold;">self</span>.ser.write(<span style="color: #e67128;">"tlim\n"</span>)
+    <span style="color: #dbdb95;">line</span> = <span style="color: #ffad29; font-weight: bold;">self</span>.ser.readline()
+    <span style="color: #dbdb95;">line</span> = <span style="color: #ffad29; font-weight: bold;">self</span>.ser.readline()
+    <span style="color: #ffad29; font-weight: bold;">self</span>.motors = [Motor(c) <span style="color: #ffad29; font-weight: bold;">for</span> c <span style="color: #ffad29; font-weight: bold;">in</span> configs]
+    <span style="color: #ffad29; font-weight: bold;">self</span>.write(<span style="color: #e67128;">"PSET "</span> + <span style="color: #e67128;">","</span>.join([<span style="color: #23d7d7;">str</span>(i.loc) <span style="color: #ffad29; font-weight: bold;">for</span> i <span style="color: #ffad29; font-weight: bold;">in</span> <span style="color: #ffad29; font-weight: bold;">self</span>.motors])+<span style="color: #e67128;">"\n"</span>)
+</pre>
+</div>
+
+<p>
+The <code>write</code> command passes a string to the controller for execution.
+The serial ports are a little buggy (I haven't figured out why yet),
+so commands get lost sometimes.  We log an error when they're lost.
+If the command succeeds, the resulting line is returned to the caller.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-python" id="controller_write"><span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">write</span>(<span style="color: #ffad29; font-weight: bold;">self</span>,command):
+    time.sleep(0.1)
+    <span style="color: #dbdb95;">ser</span> = <span style="color: #ffad29; font-weight: bold;">self</span>.ser
+    <span style="color: #dbdb95;">command</span> = command.upper()
+    logging.debug(command)
+    ser.write(command)
+    <span style="color: #dbdb95;">line</span> = ser.readline()
+    <span style="color: #dbdb95;">failures</span> = 0
+    <span style="color: #ffad29; font-weight: bold;">while</span> line.find(command) == -1 <span style="color: #ffad29; font-weight: bold;">and</span> failures &lt; 5:
+        logging.debug( <span style="color: #e67128;">"Wrote '"</span>+command+<span style="color: #e67128;">"' and recieved '"</span> + line + <span style="color: #e67128;">"'"</span>)
+        <span style="color: #dbdb95;">line</span> = ser.readline()
+        <span style="color: #dbdb95;">failures</span> += 1
+    <span style="color: #ffad29; font-weight: bold;">if</span> failures &gt;4:
+        logging.error(<span style="color: #e67128;">"Failed at command: %s"</span>%command)
+        <span style="color: #ffad29; font-weight: bold;">return</span> <span style="color: #e67128;">""</span>
+    <span style="color: #dbdb95;">temp</span> = ser.readline()
+    <span style="color: #74af68;">#</span><span style="color: #74af68;">temp = ser.read(1000)</span>
+    ser.flush()
+    <span style="color: #ffad29; font-weight: bold;">return</span> temp.split(<span style="color: #e67128;">"\n&gt;"</span>)[0]
+</pre>
+</div>
+
+<p>
+<code>writefile</code>  takes the location of a text file full of commands and
+runs each of the commands, sequentially, on the controller.  This is
+currently used to setup the controller when it is first turned on.
+Many of these commands should actually be ported into the motor class
+for better flexibility.  If you ever reorganize the motor controller,
+you should make that software change first.  It will save you a good
+deal of frustration.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-python" id="controller_writefile"><span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">writefile</span>(<span style="color: #ffad29; font-weight: bold;">self</span>,<span style="color: #23d7d7;">file</span>):
+    <span style="color: #ffad29; font-weight: bold;">with</span> <span style="color: #23d7d7;">open</span>(<span style="color: #23d7d7;">file</span>,<span style="color: #e67128;">"r"</span>) <span style="color: #ffad29; font-weight: bold;">as</span> infile:
+        <span style="color: #dbdb95;">lines</span> = infile.readlines()
+        <span style="color: #ffad29; font-weight: bold;">for</span> line <span style="color: #ffad29; font-weight: bold;">in</span> lines:
+            <span style="color: #ffad29; font-weight: bold;">self</span>.write(line)
+</pre>
+</div>
+</div>
+</div>
+
+
+
+<div id="outline-container-sec-7-3-3" class="outline-4">
+<h4 id="sec-7-3-3"><span class="section-number-4">7.3.3</span> High Level Control</h4>
+<div class="outline-text-4" id="text-7-3-3">
+<p>
+The <code>go</code> function tells the controller to move the motors.  The
+destination for the motors is contained in the <code>d</code> member variable of
+the individual motor classes.
+</p>
+
+<p>
+Once the motors are in place, the drives are deactivated as a safety
+measure against accidental motion.  The new encoder positions are also
+parsed and saved.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-python" id="controller_go"><span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">go</span>(<span style="color: #ffad29; font-weight: bold;">self</span>):
+    <span style="color: #dbdb95;">motors</span> = <span style="color: #ffad29; font-weight: bold;">self</span>.motors
+    <span style="color: #dbdb95;">write</span>=<span style="color: #ffad29; font-weight: bold;">self</span>.write
+    write(<span style="color: #e67128;">"DRIVE "</span> + <span style="color: #e67128;">''</span>.join([<span style="color: #e67128;">'1'</span> <span style="color: #ffad29; font-weight: bold;">if</span> i.active <span style="color: #ffad29; font-weight: bold;">else</span> <span style="color: #e67128;">'X'</span> <span style="color: #ffad29; font-weight: bold;">for</span> i <span style="color: #ffad29; font-weight: bold;">in</span> motors])+<span style="color: #e67128;">"\n"</span>)
+    write(<span style="color: #e67128;">"MA "</span> + <span style="color: #e67128;">''</span>.join([<span style="color: #e67128;">'1'</span> <span style="color: #ffad29; font-weight: bold;">if</span> i.active <span style="color: #ffad29; font-weight: bold;">else</span> <span style="color: #e67128;">'X'</span> <span style="color: #ffad29; font-weight: bold;">for</span> i <span style="color: #ffad29; font-weight: bold;">in</span> motors])+<span style="color: #e67128;">"\n"</span>)
+    write(<span style="color: #e67128;">"A "</span> + <span style="color: #e67128;">','</span>.join([<span style="color: #23d7d7;">str</span>(i.a) <span style="color: #ffad29; font-weight: bold;">if</span> i.active <span style="color: #ffad29; font-weight: bold;">else</span> <span style="color: #e67128;">''</span> <span style="color: #ffad29; font-weight: bold;">for</span> i <span style="color: #ffad29; font-weight: bold;">in</span> motors])+<span style="color: #e67128;">"\n"</span>)
+    write(<span style="color: #e67128;">"AD "</span> + <span style="color: #e67128;">','</span>.join([<span style="color: #23d7d7;">str</span>(i.ad) <span style="color: #ffad29; font-weight: bold;">if</span> i.active <span style="color: #ffad29; font-weight: bold;">else</span> <span style="color: #e67128;">''</span> <span style="color: #ffad29; font-weight: bold;">for</span> i <span style="color: #ffad29; font-weight: bold;">in</span> motors])+<span style="color: #e67128;">"\n"</span>)
+    write(<span style="color: #e67128;">"V "</span> + <span style="color: #e67128;">','</span>.join([<span style="color: #23d7d7;">str</span>(i.v) <span style="color: #ffad29; font-weight: bold;">if</span> i.active <span style="color: #ffad29; font-weight: bold;">else</span> <span style="color: #e67128;">''</span> <span style="color: #ffad29; font-weight: bold;">for</span> i <span style="color: #ffad29; font-weight: bold;">in</span> motors])+<span style="color: #e67128;">"\n"</span>)
+    write(<span style="color: #e67128;">"D "</span> + <span style="color: #e67128;">','</span>.join([<span style="color: #23d7d7;">str</span>(i.d) <span style="color: #ffad29; font-weight: bold;">if</span> i.active <span style="color: #ffad29; font-weight: bold;">else</span> <span style="color: #e67128;">''</span> <span style="color: #ffad29; font-weight: bold;">for</span> i <span style="color: #ffad29; font-weight: bold;">in</span> motors])+<span style="color: #e67128;">"\n"</span>)
+    write(<span style="color: #e67128;">"MC "</span> + <span style="color: #e67128;">''</span>.join([<span style="color: #e67128;">'0'</span> <span style="color: #ffad29; font-weight: bold;">if</span> i.active <span style="color: #ffad29; font-weight: bold;">else</span> <span style="color: #e67128;">'X'</span> <span style="color: #ffad29; font-weight: bold;">for</span> i <span style="color: #ffad29; font-weight: bold;">in</span> motors])+<span style="color: #e67128;">"\n"</span>)
+    write(<span style="color: #e67128;">"GO "</span> + <span style="color: #e67128;">''</span>.join([<span style="color: #e67128;">'1'</span> <span style="color: #ffad29; font-weight: bold;">if</span> i.active <span style="color: #ffad29; font-weight: bold;">else</span> <span style="color: #e67128;">'0'</span> <span style="color: #ffad29; font-weight: bold;">for</span> i <span style="color: #ffad29; font-weight: bold;">in</span> motors])+<span style="color: #e67128;">"\n"</span>)
+    write(<span style="color: #e67128;">"DRIVE00000000\n"</span>)
+    <span style="color: #ffad29; font-weight: bold;">self</span>.parseEncoder()
+    <span style="color: #ffad29; font-weight: bold;">for</span> motor <span style="color: #ffad29; font-weight: bold;">in</span> motors:
+        <span style="color: #dbdb95;">motor.d</span>=0
+        <span style="color: #dbdb95;">motor.active</span>=<span style="color: #008b8b;">False</span>
+    [motor.save() <span style="color: #ffad29; font-weight: bold;">for</span> motor <span style="color: #ffad29; font-weight: bold;">in</span> motors]
+</pre>
+</div>
+
+<p>
+The <code>parseEncoder</code> function reads back the encoder positions from the
+motor controller.  For motors that don't have encoders, it reads back
+the position which the controller thinks that the motor moved to via
+dead reckoning.
+</p>
+
+<p>
+It begins by sending the "TPE" command to the controller and waiting
+for the response.  If no response is recieved, it simply tries again.
+The positions are then parsed from the comma separated text and stored
+in the <code>loc</code> member of the various <code>Motor</code> objects.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-python" id="controller_parseEncoder"><span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">parseEncoder</span>(<span style="color: #ffad29; font-weight: bold;">self</span>):
+    <span style="color: #ffad29; font-weight: bold;">self</span>.ser.write(<span style="color: #e67128;">"TPE\n"</span>)
+    <span style="color: #dbdb95;">line</span> = <span style="color: #ffad29; font-weight: bold;">self</span>.ser.readline()
+    <span style="color: #ffad29; font-weight: bold;">while</span> line.find(<span style="color: #e67128;">"TPE"</span>) == -1:
+        logging.debug(<span style="color: #e67128;">"Readback:"</span>+line)<span style="color: #74af68;">#</span><span style="color: #74af68;">This is the echo back from the unit</span>
+        <span style="color: #dbdb95;">line</span> = <span style="color: #ffad29; font-weight: bold;">self</span>.ser.readline()
+    logging.debug(<span style="color: #e67128;">"Line: "</span>+line)
+    <span style="color: #dbdb95;">response</span> = <span style="color: #ffad29; font-weight: bold;">self</span>.ser.readline()
+    <span style="color: #dbdb95;">failures</span> = 0
+    <span style="color: #ffad29; font-weight: bold;">while</span> response.find(<span style="color: #e67128;">"TPE"</span>) == -1 <span style="color: #ffad29; font-weight: bold;">and</span> failures &lt; 5:
+        logging.debug(<span style="color: #e67128;">"Readback:"</span>+response)<span style="color: #74af68;">#</span><span style="color: #74af68;">This is the echo back from the unit</span>
+        <span style="color: #dbdb95;">response</span> = <span style="color: #ffad29; font-weight: bold;">self</span>.ser.readline()
+        <span style="color: #dbdb95;">failures</span> += 1
+    <span style="color: #ffad29; font-weight: bold;">if</span> failures &gt; 4:
+        logging.error(<span style="color: #e67128;">"Recieved no response from Motor System"</span>)
+        <span style="color: #ffad29; font-weight: bold;">return</span> <span style="color: #ffad29; font-weight: bold;">self</span>.parseEncoder() <span style="color: #74af68;">#</span><span style="color: #74af68;">Just try it again</span>
+    logging.debug(<span style="color: #e67128;">"Response:"</span>+response)
+    <span style="color: #74af68;">#</span><span style="color: #74af68;">This is the response.  We use the readline to make sure that</span>
+    <span style="color: #74af68;">#</span><span style="color: #74af68;">we don't timeout.</span>
+    <span style="color: #dbdb95;">data</span> = <span style="color: #23d7d7;">map</span>(<span style="color: #23d7d7;">float</span>,response.split(<span style="color: #e67128;">"*TPE"</span>)[1].split(<span style="color: #e67128;">","</span>))
+    <span style="color: #ffad29; font-weight: bold;">for</span> (motor,place) <span style="color: #ffad29; font-weight: bold;">in</span> <span style="color: #23d7d7;">zip</span>(<span style="color: #ffad29; font-weight: bold;">self</span>.motors,data):
+        <span style="color: #dbdb95;">motor.loc</span> = place 
+<span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">__del__</span>(<span style="color: #ffad29; font-weight: bold;">self</span>):
+    <span style="color: #ffad29; font-weight: bold;">self</span>.ser.close()
+</pre>
+</div>
+</div>
+</div>
+</div>
+<div id="outline-container-sec-7-4" class="outline-3">
+<h3 id="sec-7-4"><span class="section-number-3">7.4</span> MotorFacade Class</h3>
+<div class="outline-text-3" id="text-7-4">
+<p>
+The <code>MotorFacade</code> provides a unified interface to all of the
+motors.  The user doesn't really care which motor controller the
+motor is hooked onto - she simply wishes to move a motor.  Thus,
+all of the various motor objects are collected into a single
+interface focused around moving motors.  This can also be useful in
+the future if motors that are NOT controlled by a Parker 6k8 are
+added, as the code for these motors can be added to the facade
+without forcing them to fit into the old framework.
+</p>
+</div>
+
+<div id="outline-container-sec-7-4-1" class="outline-4">
+<h4 id="sec-7-4-1"><span class="section-number-4">7.4.1</span> MotorFacade Skeleton</h4>
+<div class="outline-text-4" id="text-7-4-1">
+<div class="org-src-container">
+
+<pre class="src src-python" id="motor_motorFacade"><span style="color: #ffad29; font-weight: bold;">class</span> <span style="color: #34cae2;">MotorFacade</span>(<span style="color: #23d7d7;">object</span>):
+    &lt;&lt;motorfacade_init&gt;&gt;
+    <span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">getter</span>(<span style="color: #ffad29; font-weight: bold;">self</span>,controller,index):
+        <span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">newGetter</span>():
+            controller.parseEncoder()
+            <span style="color: #ffad29; font-weight: bold;">return</span> controller.motors[index].loc
+        <span style="color: #ffad29; font-weight: bold;">return</span> newGetter
+    <span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">setter</span>(<span style="color: #ffad29; font-weight: bold;">self</span>,controller,index):
+        <span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">newSetter</span>(n):
+            logging.warn(n)
+            controller.motors[index]<span style="color: #dbdb95;">.active</span>=<span style="color: #008b8b;">True</span>
+            controller.motors[index]<span style="color: #dbdb95;">.d</span>=n
+            controller.go()
+            controller.parseEncoder()
+            <span style="color: #ffad29; font-weight: bold;">return</span> controller.motors[index].loc
+        <span style="color: #ffad29; font-weight: bold;">return</span> newSetter
+</pre>
+</div>
+</div>
+</div>
+<div id="outline-container-sec-7-4-2" class="outline-4">
+<h4 id="sec-7-4-2"><span class="section-number-4">7.4.2</span> MotorFacade Init</h4>
+<div class="outline-text-4" id="text-7-4-2">
+<p>
+The initialization begins by creating a connection to the controllers
+on com ports 3 and 8, called the top and middle controllers for
+obvious reasons.  Note that we <code>2</code> and <code>7</code>, instead of three and
+eight, because Python starts counting the COM ports at zero.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-python" id="motorfacade_init"><span style="color: #ffad29; font-weight: bold;">def</span> <span style="color: #00ede1; font-weight: bold;">__init__</span>(<span style="color: #ffad29; font-weight: bold;">self</span>):
+    logging.info(<span style="color: #e67128;">"Starting Top Controller"</span>)
+    <span style="color: #ffad29; font-weight: bold;">self</span>.topcontroller = Controller(2,topconfigs,timeout=5)
+    <span style="color: #ffad29; font-weight: bold;">self</span>.topcontroller.writefile(<span style="color: #e67128;">"setuptop.txt"</span>)
+    <span style="color: #ffad29; font-weight: bold;">self</span>.topcontroller.write(<span style="color: #e67128;">"tlim\n"</span>)
+    logging.info(<span style="color: #e67128;">"Starting Middle Controller"</span>)
+    <span style="color: #ffad29; font-weight: bold;">self</span>.middlecontroller = Controller(7,middleconfigs,timeout=5)
+    logging.info(<span style="color: #e67128;">"Writing to Middle Controller"</span>)
+    <span style="color: #ffad29; font-weight: bold;">self</span>.middlecontroller.writefile(<span style="color: #e67128;">"setupmiddle.txt"</span>)
+    logging.info(<span style="color: #e67128;">"Connecting to Middle Controller"</span>)
+    <span style="color: #ffad29; font-weight: bold;">self</span>.middlecontroller.write(<span style="color: #e67128;">"tlim\n"</span>)
+    <span style="color: #74af68;">#</span><span style="color: #74af68;">Create motor getters</span>
+</pre>
+</div>
+
+<p>
+There's a large number of motors which will need to have functions
+added to the facade.  However, these functions will be nearly
+identical and will involve a large amount of duplication of code,
+violating the <a href="http://en.wikipedia.org/wiki/Don't_repeat_yourself">DRY</a> principle.  Instead, we use the <a href="https://docs.python.org/2/library/functions.html#setattr">setattr</a> function to
+add these function to the class programatically.  The <code>getter</code> and
+<code>setter</code> functions are then sued to create the actual class members.
+</p>
+
+<p>
+As an example, the code before will create a function <code>getR1</code> which
+returns the position of the right slit on the upstream slit set and
+another function <code>setRot</code> which move the rotation state.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-python" id="motorfacade_init"><span style="color: #74af68;">#</span>
+    logging.info(<span style="color: #e67128;">"Establishing getters and setters"</span>)
+    <span style="color: #dbdb95;">topgetters</span> = [<span style="color: #e67128;">"getT1"</span>,<span style="color: #e67128;">"getB1"</span>,<span style="color: #e67128;">"getL1"</span>,<span style="color: #e67128;">"getR1"</span>,<span style="color: #e67128;">"getT2"</span>,<span style="color: #e67128;">"getB2"</span>,<span style="color: #e67128;">"getL2"</span>,<span style="color: #e67128;">"getR2"</span>]
+    <span style="color: #dbdb95;">topsetters</span> = [<span style="color: #e67128;">"setT1"</span>,<span style="color: #e67128;">"setB1"</span>,<span style="color: #e67128;">"setL1"</span>,<span style="color: #e67128;">"setR1"</span>,<span style="color: #e67128;">"setT2"</span>,<span style="color: #e67128;">"setB2"</span>,<span style="color: #e67128;">"setL2"</span>,<span style="color: #e67128;">"setR2"</span>]
+    <span style="color: #ffad29; font-weight: bold;">for</span> (i,g,s) <span style="color: #ffad29; font-weight: bold;">in</span> <span style="color: #23d7d7;">zip</span>(<span style="color: #23d7d7;">range</span>(8),topgetters,topsetters):
+        <span style="color: #23d7d7;">setattr</span>(<span style="color: #ffad29; font-weight: bold;">self</span>,g,<span style="color: #ffad29; font-weight: bold;">self</span>.getter(<span style="color: #ffad29; font-weight: bold;">self</span>.topcontroller,i))
+        <span style="color: #23d7d7;">setattr</span>(<span style="color: #ffad29; font-weight: bold;">self</span>,s,<span style="color: #ffad29; font-weight: bold;">self</span>.setter(<span style="color: #ffad29; font-weight: bold;">self</span>.topcontroller,i))
+    <span style="color: #dbdb95;">middlemotors</span> = [<span style="color: #e67128;">"dummy0"</span>,<span style="color: #e67128;">"dummy1"</span>,<span style="color: #e67128;">"dummy2"</span>,<span style="color: #e67128;">"Rot"</span>,<span style="color: #e67128;">"GonioX"</span>,<span style="color: #e67128;">"GonioY"</span>,<span style="color: #e67128;">"dummy6"</span>,<span style="color: #e67128;">"dummy7"</span>]
+    <span style="color: #ffad29; font-weight: bold;">for</span> (i,name) <span style="color: #ffad29; font-weight: bold;">in</span> <span style="color: #23d7d7;">zip</span>(<span style="color: #23d7d7;">range</span>(8),middlemotors):
+        <span style="color: #23d7d7;">setattr</span>(<span style="color: #ffad29; font-weight: bold;">self</span>,<span style="color: #e67128;">"get"</span>+name,<span style="color: #ffad29; font-weight: bold;">self</span>.getter(<span style="color: #ffad29; font-weight: bold;">self</span>.middlecontroller,i))
+        <span style="color: #23d7d7;">setattr</span>(<span style="color: #ffad29; font-weight: bold;">self</span>,<span style="color: #e67128;">"set"</span>+name,<span style="color: #ffad29; font-weight: bold;">self</span>.setter(<span style="color: #ffad29; font-weight: bold;">self</span>.middlecontroller,i))
+    logging.info(<span style="color: #e67128;">"Initialization finished"</span>)
+</pre>
+</div>
+</div>
+</div>
+</div>
+</div>
 </div>
 <div id="postamble" class="status">
 <p class="author">Author: Adam Washington</p>
-<p class="date">Created: 2014-04-21 Mon 16:15</p>
+<p class="date">Created: 2014-04-23 Wed 13:53</p>
 <p class="creator"><a href="http://www.gnu.org/software/emacs/">Emacs</a> 24.3.1 (<a href="http://orgmode.org">Org</a> mode 8.2.5h)</p>
 <p class="validation"><a href="http://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>
