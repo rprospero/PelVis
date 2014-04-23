@@ -48,6 +48,7 @@ class MonFile:
         y = np.fromfile(file,np.int32,-1)
         x = np.arange(0,50001,1,dtype=np.float32)
         x = self.convertTime(x)
+    #
         #f = ip.interp1d(x,y)
         #p0 = [10., 0.0001, 10000., 2.]
         #p1, cov = op.curve_fit(self.func, x, y, p0)
@@ -56,10 +57,10 @@ class MonFile:
         #xs = range(200)
         #xs = np.arange(0,35,0.1)
         #ys = np.zeros(350,dtype=np.uint32)
-
+    
         xs = np.arange(0,uplim,base)
         ys = np.zeros(uplim/base,dtype=np.uint32)
-
+    
         for (i,j) in zip(x,y):
             if i > base:
                 ys[int(10*base-1)]=count
@@ -69,10 +70,10 @@ class MonFile:
         base = 0.1
         count = 0
         uplim = 31
-            
+    #
         ymean = np.mean(ys[250:300])
         ynew = np.array([float(yo)-ymean*(uplim/base)/50001 for yo in y])
-        
+    #
         ysnew = np.zeros(uplim/base,dtype=np.float32)
         for (i,j) in zip(x,ynew):
             if i > base:
@@ -80,12 +81,12 @@ class MonFile:
                 base += 0.1
                 count = 0
             count += j
-
+    #
         if plot:
             graph = GraphFrame(None,"Monitor")
             graph2 = GraphFrame(None,"Monitor Adjusted")
         #        graph.plot(np.arange(0.0,20.0,0.1),f(xs))
         #    graph.plot(xs,ys)
             graph2.plot(xs,ysnew)          
+    #
         self.spec = np.expand_dims(np.expand_dims(y,axis=0),axis=0)
-

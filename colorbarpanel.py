@@ -26,7 +26,7 @@ class ColorBarPanel(wx.Panel):
                  res=64,orientation='vertical',
                  size=[0.05,0.025,.25,0.95]):
         """Creates a ColorBarPanel.
-
+    
         Keyword arguments:
         parent -- container which holds the panel.
         cmap -- the color map to display in the color bar.
@@ -35,23 +35,23 @@ class ColorBarPanel(wx.Panel):
         res -- the number of pixels per unit in fig
         orientation -- the rotation of the color bar
         size -- the position of the color bar in the panel
-
+    
         res and size combine to produce the actual size of the
         panel in pixels.  For instance, with fig=(1,10) and res=64,
         the panel will be 64 pixels wide and 640 pixels tall.
-
+    
         size is a four element array which marks the far
         corners of the graph.  The coordinates are given as a fraction
         of the size of the panel.  For instance, pos=[0,0.3333,1,0.6666]
         would produce a graph that stretches across the panel in the x
         direction, but only uses the middle third in the y direction.
         The default value should allow the axes to be seen.
-
+    
         """
-
+    
         wx.Panel.__init__(self,parent)
         self.Bind(wx.EVT_PAINT,self.__OnPaint)
-
+    
         self.figure = Figure(figsize=fig,dpi=res)#the actual plot
         #the object to display the plot
         self.canvas = FigureCanvas(self,-1,self.figure)
@@ -63,16 +63,15 @@ class ColorBarPanel(wx.Panel):
         self.vmax=18 #The maximum value on the color bar
         self.size=size #The position of the color bar in the frame
         self.update()
-
+        
     def setRange(self,vmin,vmax):
         """Set the range for the axes on the colorbar."""
         self.vmin=vmin
         self.vmax=vmax
-
+    
     def setCmap(self,cmap):
         """Pick the colormap to display."""
         self.cmap = cmap
-
     def update(self):
         """Reacts to any changes in the objects members."""
         axes = self.figure.add_axes(self.size)
@@ -93,6 +92,7 @@ class ActionColorbar(ColorBarPanel):
     to a given function when clicked on by the user.
 
     """
+#
     def __init__(self,parent,cmap,command):
         """Creates an ActionColorbar
 
@@ -107,7 +107,7 @@ class ActionColorbar(ColorBarPanel):
         ColorBarPanel.__init__(self,parent,cm.get_cmap(cmap),fig=(5,1),orientation='horizontal',size=[0,0,1,0.6])
         self.comm = command#The command to run on clicks
         self.canvas.Bind(wx.EVT_LEFT_UP,self.__OnClick)
-
+#
     def update(self):
         """Reacts to any changes in the objects members."""
         axes = self.figure.add_axes(self.size,title=self.title)
@@ -115,7 +115,7 @@ class ActionColorbar(ColorBarPanel):
         colorbar = ColorbarBase(axes,cmap=self.cmap,norm=norm,
                                 orientation=self.orientation)
         self.Refresh()
-
+#
     def __OnClick(self,event):
         """Event handler to call self.comm when the panel is clicked."""
         self.comm(self.cmap)
@@ -123,6 +123,7 @@ class ActionColorbar(ColorBarPanel):
 
 class ColorMapPicker(wx.Frame):
     """A window for selecting a color map"""
+#
     def __init__(self,parent,command):
         """Creates a ColorMapPicker
 
@@ -142,7 +143,7 @@ class ColorMapPicker(wx.Frame):
         sizer.SetSizeHints(scroll)
         scroll.SetSizer(sizer)
         self.Bind(wx.EVT_CLOSE,self.__OnClose)
-
+#
     def __OnClose(self,event):
         """Event handler for closing the window
 

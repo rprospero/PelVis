@@ -4,6 +4,7 @@ import numpy
 import struct
 import json
 
+
 nidaq = ctypes.windll.nicaiu #Link to nicaiu.dll
 
 int32 = ctypes.c_long
@@ -43,12 +44,13 @@ def compensate(value,f):
 class PowerSupply:
     
     def __init__(self):
-
+        
+        
         self.triangleHandles = []
         self.supplyHandles = {}
-
+        
         self.values = {}
-
+        
         for t in triangles:
             taskHandle = TaskHandle(0)
             print t
@@ -63,10 +65,11 @@ class PowerSupply:
             self.supplyHandles[k] = taskHandle
             
         print self.supplyHandles
-
+        
         with open("calibration.json") as configFile:
             self.calibration = json.load(configFile)
-
+        
+        
         self.values['triangles'] = [0]*8
         for i in range(1,9):
             self.triangle(i,0)
@@ -75,7 +78,9 @@ class PowerSupply:
         self.phase(0)
         self.sample(0)
             
-
+        
+        
+    
     def set(self,task,x):
         """Takes a task handle and a current and sets that task to that current."""
         self.CHK(nidaq.DAQmxWriteAnalogScalarF64( task,
@@ -89,10 +94,11 @@ class PowerSupply:
                  compensate(curr,self.calibration['tri'+str(tri)]))
         self.values['triangles'][tri-1]=curr
         return self.getTriangle(tri)
-
+    
     def getTriangle(self,tri):
         return self.values['triangles'][tri-1]
-
+    
+    
     def flipper(self,curr):
         self.set(self.supplyHandles["flipper"],
                  compensate(curr,self.calibration['flipper']))
@@ -122,7 +128,9 @@ class PowerSupply:
         return self.getSample()
     def getSample(self):
         return self.values['sample']
-
+    
+    
+    
     def CHK( self, err ):
         """a simple error checking routine"""
         if err < 0:
@@ -146,6 +154,7 @@ class PowerSupply:
             nidaq.DAQmxStopTask( task )
             nidaq.DAQmxClearTask( task )
             
+    
     def __del__(self):
         self.stop()
 
@@ -153,4 +162,3 @@ class PowerSupply:
 
 if __name__=="__main__":
     x=PowerSupply()
-

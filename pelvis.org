@@ -196,7 +196,7 @@
 #+end_src
 
 
-* GUI Controls
+* TODO GUI Controls
 
   We're using [[https://www.wxwidgets.org/][wxWidgets]] as our GUI toolkit through the [[http://www.wxpython.org][wxPython]]
   binding library.  wxWidgets was chosen as it is cross platform and
@@ -3089,7 +3089,7 @@ class SpectrumDialog(wx.Dialog):
 #+end_src
 
 
-** Livewatch
+** TODO Livewatch
 
    =Livewatch.py= is a utility to display the polarization as it comes
    in.  It takes two parameters at the command line.  The first is the
@@ -5468,7 +5468,7 @@ The nidaq object is a link to the DLL file which contains National
 Instrument DAQmx interface to their hardware.  It may not be quite as
 friendly as something like Measurement Studio, but it's actually a nice
 and simple API and it gets the job done.  All of the functions in the
-[[file://C:/Program Files/National Instruments/NI-DAQ/docs/daqmxcfunc.chm][NI-DAQmx C Reference Help]] are available from this DLL.  This help
+[[file:C:/Program Files/National Instruments/NI-DAQ/docs/daqmxcfunc.chm][NI-DAQmx C Reference Help]] are available from this DLL.  This help
 reference is installed with the drivers and you should update the link
 to where it is install on your computer.
 
@@ -5878,3 +5878,396 @@ if __name__=="__main__":
 
 #+end_src
 #  LocalWords:  livewatch
+
+* Motors
+
+  A python server to control the parker motor system was hastily
+  implemented before the dark field experiments. The system
+  communicates over RS232 cables to the [[http://www.parkermotion.com/products/Controllers__1745__30_32_80_567_29.html][Parker 6k8]] motor controls,
+  which subsequently run the drivers which power the motors.
+
+  At the time of this writing, the two slits had been implemented, as
+  had been the rotations of the sample stage.
+
+** Motor Skeleton
+
+#+begin_src python :tangle motor.py :noweb tangle :padline no
+import serial
+import json
+import time
+import sys
+
+import logging
+logging.basicConfig(level=logging.DEBUG,
+                    format="%(asctime)s %(name)-12s %(levelname)-8s %(message)s",
+                    datefmt="%m-%d %H:%M",
+                    filename="C:/MotorSoftware/motorlog.txt",
+                    filemode="a")
+console = logging.StreamHandler(sys.stdout)
+console.setLevel(logging.WARN)
+formatter = logging.Formatter("%(message)s")#The console just needs the message
+console.setFormatter(formatter)
+logging.getLogger("").addHandler(console)
+
+<<motor_motor_class>>
+
+topconfigs = ["slit1bottom.json",
+              "slit1top.json",
+              "slit1left.json",
+              "slit1right.json",
+              "slit2bottom.json",
+              "slit2top.json",
+              "slit2left.json",
+              "slit2right.json"]
+
+middleconfigs = ["dummy.json",
+                 "dummy.json",
+                 "dummy.json",
+                 "rotation.json",
+                 "goniox.json",
+                 "gonioy.json",
+                 "dummy.json",
+                 "dummy.json"]
+
+<<motor_controller_class>>
+
+<<motor_motorFacade>>
+
+from SimpleXMLRPCServer import SimpleXMLRPCServer
+from SimpleXMLRPCServer import SimpleXMLRPCRequestHandler
+
+PORT = 7894
+
+# Restrict to a particular path.
+class RequestHandler(SimpleXMLRPCRequestHandler):
+    rpc_paths = ('/RPC2',)
+
+# Create server
+server = SimpleXMLRPCServer(("192.168.70.160", PORT),
+                            requestHandler=RequestHandler)
+server.register_introspection_functions()
+
+server.register_instance(MotorFacade())
+print("Registered")
+server.serve_forever()
+
+
+#+end_src
+
+** Motor Class
+
+   The =Motor= class handles individual drives for the motors.  For
+   instance, the top blade on a slit is one motor and would need a
+   corresponding =Motor= object to move it.  The class itself is
+   mostly converned with storing the relevant information about the
+   motor's configuation.  The actual motion is handled through the
+   controller.
+
+   When a motor object is created, it expects the path of a
+   configuration file which contains the motor's parameters in json
+   format.  The parameters are as follows:
+
+   - a :: The desired maximum acceleration of the motor.
+   - aa :: The desired average acceleration of the motor.  This can be
+           used to scale up the acceleration to its maximum and
+           prevent jerking.  In practice, I don't think that we use it.
+   - ad :: The desired maximum deceleration.
+   - ada :: The desired average deceleration.
+   - v :: The desired maximum velocity
+   - loc :: The motor's current position
+
+  The =Motor= class has two additional parameters.  =d= is the
+  displacement of the motor
+
+#+name: motor_motor_class
+#+begin_src python
+class Motor:
+    """This class handles the movement of a single motor"""
+    def __init__(self,config):
+        self.config = config
+        with open(config,"r") as infile:
+            data = json.load(infile)
+    
+            self.a = float(data["a"]) #Acceleration
+            self.aa = float(data["aa"]) #Average Acceleration
+            self.ad = float(data["ad"]) #Deceleration
+            self.ada = float(data["ada"]) #Average Deceleration
+            self.v = float(data["v"]) #Velocity
+            self.d = 0 #Displacement
+            self.loc = float(data["loc"]) #Location
+            self.active=False
+#+end_src
+
+The =save= method tells the motor to dump its current parameters back
+out to the json file.
+
+#+name: motor_motor_class
+#+begin_src python
+#
+    def save(self):
+        status = {"a": self.a,
+                  "aa": self.aa,
+                  "ad": self.ad,
+                  "ada": self.ada,
+                  "v": self.v,
+                  "loc": self.loc}
+        with open(self.config,"w") as outfile:
+            json.dump(status,outfile)
+#+end_src
+
+Finally, we need a destructor to ensure that the class always saves
+before the program ends.
+
+#+name: motor_motor_class
+#+begin_src python
+#
+    def __del__(self):
+        self.save()
+#+end_src
+
+** Controller Class
+
+The =Controller= class talks to a single Parker 6k8 motor controller.
+It has =Motor= instances for each attached motor and handles all of
+the communication and motor motion.
+
+*** Controller Skeleton
+
+#+name: motor_controller_class
+#+begin_src python :noweb export :padline no
+class Controller:
+    """This class handles the motor controller, which can contrain up to eight motors"""
+    <<controller_init>>
+    <<controller_go>>
+    <<controller_write>>
+    <<controller_writefile>>
+    <<controller_parseEncoder>>
+#+end_src
+
+*** Low Level Control
+
+When the =Controller= is initialized, we start by sendings a =TLIM=
+command, which reports the status of the limits.  This is mostly to
+eliminate any other commands still sitting in the buffer on the
+controller and give us a fresh entry point.  We check for two newlines
+being returned to confirm that we have communication.  Finally, we
+load the motor configurations from the file and set the motor
+positions on the controller to the values in the config file (They are
+zero by default when the controller is turned on).
+
+#+name: controller_init
+#+begin_src python
+    def __init__(self,port,configs,timeout=0.25):
+        self.ser = serial.Serial(port,timeout=timeout)
+        self.ser.write("tlim\n")
+        line = self.ser.readline()
+        line = self.ser.readline()
+        self.motors = [Motor(c) for c in configs]
+        self.write("PSET " + ",".join([str(i.loc) for i in self.motors])+"\n")
+#+end_src
+
+The =write= command passes a string to the controller for execution.
+The serial ports are a little buggy (I haven't figured out why yet),
+so commands get lost sometimes.  We log an error when they're lost.
+If the command succeeds, the resulting line is returned to the caller.
+
+#+name: controller_write
+#+begin_src python
+    def write(self,command):
+        time.sleep(0.1)
+        ser = self.ser
+        command = command.upper()
+        logging.debug(command)
+        ser.write(command)
+        line = ser.readline()
+        failures = 0
+        while line.find(command) == -1 and failures < 5:
+            logging.debug( "Wrote '"+command+"' and recieved '" + line + "'")
+            line = ser.readline()
+            failures += 1
+        if failures >4:
+            logging.error("Failed at command: %s"%command)
+            return ""
+        temp = ser.readline()
+        #temp = ser.read(1000)
+        ser.flush()
+        return temp.split("\n>")[0]
+#+end_src
+
+=writefile=  takes the location of a text file full of commands and
+runs each of the commands, sequentially, on the controller.  This is
+currently used to setup the controller when it is first turned on.
+Many of these commands should actually be ported into the motor class
+for better flexibility.  If you ever reorganize the motor controller,
+you should make that software change first.  It will save you a good
+deal of frustration.
+
+#+name: controller_writefile
+#+begin_src python
+    def writefile(self,file):
+        with open(file,"r") as infile:
+            lines = infile.readlines()
+            for line in lines:
+                self.write(line)
+#+end_src
+
+
+
+
+*** High Level Control
+
+The =go= function tells the controller to move the motors.  The
+destination for the motors is contained in the =d= member variable of
+the individual motor classes.
+
+Once the motors are in place, the drives are deactivated as a safety
+measure against accidental motion.  The new encoder positions are also
+parsed and saved.
+
+#+name: controller_go
+#+begin_src python
+    def go(self):
+        motors = self.motors
+        write=self.write
+        write("DRIVE " + ''.join(['1' if i.active else 'X' for i in motors])+"\n")
+        write("MA " + ''.join(['1' if i.active else 'X' for i in motors])+"\n")
+        write("A " + ','.join([str(i.a) if i.active else '' for i in motors])+"\n")
+        write("AD " + ','.join([str(i.ad) if i.active else '' for i in motors])+"\n")
+        write("V " + ','.join([str(i.v) if i.active else '' for i in motors])+"\n")
+        write("D " + ','.join([str(i.d) if i.active else '' for i in motors])+"\n")
+        write("MC " + ''.join(['0' if i.active else 'X' for i in motors])+"\n")
+        write("GO " + ''.join(['1' if i.active else '0' for i in motors])+"\n")
+        write("DRIVE00000000\n")
+        self.parseEncoder()
+        for motor in motors:
+            motor.d=0
+            motor.active=False
+        [motor.save() for motor in motors]     
+#+end_src
+
+The =parseEncoder= function reads back the encoder positions from the
+motor controller.  For motors that don't have encoders, it reads back
+the position which the controller thinks that the motor moved to via
+dead reckoning.
+
+It begins by sending the "TPE" command to the controller and waiting
+for the response.  If no response is recieved, it simply tries again.
+The positions are then parsed from the comma separated text and stored
+in the =loc= member of the various =Motor= objects.
+
+#+name: controller_parseEncoder
+#+begin_src python
+    def parseEncoder(self):
+        self.ser.write("TPE\n")
+        line = self.ser.readline()
+        while line.find("TPE") == -1:
+            logging.debug("Readback:"+line)#This is the echo back from the unit
+            line = self.ser.readline()
+        logging.debug("Line: "+line)
+        response = self.ser.readline()
+        failures = 0
+        while response.find("TPE") == -1 and failures < 5:
+            logging.debug("Readback:"+response)#This is the echo back from the unit
+            response = self.ser.readline()
+            failures += 1
+        if failures > 4:
+            logging.error("Recieved no response from Motor System")
+            return self.parseEncoder() #Just try it again
+        logging.debug("Response:"+response)
+        #This is the response.  We use the readline to make sure that
+        #we don't timeout.
+        data = map(float,response.split("*TPE")[1].split(","))
+        for (motor,place) in zip(self.motors,data):
+            motor.loc = place 
+    def __del__(self):
+        self.ser.close()
+
+#+end_src
+
+** MotorFacade Class
+
+   The =MotorFacade= provides a unified interface to all of the
+   motors.  The user doesn't really care which motor controller the
+   motor is hooked onto - she simply wishes to move a motor.  Thus,
+   all of the various motor objects are collected into a single
+   interface focused around moving motors.  This can also be useful in
+   the future if motors that are NOT controlled by a Parker 6k8 are
+   added, as the code for these motors can be added to the facade
+   without forcing them to fit into the old framework.
+
+*** MotorFacade Skeleton
+
+#+name: motor_motorFacade
+#+begin_src python :noweb tangle :padline no
+class MotorFacade(object):
+    <<motorfacade_init>>
+    def getter(self,controller,index):
+        def newGetter():
+            controller.parseEncoder()
+            return controller.motors[index].loc
+        return newGetter
+    def setter(self,controller,index):
+        def newSetter(n):
+            logging.warn(n)
+            controller.motors[index].active=True
+            controller.motors[index].d=n
+            controller.go()
+            controller.parseEncoder()
+            return controller.motors[index].loc
+        return newSetter
+
+
+
+#+end_src
+
+*** MotorFacade Init
+
+The initialization begins by creating a connection to the controllers
+on com ports 3 and 8, called the top and middle controllers for
+obvious reasons.  Note that we =2= and =7=, instead of three and
+eight, because Python starts counting the COM ports at zero.
+
+#+name: motorfacade_init
+#+begin_src python
+    def __init__(self):
+        logging.info("Starting Top Controller")
+        self.topcontroller = Controller(2,topconfigs,timeout=5)
+        self.topcontroller.writefile("setuptop.txt")
+        self.topcontroller.write("tlim\n")
+        logging.info("Starting Middle Controller")
+        self.middlecontroller = Controller(7,middleconfigs,timeout=5)
+        logging.info("Writing to Middle Controller")
+        self.middlecontroller.writefile("setupmiddle.txt")
+        logging.info("Connecting to Middle Controller")
+        self.middlecontroller.write("tlim\n")
+        #Create motor getters
+#+end_src
+
+There's a large number of motors which will need to have functions
+added to the facade.  However, these functions will be nearly
+identical and will involve a large amount of duplication of code,
+violating the [[http://en.wikipedia.org/wiki/Don%27t_repeat_yourself][DRY]] principle.  Instead, we use the [[https://docs.python.org/2/library/functions.html#setattr][setattr]] function to
+add these function to the class programatically.  The =getter= and
+=setter= functions are then sued to create the actual class members.
+
+As an example, the code before will create a function =getR1= which
+returns the position of the right slit on the upstream slit set and
+another function =setRot= which move the rotation state.
+
+#+name: motorfacade_init
+#+begin_src python
+    #
+        logging.info("Establishing getters and setters")
+        topgetters = ["getT1","getB1","getL1","getR1","getT2","getB2","getL2","getR2"]
+        topsetters = ["setT1","setB1","setL1","setR1","setT2","setB2","setL2","setR2"]
+        for (i,g,s) in zip(range(8),topgetters,topsetters):
+            setattr(self,g,self.getter(self.topcontroller,i))
+            setattr(self,s,self.setter(self.topcontroller,i))
+        middlemotors = ["dummy0","dummy1","dummy2","Rot","GonioX","GonioY","dummy6","dummy7"]
+        for (i,name) in zip(range(8),middlemotors):
+            setattr(self,"get"+name,self.getter(self.middlecontroller,i))
+            setattr(self,"set"+name,self.setter(self.middlecontroller,i))
+        logging.info("Initialization finished")
+    
+
+#+end_src

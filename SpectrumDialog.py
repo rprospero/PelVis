@@ -20,11 +20,11 @@ class SpectrumDialog(wx.Dialog):
         """Create a SpectrumDialog"""
         wx.Dialog.__init__(self,parent,wx.ID_ANY,"Spectrum Options")
         sizer = wx.GridBagSizer()
-
-#        self.datacount = 0
+    #
         self.up = None #The spin up data array
         self.down = None #The spin down data array
-
+    #
+    
         #A dictionary of the available manipulations to perform
         #on the data before plotting it.
         self.modes = {"up":self.spinUp,
@@ -32,25 +32,26 @@ class SpectrumDialog(wx.Dialog):
                       "polar":self.polar,
                       "flipping":self.flipping}
         self.calcSpec = self.spinUp #The current data manipulation function
+    #
         
         saveButton = wx.Button(self,-1,"Save Spectrum")
         viewButton = wx.Button(self,-1,"View Spectrum")
         viewButton.Bind(wx.EVT_BUTTON,self.onView)
         saveButton.Bind(wx.EVT_BUTTON,self.onSave)
+    #
         
         sizer.Add(wx.StaticText(self,-1,"Minimum Percent Error"),
                   pos=wx.GBPosition(0,0), flag=wx.EXPAND)
         #An input box for the user's chosen percentage error
         self.minerr = wx.TextCtrl(self,-1,"10")
         sizer.Add(self.minerr,pos=wx.GBPosition(0,1), flag=wx.EXPAND)
-
+    #    
+    
         #A checkbox for whether the user wants the data autobinned
-#        self.binbox = wx.CheckBox(self,-1,"Auto binning")
         self.nobinrad = wx.RadioButton(self,-1,"Raw Data",style=wx.RB_GROUP)
         self.autobinrad = wx.RadioButton(self,-1,"Auto binning")
         self.setbinrad = wx.RadioButton(self,-1,"Fixed Binning")
-#        sizer.Add(self.binbox,pos=wx.GBPosition(1,0),flag=wx.EXPAND,
-#                  span=wx.GBSpan(1,2))
+    #
         sizer.Add(self.nobinrad,wx.GBPosition(1,0),flag=wx.EXPAND)
         sizer.Add(self.autobinrad,wx.GBPosition(1,1),flag=wx.EXPAND)
         sizer.Add(self.setbinrad,wx.GBPosition(1,2),flag=wx.EXPAND)
@@ -59,8 +60,7 @@ class SpectrumDialog(wx.Dialog):
         sizer.Add(viewButton,pos=wx.GBPosition(2,1),flag=wx.EXPAND)
         sizer.SetSizeHints(self)
         self.SetSizer(sizer)
-#        self.bin=True
-
+    
     def setData(self,up,down=None):
         """Sets the spin up and spin down spectra.  Expects two numpys arrays"""
         del self.up
@@ -70,19 +70,17 @@ class SpectrumDialog(wx.Dialog):
             down[down < 0.0] = 0.0
         self.up=up
         self.down=down
-
     def setScale(self,up,down=None):
         """Sets the scaling constants for the spin up and spin down states.
-
+    
         To calculate error, we need the raw neutron counts, not just the
         monitor normalized ones.  This function accepts the monitor counts
         used to do the initial scaling on the detector data, so that
         the raw counts can be recalculated.
-
+    
         """
         self.uscale=up
         self.dscale=down
-
     def setIntensityRange(self,range):
         """Set the minimum and maximum y axis for plotting"""
         self.vmin,self.vmax = range
@@ -108,11 +106,11 @@ class SpectrumDialog(wx.Dialog):
 
     def setMode(self,mode):
         """Chooses the calculation to perform on the data
-
+    
         Keyword arguments:
         mode -- a string describing which function out of self.modes
                 should be performed on the data.
-
+    
         """
         self.calcSpec = self.modes[mode]
 
@@ -128,9 +126,11 @@ class SpectrumDialog(wx.Dialog):
         if self.nobinrad.GetValue():
             return (np.arange(0.0,RESOLUTION)*20.0/RESOLUTION
                     ,self.up,self.down)
+    #
         #If we're going any sort of binning, we'll need raw values
         up=self.up*self.uscale
         down=self.down*self.dscale
+    #
         #Check for autobinning
         if self.autobinrad.GetValue():
             #The maximum percentage error in the spin up or spin down state
@@ -155,6 +155,7 @@ class SpectrumDialog(wx.Dialog):
             return (np.array(x),
                     np.array(u),
                     np.array(d))
+    #
         elif self.setbinrad.GetValue():
             count = int(self.minerr.GetValue())
             x = [np.mean(y) for y in 
@@ -165,19 +166,21 @@ class SpectrumDialog(wx.Dialog):
             return (np.array(x),
                     np.array(u),
                     np.array(d))
+    #
         else:
             raise RuntimeException("Need to Implement bullet choice!")
 
     def autobin(self,up,scale):
         """Rebins one data array based on the user's chosen error
-
+    
         Keyword arguments:
         up -- the array to be rebinned
         scale -- the conversion factor used to normalize against monitor
-
+    
         """
         if self.nobinrad.GetValue():
             return (np.arange(0.0,RESOLUTION)*20.0/RESOLUTION,up/scale)
+    #
         elif self.autobinrad.GetValue():
             x=[]
             u=[]
@@ -196,13 +199,15 @@ class SpectrumDialog(wx.Dialog):
                 else:
                     count += 1
             return (np.array(x),np.array(u))
+    #
         elif self.setbinrad.GetValue():
             count = int(self.minerr.GetValue())
             x = np.arange(0.0,RESOLUTION)*20.0/RESOLUTION
             x = np.array([np.mean(y) for y in np.array_split(x,count)])
             u = np.array([np.sum(y)/scale for y in np.array_split(up,count)])
             return (x,u)
-
+    
+    
     def flipping(self):
         """Calculate the flipping ratio"""
         if self.down is not None:
@@ -213,7 +218,6 @@ class SpectrumDialog(wx.Dialog):
             e = y*np.sqrt((uerr/u)**2+(derr/d)**2)
             #e = y * np.sqrt(1/(u + 1e-6)+1/(d + 1e-6))
             return (x,y,e)
-
     def polar(self):
         """Calculate the polarization"""
         if self.down is not None:
@@ -226,15 +230,12 @@ class SpectrumDialog(wx.Dialog):
             e = 2*np.sqrt(u**2*derr**2+d**2*uerr**2)/(u+d)**2
             #e = nerr/n*(1+abs(y))
             return (x,y,e)
-
     def spinUp(self):
         """Calculate the spin up intensity"""
         (x,y)=self.autobin(self.up*self.uscale,self.uscale)
         return (x,y,np.sqrt(y*self.uscale)/self.uscale)
-
     def spinDown(self):
         """Calculate the spin down intensity"""
         if self.down is not None:
             (x,y)=self.autobin(self.down*self.dscale,self.dscale)
             return (x,y,np.sqrt(y*self.dscale)/self.dscale)
-
