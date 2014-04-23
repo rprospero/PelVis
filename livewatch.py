@@ -33,6 +33,7 @@ def spectrum(run,mins=(0,0),maxs=(16,128),mask=None):
 
     return up,np.sum(mon.spec),manifest
 
+
 mpl.rcParams['interactive'] = True
 
 def manifestly(start):
@@ -55,6 +56,7 @@ def manifestly(start):
                 i += 1
             except ValueError:
                 yield None
+
 
 
 def spectra(gen):

@@ -28,15 +28,14 @@ class ImagePanel(wx.Panel):
         posFunction -- function to be updated with mouse position
         setMin -- function to be called on left click
         setMax -- function to be called on right click
-
+    
         """
         wx.Panel.__init__(self,parent)
         self.Bind(wx.EVT_PAINT,self.__OnPaint)
         self.posFunction = posFunction#Function to call on mouse movement
         self.setMin = setMin#Function to call on right click
         self.setMax = setMax#Function to call on left click
-
-        #The figure which holds the graph
+    #The figure which holds the graph
         self.figure = Figure(figsize=(1,1),dpi=512)
         #The object where the graph is drawn
         self.canvas = FigureCanvas(self,-1,self.figure)
@@ -45,8 +44,7 @@ class ImagePanel(wx.Panel):
         self.canvas.Bind(wx.EVT_RIGHT_UP,self.__OnMouseRight)
         
         self.cmap = cm.spectral#The color map for the graph
-
-        #Known file formats for saving images
+    #Known file formats for saving images
         self.handlers={u"BMP":wx.BITMAP_TYPE_BMP,
                         u"JPG":wx.BITMAP_TYPE_JPEG,
                         u"PNG":wx.BITMAP_TYPE_PNG,
@@ -58,13 +56,13 @@ class ImagePanel(wx.Panel):
         """Event handler to redraw graph when panel is redrawn."""
         self.canvas.draw()
         event.Skip()
-
+    
     def __OnMouseMove(self,event):
         """Event handler when the mouse moves over the graph"""
         (x,y) = event.GetPosition()
         if self.posFunction is None: return
         self.posFunction(x/32,y/4)
-
+    
     def __OnMouseLeft(self,event):
         """Event handler for left clicking on the graph."""
         (x,y) = event.GetPosition()
@@ -73,7 +71,7 @@ class ImagePanel(wx.Panel):
         else:
             self.setMin(x/32,y/4)
         event.Skip()
-
+    
     def __OnMouseRight(self,event):
         """Event handler for right clicking on the graph."""
         (x,y) = event.GetPosition()
@@ -85,12 +83,12 @@ class ImagePanel(wx.Panel):
 
     def update(self,data,vmin=10,vmax=20):
         """Change the dataset for the graph
-
+    
         Keyword arguments:
         data -- 2D numpy array
         vmin -- floor value for graphing
         vmax -- ceiling value for graphing
-
+    
         """
         self.data=data
         self.figure.clear()
@@ -101,6 +99,8 @@ class ImagePanel(wx.Panel):
         self.figure.canvas.draw()
         self.Refresh()
 
+
+    
     def saveImage(self,path):
         """Saves the graph to an image file"""
         bitmap = wx.EmptyBitmap(512,512,24)
@@ -109,6 +109,7 @@ class ImagePanel(wx.Panel):
         image = wx.Bitmap.ConvertToImage(bitmap)
         image.SaveFile(path,self.handlers[path[-3:].encode('ascii')])
 
+    
     def copyToClipboard(self):
         """Copies the image of the graph to the system Clipboard."""
         if wx.TheClipboard.Open():

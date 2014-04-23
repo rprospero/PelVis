@@ -44,23 +44,23 @@ class GraphPanel(wx.Panel):
     VERTICAL = 2
     def __init__(self,parent,fig,res,orientation):
         """Create a new panel for plotting.
-
+    
         Keyword Arguments:
         parent -- the panel in which the new one is to be displayed
         fig -- a tuple representing the relative dimensions of the panel
         res -- the number of pixels per part of the fig tuple.
         orientation -- the rotation of the image
-
+    
         fig and res combine to produce the total size, in pixels, of the
         panel.  For instance, if fig=(2,8) and res=64, the final panel
         has a size of (128,512)
-
+    
         The orientation can be one of HORIZONTAL, VERTICAL, or INVERTED,
         as defined as constants in the class definition. Horitzontal uses
         the standard x and y axes, and is best for putting above a 2d image.
         VERTICAL swaps the x and y axes and is best for going to the right
         of an image.  INVERTED plots with x and -y, and is best below the image.
-
+    
         """
         wx.Panel.__init__(self,parent)
         self.Bind(wx.EVT_PAINT,self.__OnPaint)
@@ -70,7 +70,6 @@ class GraphPanel(wx.Panel):
         self.canvas = FigureCanvas(self,-1,self.figure)
         #The rotation of the figure.
         self.orientation=orientation
-
     def SetPlot(self,x,y):
         """Set the x and y coordinates of the data to be plotted."""
         self.figure.clear()
@@ -93,7 +92,7 @@ class GraphPanel(wx.Panel):
             self.axes.fill_betweenx(x,-y)
             self.SetPos([0.2,0,0.8,1])
             self.axes.set_ylim((0,128))
-
+    
         self.axes.autoscale_view(True,True,True)
         self.Refresh()
 
@@ -103,10 +102,9 @@ class GraphPanel(wx.Panel):
 #     def SetXLim(self,range):
 #         self.axes.set_xlim(range)
 
-
     def SetPos(self,pos):
         """Set the position of the graph within the panel.
-
+    
         This function take a four element array which marks the far
         corners of the graph.  The coordinates are given as a fraction
         of the size of the panel.  For instance, pos=[0,0.3333,1,0.6666]
@@ -114,7 +112,7 @@ class GraphPanel(wx.Panel):
         direction, but only uses the middle third in the y direction.
         You will probably need to play with these values in order to be 
         able to view the values of the axes on the plot.
-
+    
         """
         self.axes.set_position(pos)
 

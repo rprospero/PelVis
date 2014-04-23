@@ -21,6 +21,7 @@ def export(runs,sortby=None,flipper=0,minmon=8,current=None,\
 
     keys = data.keys()
     print keys
+#
 
     if sortby is None:
         values = [""]
@@ -29,8 +30,10 @@ def export(runs,sortby=None,flipper=0,minmon=8,current=None,\
             values = set([x[sortby] for x in keys])
         else:
             values = [filter]
+#
 
     base = basedir + "SESAME_%i/" % runs[-1]
+#
 
     for value in values:
         if type(value) is not str:
@@ -44,12 +47,15 @@ def export(runs,sortby=None,flipper=0,minmon=8,current=None,\
         sames = [x for x in keys if (flipper is not None and x[flipper] == 0)  \
                 and (watch is None or x[choices[watch]]==current) \
                 and (sortby is None or normalize_name(x[sortby]) == value)]
+#
         if filter is not None:
             value = "" #Don't put values on files when we're only running a single export
+#
         if current==None:
             titleend=""
         else:
             titleend="_current="+str(current)
+#
         if ups == [] and downs == []:
             Combiner.save(base+value+"Combined"+titleend,
                           0,
@@ -70,6 +76,8 @@ def export(runs,sortby=None,flipper=0,minmon=8,current=None,\
         
             
 
+
+
 def plot_2d_range(data,rnge=None,steps=100,mask=None):
     """Takes a 2d data set and plots a plateau plot"""
     if type(rnge) is tuple:
@@ -87,7 +95,6 @@ def plot_2d_range(data,rnge=None,steps=100,mask=None):
     ys = np.array(ys)
     plt.plot(xs,ys,"r*")
     plt.show()
-
 def get_2d_int(run,name):
     p = PelFile(basedir+"SESAME_%i/" % run + name+"_neutron_event.dat")
     mon = MonFile(basedir+"SESAME_%i/" % run + name+"_bmon_histo.dat",False)
@@ -104,7 +111,6 @@ def plot_pol_range(run,mask=None):
     plot_2d_range((up-down)/(up+down),(-1.0,1.0),mask=mask)
     
     
-
 def getIntegratedSpectra(run,name,mins,maxs,mask):
     name = normalize_name(name)
     p = PelFile(basedir+"SESAME_%i/" % run + name+"up_neutron_event.dat")
@@ -158,7 +164,6 @@ def errspectrum(run,name,mins=(0,0),maxs=(16,128),mask=None):
     p = (up-down)/(up+down)
     err = p*np.sqrt((up-down)**-2+(up+down)**-2)*np.sqrt(uperr**2+downerr**2)
     return p,err
-
 def simple_spectrum(run,mins=(0,0),maxs=(16,128),mask=None):
     p = PelFile(basedir+"SESAME_%i/SESAME_%i_neutron_event.dat"%(run,run))    
     mon = MonFile(basedir+"SESAME_%i/SESAME_%i_bmon_histo.dat"%(run,run),False)    
@@ -218,6 +223,7 @@ def echoplot(run,names,mins=(0,0),maxs=(16,128),mask=None,outfile=None):
                         print(data[j,i])
                         of.write("%f\t%f\t%f\t%f\n"
                                  %(xs[i],ys[j],data[j,i],errs[j,i]))
+
 
 
 def intensity(run,names,mins=(0,0),maxs=(16,128),mask=None,outfile=None):
@@ -355,55 +361,72 @@ def two_flipper(runs, flipper1, flipper2, minmon, current, \
 if __name__=='__main__':
 
     parser = OptionParser()
+#
 
     choices = {None:None,"flipper":0,"guides":1,"phase":2,"sample":3,"1":4,"2":5,"3":6,"4":7,"5":8,"6":9,"7":10,"8":11}
+#
 
     parser.add_option("-e","--export", type="choice", action="store", \
                       help="Export into pel files",
                       choices=["flip","twoflip"])
+#
     parser.add_option("--sortby",action="store",type="choice", \
                        help = "Which power supply is scanned",
                        choices=choices.keys())
+#
     parser.add_option("--filter",action="store",type="float", \
                        help="Focuses the export to only a single \
                        value in the sortby parameter")
+#
     parser.add_option("--flip",action="store",type="choice", \
                        help="Which power supply runs the flipper",
                        choices=choices.keys())
+#
     parser.add_option("--flip2",action="store",type="choice", \
                        help="Which power supply runs the second flipper \
                        in a two flipper run",
                        choices=choices.keys())
+#
     parser.add_option("--mon",action="store",default=32,type="float", \
                        help="Minimum monitor value.  If the value \
                        is lessthan or equal to zero, all runs are \
                        included, regardless of monitor count.")
+#
 
     parser.add_option("--xmin",action="store",type="int",help="Minimum x value",default=0)
     parser.add_option("--ymin",action="store",type="int",help="Minimum y value",default=0)
     parser.add_option("--xmax",action="store",type="int",help="Maximum x value",default=16)
     parser.add_option("--ymax",action="store",type="int",help="Maximum y value",default=128)
+#
 
     parser.add_option("--start",action = "store",type="float", help="The starting current of the scan")
     parser.add_option("--stop",action = "store", type="float", help="The ending current of the scan")
     parser.add_option("--step",action = "store", type="float", help="The current step of the scan")
+#
     parser.add_option("--skip",action = "append", type="int", help="Marks that a run should NOT be included in the file export.")
+#
 
     parser.add_option("--plot",action="store",type="choice",
                       help="Where to make a simple plot or perform a height diff",
                       choices=["plot","diff","fr","echo","intensity","poldrift","int2drange","pol2drange"])
+#
     parser.add_option("--save",action="store",type="string",default=None,
                       help="A file in which to save the dataset.")
+#
     parser.add_option("--mask",action="append",type="string",default=None,
                       help="A mask file indicating which pixel to use in the analysis")
+#
     parser.add_option("--current",action="store",type="int",
                       default=None,
                       help="A triangle current to filter the results.")
+#
     parser.add_option("--watch",action="store",type="choice", \
                       choices=choices.keys(), \
                       help="Which coil are we watching the current of (see --current)")
+#
     parser.add_option("--complex",action="store_true",
                      help="Whether to load the run data from runlist.txt")
+#
 
     (options,runs) = parser.parse_args()
 
@@ -411,9 +434,11 @@ if __name__=='__main__':
         runs = list(np.loadtxt("runlist.txt"))
     else:
         runs = range(int(runs[0]),int(runs[1])+1)
+#
     if options.skip:
         for item in options.skip:
             runs.remove(item)
+#
 
     if options.export=="flip":
         export(runs, choices[options.sortby], choices[options.flip], \
@@ -421,6 +446,7 @@ if __name__=='__main__':
     if options.export=="twoflip":
         two_flipper(runs, choices[options.flip], choices[options.flip2], \
                options.mon, options.current, options.watch)
+#
 
     if options.mask is not None:
         mask = np.ones((128,16),dtype=np.bool)
@@ -431,8 +457,11 @@ if __name__=='__main__':
                 mask = np.logical_and(mask,np.load(m))
     else:
         mask = None
+#
     if options.plot is None:
         pass
+
+#
     else:
         if options.sortby is None or options.filter is not None:
             names = [""]
@@ -454,6 +483,7 @@ if __name__=='__main__':
                                         normalize_name(name)+
                                         "down_neutron_event.dat")]
             print(names)
+#
 
         if options.plot=="plot":
             print runs
@@ -475,4 +505,3 @@ if __name__=='__main__':
             plot_int_range(runs[-1])
         elif options.plot=="pol2drange":
             plot_pol_range(runs[-1],mask)
-

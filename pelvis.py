@@ -44,6 +44,7 @@ class PositionPanel(wx.Panel):
     interest.
 
     """
+
     def __init__(self,parent):
         """Create a PositionPanel"""
         wx.Panel.__init__(self,parent)
@@ -60,18 +61,18 @@ class PositionPanel(wx.Panel):
         self.integrate = wx.TextCtrl(self,-1,"")
         sizer.Add(wx.StaticText(self,-1,"ROI:"),pos=wx.GBPosition(3,0))
         sizer.Add(self.integrate,pos=wx.GBPosition(3,1))
-
+        
         #Set the starting region of interest
         self.minX = 0
         self.minY = 0
         self.maxX = 16
         self.maxY = 128
-
+        
         self.x.SetEditable(False)
         self.y.SetEditable(False)
         self.intensity.SetEditable(False)
         self.data = None #A 2D numpy array of the data being examined.
-
+        
         self.SetAutoLayout(True)
         sizer.SetSizeHints(self)
         self.SetSizer(sizer)
@@ -97,7 +98,6 @@ class PositionPanel(wx.Panel):
         """Calculates the sum of the data over the region of interest"""
         self.integrate.SetValue(
             str(np.sum(self.data[self.minY:self.maxY,self.minX:self.maxX])))
-
 class PelvisOptionPanel(wx.Panel):
     """A panel for user parameters
 
@@ -124,23 +124,21 @@ class PelvisOptionPanel(wx.Panel):
         """Creates a PelvisOptionPanel"""
         wx.Panel.__init__(self,parent)
         sizer=wx.BoxSizer(wx.VERTICAL)
-        
         self.options={}#member which holds the created text controls
-
+          
         self.DEFAULTS.sort(lambda x,y: x[1]-y[1])
         for option in self.DEFAULTS:
             (key,_,title,val) = option
             sizer.Add(wx.StaticText(self,-1,title))
             self.options[key] = wx.TextCtrl(self,-1,val)
             sizer.Add(self.options[key])
-            
-
         self.SetAutoLayout(True)
         self.specDlg = SpectrumDialog(self)
         sizer.SetSizeHints(self)
         self.SetSizer(sizer)
         self.Layout()
 
+    
     def getLambdaRange(self):
         """Gives a tuple with the minimum and maximum wavelength indices"""
         try:
@@ -152,7 +150,7 @@ class PelvisOptionPanel(wx.Panel):
         except ValueError:
             lmax = RESOLUTION
         return (lmin,lmax)
-
+      
     def setLambdaRange(self,min,max):
         """Set the minimum and maximum wavelengths"""
         self.options["lambdaMin"].SetValue(str(min))
@@ -160,10 +158,10 @@ class PelvisOptionPanel(wx.Panel):
 
     def getIntensityRange(self):
         """Return a tuple with the floor and ceilling for intensity
-
+      
         If a value isn't specified, or is not a number, None is returned
         for that part of the range.
-
+      
         """
         try:
             vMin = float(self.options["intMin"].GetValue())
@@ -174,19 +172,20 @@ class PelvisOptionPanel(wx.Panel):
         except ValueError:
             vMax = None
         return (vMin,vMax)
-
+      
     def setIntensityRange(self,min,max):
         self.options["intMin"].SetValue(str(min))
         self.options["intMax"].SetValue(str(max))
         self.specDlg.setIntensityRange((min,max))
+    
 
     def getRoi(self):
         """Returns a 4-tuple with the region of interest
-
+      
         Returns (xmin,xmax,ymin,ymax).  Minimum values, if
         unspecified, are set to zero.  Maximum values, if
         unspecified, are set to 512.
-
+      
         """
         try:
             xMin = int(self.options["xMin"].GetValue())
@@ -205,12 +204,12 @@ class PelvisOptionPanel(wx.Panel):
         except ValueError:
             yMax = 512
         return (xMin,xMax,yMin,yMax)
-
+      
     def setPosMin(self,x,y):
         """Takes the x and y coordinates for the NW corner of the ROI."""
         self.options["xMin"].SetValue(str(x))
         self.options["yMin"].SetValue(str(y))
-
+      
     def setPosMax(self,x,y):
         """Takes the x and y coordinates for the SE corner of the ROI."""
         self.options["xMax"].SetValue(str(x))
@@ -247,16 +246,15 @@ class PelvisFrame(wx.Frame):
 
     def __init__(self,Yield):
         """Create a PELvis frame
-
+          
         Keyword arguments:
         Yield -- A function to give control back to the main event loop
-
+          
         """
         wx.Frame.__init__(self,None,wx.ID_ANY,"PEL Visualizer")
         self.data = PelFile()
         self.Yield = Yield
         self.mask = np.ones((128,16),dtype=np.bool)
-
         #Create items in the frame
         self.yPanel = GraphPanel(self,(2,8),64,GraphPanel.VERTICAL)
         self.xPanel = GraphPanel(self,(8,2),64,GraphPanel.INVERTED)
@@ -266,13 +264,13 @@ class PelvisFrame(wx.Frame):
         self.imPanel = ImagePanel(self,self.posPanel.set,
                                   self.opPanel.setPosMin,self.opPanel.setPosMax)
         self.specDlg = SpectrumDialog(self)
-
+          
         self.cmp = None #color map
         self.imageSaveDialog=wx.FileDialog(self,"Choose graphics file",wildcard="Portable Network Graphic (png)|*.PNG|Windows Bitmap (bmp)|*.BMP|Joint Photographic Experts Group (jpg)|*.JPG|Portable Network Monocrome (pnm)|*.PNM|Tagged Image File Format (tif)|*.TIF|Archaic, useless format (pcx)|*.PCX",style=wx.FD_SAVE|wx.FD_OVERWRITE_PROMPT)
-
+          
         self.update = self.updateSingle#update the image
         self.updateData = self.updateSingleData#update the data in the image
-
+          
         #Create the menu
         menubar = wx.MenuBar()
         filemenu = wx.Menu()
@@ -280,7 +278,7 @@ class PelvisFrame(wx.Frame):
         scalemenu = wx.Menu()
         analysismenu = wx.Menu()
         noisemenu = wx.Menu()
-
+          
         #populate the menu
         filemenu.Append(self.ID_OPEN,"&Open\tCtrl-O"," Open a PEL file")
         filemenu.Append(self.ID_OPENTWO,"&Polarized Set"," Open two PEL files")
@@ -288,26 +286,26 @@ class PelvisFrame(wx.Frame):
         filemenu.Append(self.ID_SPECTRUM,"Spectrum"," View the TOF spectrum")
         filemenu.Append(self.ID_IMAGE_ARRAY,"&Export Images..."," Save a series of TOF snapshots")
         filemenu.Append(self.ID_EXIT,"&Quit\tCtrl-Q"," Quit")
-
+          
         editmenu.Append(self.ID_COPY,"&Copy\tCtrl-c","Copy the current image to the clipboard")
-
+          
         scalemenu.Append(self.ID_GREY,"Greyscale\tCtrl-G","Monochrome images")
         scalemenu.Append(self.ID_HUEVAL,"Hue and Value\tCtrl-H","Scaled Rainbow Images")
         scalemenu.Append(self.ID_SPECTRAL,"spectral","Uses spectrum of light")
         scalemenu.Append(self.ID_PICKER,"Map Picker..."," Select from the full list of colormaps")
-
+          
         analysismenu.Append(self.ID_POLAR,"Check Polarization\tCtrl-P","2d plot of polarization data")
         analysismenu.Append(self.ID_FLIPPING,"Check Flipping Ratio\tCtrl-F","2d plot of  spin up over spin down")
         analysismenu.Append(self.ID_SPIN_UP,"View Spin Up State\tCtrl-U","2d plot of  spin up")
         analysismenu.Append(self.ID_SPIN_DOWN,"View Spin Down State\tCtrl-D","2d plot of  spin down")
-
+          
         noisemenu.Append(self.ID_FLAT,"&Load Flat"," Load a blank run for background subtraction")
         noisemenu.Append(self.ID_FAKEFLAT,"Si&mulate Flat"," Drop out background within the same image")
         noisemenu.Append(self.ID_ROD,"Region of &Disinterest"," Drop out background within the same image")
         noisemenu.Append(self.ID_EXPORT_ROI,"Export ROI"," Export a binary file corresponding to where the data is above the minimum intensity.")
         noisemenu.Append(self.ID_IMPORT_ROI,"Import ROI"," Add another exclusion mask.")
-
-
+          
+          
         #Bind events to the menu
         self.Connect(self.ID_EXIT,-1,wx.wxEVT_COMMAND_MENU_SELECTED,self.OnExit)
         self.Connect(self.ID_OPEN,-1,wx.wxEVT_COMMAND_MENU_SELECTED,self.OnOpen)
@@ -323,21 +321,22 @@ class PelvisFrame(wx.Frame):
         self.Connect(self.ID_FLIPPING,-1,wx.wxEVT_COMMAND_MENU_SELECTED,self.OnFlipping)
         self.Connect(self.ID_SPIN_UP,-1,wx.wxEVT_COMMAND_MENU_SELECTED,self.OnAnalysisSpinUp)
         self.Connect(self.ID_SPIN_DOWN,-1,wx.wxEVT_COMMAND_MENU_SELECTED,self.OnAnalysisSpinDown)
-
+          
         self.Connect(self.ID_FLAT,-1,wx.wxEVT_COMMAND_MENU_SELECTED,self.OnFlat)
         self.Connect(self.ID_FAKEFLAT,-1,wx.wxEVT_COMMAND_MENU_SELECTED,self.OnFakeFlat)
         self.Connect(self.ID_ROD,-1,wx.wxEVT_COMMAND_MENU_SELECTED,self.OnROD)
         self.Connect(self.ID_EXPORT_ROI,-1,wx.wxEVT_COMMAND_MENU_SELECTED,self.OnExportROI)
         self.Connect(self.ID_IMPORT_ROI,-1,wx.wxEVT_COMMAND_MENU_SELECTED,self.OnImportROI)
         self.Connect(self.ID_COPY,-1,wx.wxEVT_COMMAND_MENU_SELECTED,self.OnCopy)
-
+        
+          
         menubar.Append(filemenu,"&File")
         menubar.Append(editmenu,"&Edit")
         menubar.Append(scalemenu,"&Color")
         menubar.Append(analysismenu,"&Analysis")
         menubar.Append(noisemenu,"&Noise")
         self.SetMenuBar(menubar)
-
+          
         #arrange window
         sizer = wx.GridBagSizer()
         sizer.Add(self.colorbar,pos=wx.GBPosition(0,9),span=wx.GBSpan(9,1))
@@ -348,11 +347,11 @@ class PelvisFrame(wx.Frame):
         sizer.Add(self.posPanel,pos=wx.GBPosition(8,0),flag=wx.EXPAND)
         self.progress = wx.Gauge(self,range=1000)
         sizer.Add(self.progress,pos=wx.GBPosition(9,0),span=wx.GBSpan(1,11),flag=wx.EXPAND)
-
+          
         updateButton = wx.Button(self,-1,"Update")
         updateButton.Bind(wx.EVT_BUTTON,self.OnUpdateButton)
         sizer.Add(updateButton,flag=wx.EXPAND,pos=wx.GBPosition(8,10))
-
+          
         self.data = self.makePel()
         self.flatrun = None#background data
         
@@ -368,29 +367,29 @@ class PelvisFrame(wx.Frame):
             self.Yield()
         data.statusfunc = statusfunc
         return data
-
     def loadPel(self,message):
         """Load a .pel file and its monitor data.
-
+        
         Keyword arguments:
         message -- The title for the load file dialog.
-
+        
         """
         dlg=wx.FileDialog(self,message,wildcard="He3 data|*neutron_event.dat|Preformatted Histograms|*.npy",style=wx.FD_OPEN)
         if dlg.ShowModal()==wx.ID_OK:
-#            self.SetCursor(wx.CURSOR_WAIT)
+        #            self.SetCursor(wx.CURSOR_WAIT)
             path = dlg.GetPath()
             if path[-3:] == "dat":
                 data = self.makePel()
                 data.readfileimage(path)
             elif path[-3:] == "npy":
                 data = np.load(path)
-#            self.SetCursor(wx.CURSOR_ARROW)
+        #            self.SetCursor(wx.CURSOR_ARROW)
         else:
             return (None,None)
         mon = MonFile(path[:-17]+"bmon_histo.dat")
         return (data,mon)
 
+    
     def OnImageArray(self,event):
         """Exports the 2d detector image by wavelength"""
         dlg = self.imageSaveDialog
@@ -411,6 +410,7 @@ class PelvisFrame(wx.Frame):
             self.updateData()
             self.progress.SetValue(0)
 
+    
     def loadNormPel(self,message):
         """Load a .pel file, normalize it by monitor, and subtract background"""
         (data,mon) = self.loadPel(message)
@@ -446,7 +446,7 @@ class PelvisFrame(wx.Frame):
         (lmin,lmax) = self.opPanel.getLambdaRange()
         self.flatdata = np.sum(self.data[:,:,lmin:lmax],2)
         self.update()
-
+      
     def updateDataFlip(self,event=None):
         """Update changes in wavelength for flipping ratios"""
         (lmin,lmax) = self.opPanel.getLambdaRange()
@@ -455,7 +455,7 @@ class PelvisFrame(wx.Frame):
         d = np.sum(d3d[:,:,lmin:lmax],2)
         self.flatdata = u/(d+1e-6)
         self.update()
-
+      
     def updateDataPolar(self,event=None):
         """Update changes in wavelength for polarizations"""
         (lmin,lmax) = self.opPanel.getLambdaRange()
@@ -464,27 +464,27 @@ class PelvisFrame(wx.Frame):
         d = np.sum(d3d[:,:,lmin:lmax],2)
         self.flatdata = (u-d)/(u+d+1e-6)
         self.update()
-
+    
     def updateDataUp(self,event=None):
         """Update changes in wavelength for the spin up state"""
         (lmin,lmax) = self.opPanel.getLambdaRange()
         (u3d,_)=self.data
         self.flatdata = np.sum(u3d[:,:,lmin:lmax],2)
         self.update()
-
+      
     def updateDataDown(self,event=None):
         """Update changes in wavelength for the spin down state"""
         (lmin,lmax) = self.opPanel.getLambdaRange()
         (_,d3d)=self.data
         self.flatdata = np.sum(d3d[:,:,lmin:lmax],2)
         self.update()
-
+      
     def updateSingle(self,event=None):
         """Update the 2D data for the region of interest and intensity"""
         (vMin,vMax) = self.opPanel.getIntensityRange()
         (xMin,xMax,yMin,yMax) = self.opPanel.getRoi()
         data = self.flatdata[:,:]
-
+      
         #Mask to zero during the summing parts
         data[np.logical_not(self.mask)] = 0
         self.posPanel.data = data
@@ -505,6 +505,7 @@ class PelvisFrame(wx.Frame):
         #mask to vmin for the plotting
         data[np.logical_not(self.mask)] = vMin
         self.imPanel.update(self.flatdata,vMin,vMax)
+    
 
     def OnUpdateButton(self,event):
         """Refresh the data when the user pushes the "Update" button"""
@@ -547,7 +548,7 @@ class PelvisFrame(wx.Frame):
         np.save(self.flatrun,flatrun)
         self.flatrun.seek(0)
         self.progress.SetValue(0)
-
+      
     def OnFakeFlat(self,event):
         """Create a fake background run from outside the region of interest."""
         (xMin,xMax,yMin,yMax)=self.opPanel.getRoi()
@@ -556,12 +557,12 @@ class PelvisFrame(wx.Frame):
         backgroundarea = totarea-centarea
         if type(self.data) is tuple:
             (u,d)=self.data
-
+      
             totu = np.sum(u)
             totd = np.sum(d)
             centu = np.sum(u[yMin:yMax,xMin:xMax,:])
             centd = np.sum(d[yMin:yMax,xMin:xMax,:])
-
+      
             backgroundu = totu-centu
             backgroundd = totd-centd
             backgroundrateu = backgroundu/backgroundarea
@@ -608,7 +609,7 @@ class PelvisFrame(wx.Frame):
             #print(self.data.shape)
             self.data -= totd
         self.updateData()
-
+    
     def OnExportROI(self,event):
         """Save a file containing a map of where the current data
         image is greater than vmin"""
@@ -631,7 +632,7 @@ class PelvisFrame(wx.Frame):
                 np.savetxt(path,mask,fmt="%d")
             else:
                 np.save(path,mask)
-
+    
     def OnImportROI(self,event):
         """Adds another mask to the current system mask"""
         dlg = wx.FileDialog(self,
@@ -653,17 +654,16 @@ class PelvisFrame(wx.Frame):
             #self.opPanel.setLambdaRange(newmask["lMin"],newmask["lMax"])#
             #self.opPanel.setIntensityRange(newmask["vMin"],newmask["vMax"])#
             self.updateData()
-        
-        
-
+    
+    
     def OnSave(self,event):
         """Save the current 2D image to a file"""
         print("OnSave")
-#        dlg=wx.FileDialog(self,"Choose graphics file",wildcard="Windows Bitmap (bmp)|*.BMP|Portable Network Graphic (png)|*.PNG|Joint Photographic Experts Group (jpg)|*.JPG|Portable Network Monocrome (pnm)|*.PNM|Tagged Image File Format (tif)|*.TIF|Archaic, useless format (pcx)|*.PCX",style=wx.FD_SAVE|wx.FD_OVERWRITE_PROMPT)
+    #        dlg=wx.FileDialog(self,"Choose graphics file",wildcard="Windows Bitmap (bmp)|*.BMP|Portable Network Graphic (png)|*.PNG|Joint Photographic Experts Group (jpg)|*.JPG|Portable Network Monocrome (pnm)|*.PNM|Tagged Image File Format (tif)|*.TIF|Archaic, useless format (pcx)|*.PCX",style=wx.FD_SAVE|wx.FD_OVERWRITE_PROMPT)
         dlg = self.imageSaveDialog
         if dlg.ShowModal()==wx.ID_OK:
             self.imPanel.saveImage(dlg.GetPath())
-
+    
     def OnSpectrum(self,event):
         """Display a plot of the region of interest versus wavelength"""
         print("OnSpectrum")
@@ -683,36 +683,36 @@ class PelvisFrame(wx.Frame):
             copy = self.data[:,:,:]
             copy[np.logical_not(self.mask)] = 0
             u = np.sum(np.sum(copy[yMin:yMax,xMin:xMax],0),0)
-#            u *= self.scale
+            #            u *= self.scale
             self.specDlg.setScale(self.scale)
             self.specDlg.setData(u)
         self.specDlg.setIntensityRange(self.opPanel.getIntensityRange())
         self.specDlg.Show()
-
+      
     def OnGrey(self,event):
         """Set the colormap to gray"""
         self.imPanel.cmap = cm.gray
         self.colorbar.setCmap(cm.gray)
         self.update()
-
+    
     def OnHueVal(self,event):
         """Set the colormap to a rainbow"""
         self.imPanel.cmap = cm.jet
         self.colorbar.setCmap(cm.jet)
         self.update()
-
+    
     def OnSpectral(self,event):
         """Set the colormap to the spectral map"""
         self.imPanel.cmap = cm.spectral
         self.colorbar.setCmap(cm.spectral)
         self.update()
-
+    
     def OnPicker(self,event):
         """Let the user pick a color map from a list"""
         if self.cmp is None:
             self.cmp = ColorMapPicker(self,self.setColorMap)
         self.cmp.Show()
-
+      
     def setColorMap(self,cmap):
         """Changes to the given colormap"""
         self.imPanel.cmap = cmap
@@ -720,10 +720,10 @@ class PelvisFrame(wx.Frame):
         self.update()
 
 
+      
     def OnExit(self,event):
-        """Quit the program"""
-        self.Close()
-
+          """Quit the program"""
+          self.Close()
     def loadUpAndDown(self):
         """Read in spin flip data"""
         u3d,uscale = self.loadNormPel("Spin Up State")
@@ -735,7 +735,6 @@ class PelvisFrame(wx.Frame):
         self.scale = (uscale,dscale)
         return True
 
-
     def OnPolar(self,event):
         """Display neutron polarization"""
         print("OnPolar")
@@ -743,7 +742,7 @@ class PelvisFrame(wx.Frame):
         self.updateData = self.updateDataPolar
         self.update = self.updateSingle
         self.updateData()
-
+      
     def OnFlipping(self,event):
         """Display the flipping ratio"""
         print("OnFlip")
@@ -751,7 +750,7 @@ class PelvisFrame(wx.Frame):
         self.updateData = self.updateDataFlip
         self.update = self.updateSingle
         self.updateData()
-
+      
     def OnAnalysisSpinUp(self,event):
         """Display the Spin Up data"""
         print("OnSpinUp")
@@ -759,7 +758,7 @@ class PelvisFrame(wx.Frame):
         self.updateData = self.updateDataUp
         self.update = self.updateSingle
         self.updateData()
-
+      
     def OnAnalysisSpinDown(self,event):
         """Display the Spin Down data"""
         print("OnSpinDown")
@@ -767,11 +766,12 @@ class PelvisFrame(wx.Frame):
         self.updateData = self.updateDataDown
         self.update = self.updateSingle
         self.updateData()
-
+        
     def OnCopy(self,event):
         """Copy the image to a clipboard"""
         self.imPanel.copyToClipboard()
                 
+
 
 
 if __name__=="__main__":

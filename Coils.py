@@ -21,11 +21,11 @@ class Coils(xmlrpclib.ServerProxy):
         """Creates the connection object"""
         xmlrpclib.ServerProxy.__init__(self,self.HOST + ":" + str(self.PORT) + "/RPC2")
         self.fail = failmethod
-
+#
     def flip(self):
         """Reverses the current through the flipping coil"""
         self.proxy.flipper(-1*self.proxy.getFlipper())
-
+#
     def __getattr__(self,name):
         method = xmlrpclib.ServerProxy.__getattr__(self,name)
         def wrapped(*args):
@@ -45,4 +45,3 @@ if __name__=="__main__":
     coils = Coils()
     for i in range(1,5):
         coils.triangle(i,i*2-1)
-    

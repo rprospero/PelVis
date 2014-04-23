@@ -22,26 +22,26 @@ class GraphFrame(wx.Frame):
     ID_COPY = 500
     def __init__(self,parent=None,title=""):
         """Creates a new frame for displaying graphs
-
+    
         Keyword arguments:
         parent -- the parent frame of the new frame
         title -- the title for the frame.  This is not the title
                  for the graph.
-
+    
         """
         wx.Frame.__init__(self,parent,wx.ID_ANY,title)
-
+    
         self.panel = wx.Panel(self)
         self.panel.Bind(wx.EVT_PAINT,self.__PanelPaint)
-
+    #
         menubar = wx.MenuBar()
         editmenu = wx.Menu()
         editmenu.Append(self.ID_COPY,"&Copy\tCtrl-C"," Copy image to the clipboard")
         self.Connect(self.ID_COPY,-1,wx.wxEVT_COMMAND_MENU_SELECTED,self.OnCopy)
         menubar.Append(editmenu,"&Edit")
         self.SetMenuBar(menubar)
-        
-
+    #   
+    
         #First, make the plotting figure.
         self.figure = Figure()
         #Then give the figure somewhere to display.
@@ -49,7 +49,7 @@ class GraphFrame(wx.Frame):
         #Finally, make a Toolbar to adjust the canvas at runtime.
         self.toolbar = NavigationToolbar2Wx(self.canvas)
         self.toolbar.Realize()
-
+    #
         sizer = wx.GridBagSizer()
         sizer.Add(self.canvas,pos=wx.GBPosition(1,0))
         sizer.Add(self.toolbar,pos=wx.GBPosition(0,0))
@@ -76,10 +76,10 @@ class GraphFrame(wx.Frame):
 
     def plot(self,x,y,range=None,xerr=None,yerr=None):
         """Plots 2D data in the frame
-
+    
         This method is the main workhorse of the class.  It plots
         a line representing the x and y data, with optional errorbars.
-
+    
         Keyword arguments:
         x -- numpy array of x coordinates
         y -- numpy array of y corrdinates
@@ -87,7 +87,7 @@ class GraphFrame(wx.Frame):
                  or None for autoscaling
         xerr -- numpy array of the errors in the x direction
         yerr -- numpy array of errors in the y direction
-
+    
         """
         self.figure.clear()
         axes = self.figure.add_subplot(111)

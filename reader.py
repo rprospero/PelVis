@@ -55,25 +55,14 @@ class PelFile:
         """Handles the data stored in PEL files"""
         data = np.ndarray(shape=(0),dtype=np.int64)#Raw detector data
 
+        
         def __init__(self,file=""):
                 """Create a PelFile"""
                 if(file!=""):
                         self.readfileimage(file)
-#               self.time=None
-#               self.monitor=None
+                        
 
-#         def loadmon(self,file):
-#                 with open(file,"r") as infile:
-#                         infile.readline() #drop first line
-#                         line = infile.readline()
-#                         m = re.search("lasted (\d+) milliseconds",line)
-#                         if m:
-#                                 self.time = m.group(1)
-#                                 print(self.time)
-#                 self.mon = np.loadtxt(file,dtype=np.int32,skiprows=3)
-#                 print(self.mon)
-                
-
+        
         def parseHeader(self,bytes):
                 """Turn the Pel file header into structured data"""
                 Header = namedtuple(
@@ -102,6 +91,7 @@ class PelFile:
                         "MCPPowerSupplyControlVoltageCommandOffset " +
                         "MCPPowerSupplyVoltageEnable " +
                         "x1Gain x2Gain x3Gain x4Gain x5Gain x6Gain x7Gain x8Gain x9Gain x10Gain " +
+        
                         "y1Gain y2Gain y3Gain y4Gain y5Gain y6Gain y7Gain y8Gain y9Gain y10Gain " +
                         "strobeGain EnergyGain ThresholdGain "+
                         "ADVoltageOffset ADAOffset ADBOffset ADCOffset ADDOffset "+
@@ -114,12 +104,12 @@ class PelFile:
                         "KP1 KP2 KI1 KI2 KD1 KD2 Temperature1 Temperature2 " +
                         "StrobePulseWidth " +
                         "Year Month Day Hour Minute Second")
-
-
+        
+        
                 format = "4s" #header
                 format += " ?" #endian  Note that this is currently ignored
                 (pelstring,endian) = struct.unpack(format,bytes[0:5])
-#                if pelstring != ".pel": raise Exception("Not a pel file")
+        
                 if endian:
                         format = ">" #big endian
                 else:
@@ -152,7 +142,7 @@ class PelFile:
                 format += "H" #PAPA PMT power supply control voltage command gain
                 format += "H" #PAPA PMT power supply control voltage command offsert
                 format += "B" #PAPA PMT power supply voltage enable
-
+        
                 format += "H" #Energy PMT power supply voltage command
                 format += "H" #Energy PMT power supply voltage gain
                 format += "H" #Energy PMT power supply voltage command offset
@@ -204,7 +194,7 @@ class PelFile:
                 format += "H" #Second
                 header = Header._make(struct.unpack(format,bytes))
                 return header
-
+        
         #Remember to use in-place operations to save on memory overhead
         def convertTime(self,timearr):
                 """Convert an array of TOF data into neutron wavelengths."""
@@ -216,7 +206,6 @@ class PelFile:
                 timearr -= 860
                 timearr *= 3.956034e-7/(distanceToDetector+distanceToG4)/1e-10*1e-6*(RESOLUTION/20) #The last term is to handle fractional angstroms
                 return timearr
-
         def make3d(self):
                 """Make a 3D histogram from the raw data."""
                 start=clock()                
@@ -224,22 +213,22 @@ class PelFile:
                 l = len(self.data)
                 sd =self.data
                 i=0;
-
+        
                 cube = np.zeros([128,16,RESOLUTION],dtype=np.float32)
-
+        
                 #If there's no data, return an empty array
                 if l==0:
                         return cube
-
+        #
                 Z = self.data[1::2] & 0xFFFF#position data
-
+        
                 timearr = self.convertTime(np.asarray(self.data[0::2], \
                                                       dtype=np.float64))#time data
                 timearr = np.asarray(np.floor(timearr),np.uint16)
-                
+        #
                 #Loop over 20 angstroms in steps of 0.1 angstroms
                 np.seterr(over='raise')
-
+        #
                 for i in range(RESOLUTION):
                         place = np.where(timearr==i)
                         if len(place[0]) > 0:
@@ -249,12 +238,11 @@ class PelFile:
                                 cube[:,:,i] = mapim(temp)[::-1,:]
                         statusfunc(i*1000.0/RESOLUTION)
                                 
-
+        
                 stop=clock()
                 del timearr
-
+        
                 return cube
-
         
         def spectrum(self,output):
                 """Save the neutron spectrum to a text file"""
@@ -262,7 +250,7 @@ class PelFile:
                         timearr = (self.data >> 32) & 0x7FFFFFFF
                         timearr = self.convertTime(timearr)
                         timearr /= 10
-
+        
                         #Get the spectrum and wavelengths
                         (spec,lmbda) = np.histogram(timearr,bins = \
                                                     np.arange(2.0,50.0,0.1))
@@ -275,20 +263,20 @@ class PelFile:
 
         def statusfunc(self,x):
                 """Status update function
-
+        
                 This function is called to tell other program components
                 the progress in loading the PelFile.  The progress is given
                 on a scale of 0 to 1000.  This function should be overwritten
                 by whatever function is loading the pel file to do what it
                 needs with the load time information.
-
+        
                 """
                 return
-
         def getgains(self,h):
                 """Pulls the PMT gains information into a numpy array"""
                 return np.array([h.x1Gain,h.x2Gain,h.x3Gain,h.x4Gain,h.x5Gain,h.x6Gain,h.x7Gain,h.x8Gain,h.x9Gain,h.x10Gain,
                         h.y1Gain,h.y2Gain,h.y3Gain,h.y4Gain,h.y5Gain,h.y6Gain,h.y7Gain,h.y8Gain,h.y9Gain,h.y10Gain],np.double)
+
 
         def readfileimage(self,path):
                 """Reads a raw Pel File into memory."""
@@ -304,7 +292,7 @@ class PelFile:
 
         def make1d(self,mins,maxs,mask=None):
                 """Make a 1D histogram from the spectrum data."""
-
+        
                 c = self.make3d()
                 if mask is None:
                     xmin,ymin = mins
@@ -313,8 +301,6 @@ class PelFile:
                 else:
                     c[np.logical_not(mask)] = 0
                 return np.sum(np.sum(c,axis=0,dtype=np.float64()),axis=0)
-                
-
 if __name__=="__main__":
         data = PelFile()
         

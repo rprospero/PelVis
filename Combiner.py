@@ -12,6 +12,7 @@ def load(paths,filter=None):
     currents = set([])#List of the configurations of the instrument
     runsets = {}#Directionary of lists of run nodes, indexed by their instrument configuration
 
+#
     for path in paths:
         print(path)
         base = os.path.dirname(path)
@@ -38,6 +39,7 @@ def load(paths,filter=None):
         except:
             print("Could not retrieve currents for run " + str(base[-5:]))
             continue
+#
         if current in currents:
             runsets[current].append(path)
         else:
@@ -47,20 +49,26 @@ def load(paths,filter=None):
 
 def save(path,minmon,keys,runsets):
     runs = [x for key in keys for x in runsets[key]]
+#
     mon = np.zeros((50001,),dtype=np.int32)
+#
     tottime = 0
     detcount=0
+#
     format1 = "%Y-%m-%dT%H:%M:%S-04:00"
     format2 = "%Y-%m-%dT%H:%M:%S-04:00-04:00"
+#
     with open(path+"_neutron_event.dat","wb") as outfile:
         for r in runs:
             monpath = r[:-11] + "bmon_histo.dat"
             detpath = r[:-11] + "neutron_event.dat"
+#
             starttime = strptime(ET.parse(r).getroot().find(".//"+XMLNS+"StartTime").text.strip(),format1)
             stoptime = strptime(ET.parse(r).getroot().find(".//"+XMLNS+"StopTime").text.strip(),format2)
 
             time = mktime(stoptime)-mktime(starttime)
 
+#
             with open(monpath,"r") as infile:
                 montemp = np.fromfile(infile,dtype=np.int32)
 
@@ -69,6 +77,7 @@ def save(path,minmon,keys,runsets):
             print "Time: " + str(time)
 
 
+#
             #Fixed for enabling dead run substraction 04/01/2013 done by Radian 
             if time <= 0 or ((moncount/time < minmon-20 or \
                               moncount/time>minmon+20) and minmon >0):
@@ -83,6 +92,7 @@ def save(path,minmon,keys,runsets):
             mon += montemp
             tottime += time
 
+#
             with open(detpath,"rb") as infile:
                 dettemp = np.fromfile(infile,count=-1)
                 dc = 1.*len(dettemp)
@@ -96,9 +106,13 @@ def save(path,minmon,keys,runsets):
                     print "#### SKIPPING RUN: " + str(r[-17:-12]) + " ####\n"
                     mon -= montemp
                     continue
+
+#
                 detcount += len(dettemp)
                 dettemp.tofile(outfile)
                 del dettemp
+
+#
     with open(path+"_bmon_histo.dat","wb") as stream:
         mon.tofile(stream)
     print "Total Monitor Counts = " + str(np.sum(mon))

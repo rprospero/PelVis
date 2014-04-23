@@ -1,4 +1,3 @@
-
 import serial
 import json
 import time
@@ -31,6 +30,7 @@ class Motor:
             self.d = 0 #Displacement
             self.loc = float(data["loc"]) #Location
             self.active=False
+#
     def save(self):
         status = {"a": self.a,
                   "aa": self.aa,
@@ -40,6 +40,7 @@ class Motor:
                   "loc": self.loc}
         with open(self.config,"w") as outfile:
             json.dump(status,outfile)
+#
     def __del__(self):
         self.save()
 
@@ -135,6 +136,7 @@ class Controller:
             motor.loc = place 
     def __del__(self):
         self.ser.close()
+    
 
 class MotorFacade(object):
     def __init__(self):
@@ -149,6 +151,7 @@ class MotorFacade(object):
         logging.info("Connecting to Middle Controller")
         self.middlecontroller.write("tlim\n")
         #Create motor getters
+    #
         logging.info("Establishing getters and setters")
         topgetters = ["getT1","getB1","getL1","getR1","getT2","getB2","getL2","getR2"]
         topsetters = ["setT1","setB1","setL1","setR1","setT2","setB2","setL2","setR2"]
@@ -159,8 +162,9 @@ class MotorFacade(object):
         for (i,name) in zip(range(8),middlemotors):
             setattr(self,"get"+name,self.getter(self.middlecontroller,i))
             setattr(self,"set"+name,self.setter(self.middlecontroller,i))
-    
         logging.info("Initialization finished")
+    
+    
     def getter(self,controller,index):
         def newGetter():
             controller.parseEncoder()
@@ -175,6 +179,8 @@ class MotorFacade(object):
             controller.parseEncoder()
             return controller.motors[index].loc
         return newSetter
+
+
 
 
 from SimpleXMLRPCServer import SimpleXMLRPCServer
