@@ -196,7 +196,7 @@
 #+end_src
 
 
-* GUI Controls
+* TODO GUI Controls
 
   We're using [[https://www.wxwidgets.org/][wxWidgets]] as our GUI toolkit through the [[http://www.wxpython.org][wxPython]]
   binding library.  wxWidgets was chosen as it is cross platform and
@@ -3089,7 +3089,7 @@ class SpectrumDialog(wx.Dialog):
 #+end_src
 
 
-** Livewatch
+** TODO Livewatch
 
    =Livewatch.py= is a utility to display the polarization as it comes
    in.  It takes two parameters at the command line.  The first is the
@@ -5468,7 +5468,7 @@ The nidaq object is a link to the DLL file which contains National
 Instrument DAQmx interface to their hardware.  It may not be quite as
 friendly as something like Measurement Studio, but it's actually a nice
 and simple API and it gets the job done.  All of the functions in the
-[[file://C:/Program Files/National Instruments/NI-DAQ/docs/daqmxcfunc.chm][NI-DAQmx C Reference Help]] are available from this DLL.  This help
+[[file:C:/Program Files/National Instruments/NI-DAQ/docs/daqmxcfunc.chm][NI-DAQmx C Reference Help]] are available from this DLL.  This help
 reference is installed with the drivers and you should update the link
 to where it is install on your computer.
 
